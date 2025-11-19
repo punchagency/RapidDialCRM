@@ -111,21 +111,24 @@ export const MOCK_TEMPLATES: EmailTemplate[] = [
   }
 ];
 
+// Updated with real Seattle addresses and coordinates for realistic mapping
 export const MOCK_CONTACTS: Contact[] = [
   {
     id: "1",
     name: "Dr. Sarah Jenkins",
     title: "Chief of Surgery",
-    company: "Mercy General Hospital",
+    company: "Swedish First Hill",
     phone: "(555) 123-4567",
-    email: "sjenkins@mercy.org",
-    address: "123 Medical Center Dr, Seattle, WA",
-    zip: "98101",
+    email: "sjenkins@swedish.org",
+    address: "747 Broadway, Seattle, WA",
+    zip: "98122",
     timezone: "PST",
     lastNotes: "Spoke to gatekeeper last week. Interested in new surgical tools. Call back Tuesday morning.",
     dealSize: "$50k",
     drServed: "Orthopedics",
     status: "New",
+    location_lat: 47.6099,
+    location_lng: -122.3223,
     emailHistory: [
       { id: "e1", subject: "Intro to Quo for Surgeons", date: "2 days ago", status: "opened" }
     ]
@@ -134,31 +137,35 @@ export const MOCK_CONTACTS: Contact[] = [
     id: "2",
     name: "James Wilson",
     title: "Procurement Director",
-    company: "Apex Health Systems",
+    company: "Harborview Medical",
     phone: "(555) 987-6543",
-    email: "jwilson@apexhealth.com",
-    address: "456 Corporate Blvd, Denver, CO",
-    zip: "80202",
-    timezone: "MST",
+    email: "jwilson@uw.edu",
+    address: "325 9th Ave, Seattle, WA",
+    zip: "98104",
+    timezone: "PST",
     lastNotes: "Left voicemail. Need to confirm budget cycle.",
     dealSize: "$120k",
     drServed: "General Practice",
     status: "New",
+    location_lat: 47.6023,
+    location_lng: -122.3242,
     emailHistory: []
   },
   {
     id: "3",
     name: "Dr. Emily Chen",
     title: "Medical Director",
-    company: "Chen Family Practice",
+    company: "UW Medical Center",
     phone: "(555) 456-7890",
-    email: "echen@chenpractice.com",
-    address: "789 Wellness Way, San Francisco, CA",
-    zip: "94105",
+    email: "echen@uw.edu",
+    address: "1959 NE Pacific St, Seattle, WA",
+    zip: "98195",
     timezone: "PST",
     lastNotes: "Initial email sent. No response yet.",
     dealSize: "$25k",
     status: "Email Sent",
+    location_lat: 47.6506,
+    location_lng: -122.3095,
     emailHistory: [
       { id: "e2", subject: "Quo: Better Patient Management", date: "Yesterday", status: "sent" }
     ]
@@ -167,16 +174,18 @@ export const MOCK_CONTACTS: Contact[] = [
     id: "4",
     name: "Michael Ross",
     title: "Operations Manager",
-    company: "Unity Care Clinics",
+    company: "Seattle Children's",
     phone: "(555) 222-3333",
-    email: "mross@unitycare.com",
-    address: "321 Health Ave, Portland, OR",
-    zip: "97205",
+    email: "mross@seattlechildrens.org",
+    address: "4800 Sand Point Way NE, Seattle, WA",
+    zip: "98105",
     timezone: "PST",
     lastNotes: "Asked for brochure. Sent yesterday.",
     dealSize: "$75k",
     drServed: "Pediatrics",
     status: "New",
+    location_lat: 47.6626,
+    location_lng: -122.2824,
     emailHistory: [
       { id: "e3", subject: "Requested Brochure", date: "Yesterday", status: "opened" },
       { id: "e4", subject: "Meeting Follow up", date: "Last Week", status: "replied" }
@@ -186,14 +195,16 @@ export const MOCK_CONTACTS: Contact[] = [
     id: "5",
     name: "Linda Martinez",
     title: "Office Manager",
-    company: "Westside Cardiology",
+    company: "Virginia Mason",
     phone: "(555) 444-5555",
-    email: "lmartinez@westsidecardio.com",
-    address: "654 Heart Ln, Los Angeles, CA",
-    zip: "90001",
+    email: "lmartinez@virginiamason.org",
+    address: "1100 9th Ave, Seattle, WA",
+    zip: "98101",
     timezone: "PST",
     lastNotes: "Gatekeeper is tough. Try calling during lunch.",
     status: "Called - No Answer",
+    location_lat: 47.6093,
+    location_lng: -122.3275,
     emailHistory: []
   }
 ];

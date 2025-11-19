@@ -39,15 +39,19 @@ export default function FieldSales() {
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const { toast } = useToast();
 
-  // Mock coords for Seattle area since MOCK_CONTACTS have Seattle addresses
-  // We'll add coords to the route items
+  // Build the route from MOCK_CONTACTS which now has real Seattle coordinates
   const todaysRoute = [
-    { ...MOCK_CONTACTS[0], time: "09:00 AM", type: "Visit Scheduled", distance: "1.2 mi", coords: [47.6062, -122.3321] as [number, number] },
-    { ...MOCK_CONTACTS[3], time: "11:30 AM", type: "Meeting Scheduled", distance: "4.5 mi", coords: [47.6150, -122.3400] as [number, number] },
-    { ...MOCK_CONTACTS[1], time: "02:00 PM", type: "Visit Scheduled", distance: "2.1 mi", coords: [47.6200, -122.3200] as [number, number] },
+    { ...MOCK_CONTACTS[0], time: "09:00 AM", type: "Visit Scheduled", distance: "1.2 mi" }, // Swedish First Hill
+    { ...MOCK_CONTACTS[1], time: "10:30 AM", type: "Drop-in", distance: "0.8 mi" },        // Harborview
+    { ...MOCK_CONTACTS[4], time: "01:00 PM", type: "Lunch Meeting", distance: "0.5 mi" },  // Virginia Mason
+    { ...MOCK_CONTACTS[2], time: "02:45 PM", type: "Meeting Scheduled", distance: "3.2 mi" }, // UW Medical
+    { ...MOCK_CONTACTS[3], time: "04:15 PM", type: "Visit Scheduled", distance: "1.5 mi" },   // Seattle Children's
   ];
 
   const activeStop = todaysRoute.find(s => s.id === selectedStop) || todaysRoute[0];
+  
+  // Fallback coords if data missing (Seattle center)
+  const activeCoords: [number, number] = [activeStop.location_lat || 47.6062, activeStop.location_lng || -122.3321];
 
   const handleCheckIn = () => {
     toast({
@@ -138,7 +142,7 @@ export default function FieldSales() {
                 {/* Real Map Layer */}
                 <div className="absolute inset-0 z-0">
                     <MapContainer 
-                        center={activeStop.coords} 
+                        center={activeCoords} 
                         zoom={13} 
                         style={{ height: "100%", width: "100%" }}
                         zoomControl={false}
@@ -147,22 +151,25 @@ export default function FieldSales() {
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                         />
-                        <MapUpdater center={activeStop.coords} />
+                        <MapUpdater center={activeCoords} />
                         
-                        {todaysRoute.map((stop, index) => (
-                            <Marker 
-                                key={stop.id} 
-                                position={stop.coords}
-                                eventHandlers={{
-                                    click: () => setSelectedStop(stop.id),
-                                }}
-                            >
-                                <Popup>
-                                    <div className="font-semibold">{stop.company}</div>
-                                    <div className="text-xs">{stop.address}</div>
-                                </Popup>
-                            </Marker>
-                        ))}
+                        {todaysRoute.map((stop, index) => {
+                             if (!stop.location_lat || !stop.location_lng) return null;
+                             return (
+                                <Marker 
+                                    key={stop.id} 
+                                    position={[stop.location_lat, stop.location_lng]}
+                                    eventHandlers={{
+                                        click: () => setSelectedStop(stop.id),
+                                    }}
+                                >
+                                    <Popup>
+                                        <div className="font-semibold">{stop.company}</div>
+                                        <div className="text-xs">{stop.address}</div>
+                                    </Popup>
+                                </Marker>
+                             );
+                        })}
                     </MapContainer>
                 </div>
 
