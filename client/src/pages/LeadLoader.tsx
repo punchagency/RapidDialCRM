@@ -164,13 +164,24 @@ export default function LeadLoader() {
                           <span>{searchResults.length} found</span>
                         </div>
                         {searchResults.map((result) => (
-                          <div key={result.id} className="flex items-center justify-between p-4 border-b last:border-0 hover:bg-muted/20 transition-colors">
+                          <div 
+                            key={result.id} 
+                            className={cn(
+                              "flex items-center justify-between p-4 border-b last:border-0 transition-colors",
+                              result.status === "exists" ? "bg-muted/40 opacity-60" : "hover:bg-muted/20"
+                            )}
+                          >
                             <div className="flex items-start gap-3">
-                              <div className="mt-1 p-2 bg-primary/10 rounded-full">
-                                <Building className="h-4 w-4 text-primary" />
+                              <div className={cn(
+                                "mt-1 p-2 rounded-full",
+                                result.status === "exists" ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"
+                              )}>
+                                <Building className="h-4 w-4" />
                               </div>
                               <div>
-                                <h4 className="font-semibold text-sm">{result.name}</h4>
+                                <h4 className={cn("font-semibold text-sm", result.status === "exists" && "text-muted-foreground")}>
+                                  {result.name}
+                                </h4>
                                 <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                                   <MapPin className="h-3 w-3" /> {result.address}, {result.city} {result.zip}
                                 </p>
@@ -181,7 +192,7 @@ export default function LeadLoader() {
                             </div>
                             
                             {result.status === "exists" ? (
-                              <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200 gap-1">
+                              <Badge variant="outline" className="bg-muted text-muted-foreground border-muted-foreground/20 gap-1 pointer-events-none select-none">
                                 <Info className="h-3 w-3" /> In System
                               </Badge>
                             ) : (
