@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Phone, LayoutDashboard, Users, BarChart3, Settings, LogOut, Map, Plug, Headphones, Star } from "lucide-react";
+import { Phone, LayoutDashboard, Users, BarChart3, Settings, LogOut, Map, Plug, Headphones, Star, Briefcase } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import avatar from "@assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
 import managerAvatar from "@assets/generated_images/Professional_user_avatar_2_9f00e114.png";
 
 export function Sidebar() {
   const [location] = useLocation();
-  const [userRole, setUserRole] = useState<"rep" | "manager">("rep");
+  const [userRole, setUserRole] = useState<"rep" | "manager" | "field">("rep");
 
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/" },
@@ -21,6 +21,16 @@ export function Sidebar() {
     { icon: Headphones, label: "Call Review", href: "/call-review" },
   ];
 
+  const fieldItems = [
+    { icon: Map, label: "My Route", href: "/map" },
+    { icon: Users, label: "My Territory", href: "/contacts" },
+  ];
+
+  const getRoleItems = () => {
+    if (userRole === "field") return fieldItems;
+    return navItems; // Default for Rep and Manager (Manager adds extra below)
+  };
+
   return (
     <div className="h-screen w-64 bg-card border-r border-border flex flex-col shrink-0 z-20 relative">
       <div className="p-6 flex items-center gap-2">
@@ -31,7 +41,7 @@ export function Sidebar() {
       </div>
 
       <div className="flex-1 px-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => (
+        {getRoleItems().map((item) => (
           <Link key={item.href} href={item.href}>
             <a
               className={cn(
@@ -88,13 +98,15 @@ export function Sidebar() {
             location === "/settings" ? "bg-primary/10" : "bg-muted/50 hover:bg-muted"
           )}>
             <img 
-              src={userRole === "rep" ? avatar : managerAvatar} 
+              src={userRole === "manager" ? managerAvatar : avatar} 
               alt="User" 
               className="h-9 w-9 rounded-full object-cover border border-border" 
             />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{userRole === "rep" ? "Alex Johnson" : "Sarah Miller"}</p>
-              <p className="text-xs text-muted-foreground truncate">{userRole === "rep" ? "Sales Rep" : "Sales Manager"}</p>
+              <p className="text-sm font-medium truncate">
+                  {userRole === "manager" ? "Sarah Miller" : userRole === "field" ? "Mike Field" : "Alex Johnson"}
+              </p>
+              <p className="text-xs text-muted-foreground truncate capitalize">{userRole} Role</p>
             </div>
             <Settings className={cn(
               "h-4 w-4 transition-colors", 
@@ -103,12 +115,35 @@ export function Sidebar() {
           </div>
         </Link>
         
-        <button 
-           onClick={() => setUserRole(r => r === "rep" ? "manager" : "rep")}
-           className="w-full text-xs text-center text-muted-foreground hover:text-primary transition-colors"
-        >
-           Switch to {userRole === "rep" ? "Manager" : "Rep"} View
-        </button>
+        <div className="grid grid-cols-3 gap-1 mt-2">
+           <button 
+             onClick={() => setUserRole("rep")}
+             className={cn(
+                 "text-[10px] py-1 rounded border", 
+                 userRole === "rep" ? "bg-primary/10 border-primary text-primary" : "bg-background border-border text-muted-foreground"
+             )}
+           >
+              Inside
+           </button>
+           <button 
+             onClick={() => setUserRole("field")}
+             className={cn(
+                 "text-[10px] py-1 rounded border", 
+                 userRole === "field" ? "bg-primary/10 border-primary text-primary" : "bg-background border-border text-muted-foreground"
+             )}
+           >
+              Field
+           </button>
+           <button 
+             onClick={() => setUserRole("manager")}
+             className={cn(
+                 "text-[10px] py-1 rounded border", 
+                 userRole === "manager" ? "bg-primary/10 border-primary text-primary" : "bg-background border-border text-muted-foreground"
+             )}
+           >
+              Manager
+           </button>
+        </div>
       </div>
     </div>
   );
