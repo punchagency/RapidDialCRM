@@ -1,13 +1,22 @@
 import React from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MOCK_CONTACTS } from "@/lib/mockData";
+import { getStatuses } from "@/lib/statusUtils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, Filter, Phone, MoreHorizontal, Mail, MapPin } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function Contacts() {
+  const statuses = getStatuses();
+
+  const getStatusColor = (statusValue: string) => {
+    const status = statuses.find(s => s.value === statusValue);
+    return status ? status.color : "bg-secondary text-secondary-foreground";
+  };
+
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar />
@@ -40,7 +49,15 @@ export default function Contacts() {
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-semibold truncate">{contact.name}</p>
-                        <Badge variant="secondary" className="text-[10px] h-5">{contact.status}</Badge>
+                        <Badge 
+                          variant="secondary" 
+                          className={cn(
+                            "text-[10px] h-5 border", 
+                            getStatusColor(contact.status)
+                          )}
+                        >
+                          {contact.status}
+                        </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground truncate">{contact.title} at {contact.company}</p>
                     </div>
