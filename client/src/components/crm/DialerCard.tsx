@@ -107,9 +107,9 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full max-h-[calc(100vh-140px)]">
       {/* Left Column: Contact Info */}
       <div className="lg:col-span-5 flex flex-col gap-4 h-full overflow-y-auto pr-2">
-        <Card className="border-none shadow-md overflow-hidden bg-card/50 backdrop-blur-sm">
-           <div className="h-2 bg-primary w-full" />
-           <CardContent className="pt-6">
+        <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm">
+           <div className="h-2 bg-primary w-full rounded-t-lg" />
+           <CardContent className="p-6">
              <div className="flex justify-between items-start mb-4">
                <div>
                  <h2 className="text-2xl font-heading font-bold text-foreground">{contact.name}</h2>
@@ -123,13 +123,13 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
                </Badge>
              </div>
 
-             <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl border border-border/50 mb-6 relative overflow-hidden">
+             <div className="flex items-center justify-between p-6 bg-muted/50 rounded-xl border border-border/50 mb-6 relative overflow-hidden">
                {isBonusUnlocked && (
                   <div className="absolute inset-0 bg-purple-500/10 flex items-center justify-center z-0 pointer-events-none animate-in fade-in duration-500" />
                )}
                
                <div className="z-10">
-                 <div className={cn("text-2xl font-mono font-semibold tracking-tight transition-colors", isBonusUnlocked ? "text-purple-600" : "text-foreground")}>
+                 <div className={cn("text-3xl font-mono font-semibold tracking-tight transition-colors", isBonusUnlocked ? "text-purple-600" : "text-foreground")}>
                    {contact.phone}
                  </div>
                  {isBonusUnlocked && (
@@ -152,7 +152,7 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
                ) : (
                  <Button 
                     size="lg" 
-                    className="rounded-full px-6 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20 transition-all hover:scale-105 z-10"
+                    className="rounded-full px-6 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20 transition-all hover:scale-105 z-10 h-12 text-base font-medium"
                     onClick={handleCallClick}
                     disabled={isConnecting}
                   >
