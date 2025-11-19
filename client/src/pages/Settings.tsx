@@ -49,7 +49,7 @@ export default function Settings() {
                     </div>
                     <div className="grid gap-2">
                       <Label>Email</Label>
-                      <Input defaultValue="alex@quocrm.com" />
+                      <Input defaultValue="alex@quantumpunch.com" />
                     </div>
                   </CardContent>
                 </Card>

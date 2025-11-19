@@ -53,7 +53,7 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
       toast({
         variant: "destructive",
         title: "API Key Missing",
-        description: "Please configure your Quo API key in Settings > Integrations first.",
+        description: "Please configure your QuantumPunch API key in Settings > Integrations first.",
       });
       return;
     }
@@ -66,7 +66,7 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
       setIsCallActive(true);
       toast({
         title: "Call Initiated",
-        description: `Calling ${contact.phone} via Quo Network...`,
+        description: `Calling ${contact.phone} via QuantumPunch Network...`,
       });
     }, 1500);
   };
@@ -132,7 +132,7 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
                     ) : (
                       <>
                         <Phone className="h-5 w-5 mr-2" />
-                        Call with Quo
+                        Call with QuantumPunch
                       </>
                     )}
                   </Button>

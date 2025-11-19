@@ -90,7 +90,7 @@ export const MOCK_TEMPLATES: EmailTemplate[] = [
   {
     id: "t1",
     name: "General Introduction",
-    subject: "Introduction: Quo x {{company}}",
+    subject: "Introduction: QuantumPunch x {{company}}",
     body: "Hi {{firstName}},\n\nI noticed your work at {{company}} and wanted to reach out.\n\nWe help teams like yours streamline their sales calls. Would you be open to a 10-minute chat next week?\n\nBest,\nAlex"
   },
   {
@@ -143,7 +143,7 @@ export const MOCK_CONTACTS: Contact[] = [
     location_lat: 47.6099,
     location_lng: -122.3223,
     emailHistory: [
-      { id: "e1", subject: "Intro to Quo for Surgeons", date: "2 days ago", status: "opened" }
+      { id: "e1", subject: "Intro to QuantumPunch for Surgeons", date: "2 days ago", status: "opened" }
     ]
   },
   {
@@ -180,7 +180,7 @@ export const MOCK_CONTACTS: Contact[] = [
     location_lat: 47.6506,
     location_lng: -122.3095,
     emailHistory: [
-      { id: "e2", subject: "Quo: Better Patient Management", date: "Yesterday", status: "sent" }
+      { id: "e2", subject: "QuantumPunch: Better Patient Management", date: "Yesterday", status: "sent" }
     ]
   },
   {
@@ -403,7 +403,7 @@ export const MOCK_CALLS: RecordedCall[] = [
         date: "Today, 10:30 AM", 
         status: "Meeting Scheduled", 
         score: 0,
-        transcript: "Alex: Hi Dr. Jenkins, this is Alex from Quo. I wanted to follow up on the email I sent regarding our inventory tracking for orthopedics.\n\nDr. Jenkins: Oh, yes, I saw that. We're actually struggling with our current system.\n\nAlex: I hear that a lot. Specifically with surgical kits?\n\nDr. Jenkins: Exactly. It's a mess.\n\nAlex: Well, our new module is designed exactly for that. Could we set up a 15-minute demo next week?\n\nDr. Jenkins: That sounds reasonable. How about Tuesday at 10?\n\nAlex: Tuesday at 10 works perfectly. I'll send the invite. Thanks!"
+        transcript: "Alex: Hi Dr. Jenkins, this is Alex from QuantumPunch. I wanted to follow up on the email I sent regarding our inventory tracking for orthopedics.\n\nDr. Jenkins: Oh, yes, I saw that. We're actually struggling with our current system.\n\nAlex: I hear that a lot. Specifically with surgical kits?\n\nDr. Jenkins: Exactly. It's a mess.\n\nAlex: Well, our new module is designed exactly for that. Could we set up a 15-minute demo next week?\n\nDr. Jenkins: That sounds reasonable. How about Tuesday at 10?\n\nAlex: Tuesday at 10 works perfectly. I'll send the invite. Thanks!"
     },
     { 
         id: "call-2", 
@@ -413,7 +413,7 @@ export const MOCK_CALLS: RecordedCall[] = [
         date: "Today, 9:15 AM", 
         status: "Connected", 
         score: 5,
-        transcript: "Alex: Hello James, Alex here from Quo. Do you have a quick minute?\n\nJames: Honestly, I'm about to step into a meeting.\n\nAlex: No problem at all. I'll keep it super brief. Just wanted to see if your procurement cycle is opening up next month as we discussed?\n\nJames: Yes, it is. Call me back next Thursday.\n\nAlex: Will do. Thanks James."
+        transcript: "Alex: Hello James, Alex here from QuantumPunch. Do you have a quick minute?\n\nJames: Honestly, I'm about to step into a meeting.\n\nAlex: No problem at all. I'll keep it super brief. Just wanted to see if your procurement cycle is opening up next month as we discussed?\n\nJames: Yes, it is. Call me back next Thursday.\n\nAlex: Will do. Thanks James."
     },
     { 
         id: "call-3", 
@@ -423,7 +423,7 @@ export const MOCK_CALLS: RecordedCall[] = [
         date: "Yesterday, 4:45 PM", 
         status: "Qualified", 
         score: 15,
-        transcript: "Alex: Hi, may I speak with the practice manager?\n\nReceptionist: This is she.\n\nAlex: Hi, this is Alex with Quo. We're working with several other clinics in the area to streamline patient communication.\n\nManager: Oh, we use standard email for that.\n\nAlex: I understand. Many of our partners did too, but found text messaging increased response rates by 40%. Is that something you'd be interested in exploring?\n\nManager: Actually, yes. We have a lot of no-shows."
+        transcript: "Alex: Hi, may I speak with the practice manager?\n\nReceptionist: This is she.\n\nAlex: Hi, this is Alex with QuantumPunch. We're working with several other clinics in the area to streamline patient communication.\n\nManager: Oh, we use standard email for that.\n\nAlex: I understand. Many of our partners did too, but found text messaging increased response rates by 40%. Is that something you'd be interested in exploring?\n\nManager: Actually, yes. We have a lot of no-shows."
     },
     { 
         id: "call-4", 
@@ -433,7 +433,7 @@ export const MOCK_CALLS: RecordedCall[] = [
         date: "Yesterday, 2:15 PM", 
         status: "Called - No Answer", 
         score: 0,
-        transcript: "Voicemail: You have reached the Evergreen Clinic. Please leave a message.\n\nAlex: Hi, this is Alex from Quo calling for the practice administrator. I'll try again later. Thanks."
+        transcript: "Voicemail: You have reached the Evergreen Clinic. Please leave a message.\n\nAlex: Hi, this is Alex from QuantumPunch calling for the practice administrator. I'll try again later. Thanks."
     },
     { 
         id: "call-5", 
@@ -443,7 +443,7 @@ export const MOCK_CALLS: RecordedCall[] = [
         date: "Yesterday, 11:00 AM", 
         status: "Meeting Scheduled", 
         score: 25,
-        transcript: "Alex: Dr. Chen, thanks for taking the time.\n\nDr. Chen: No problem. I have about 5 minutes.\n\nAlex: Perfect. I wanted to show you how we handle multi-location scheduling.\n\nDr. Chen: That is our biggest headache right now.\n\nAlex: I imagined so. With Quo, you can view all provider schedules in a single view. Let me describe how it works..."
+        transcript: "Alex: Dr. Chen, thanks for taking the time.\n\nDr. Chen: No problem. I have about 5 minutes.\n\nAlex: Perfect. I wanted to show you how we handle multi-location scheduling.\n\nDr. Chen: That is our biggest headache right now.\n\nAlex: I imagined so. With QuantumPunch, you can view all provider schedules in a single view. Let me describe how it works..."
     },
     { 
         id: "call-6", 
@@ -473,7 +473,7 @@ export const MOCK_CALLS: RecordedCall[] = [
         date: "3 days ago, 9:45 AM", 
         status: "Called - No Answer", 
         score: 0,
-        transcript: "Voicemail: Please leave a message after the tone.\n\nAlex: Hi Dr. Grant, Alex from Quo here. calling regarding the inventory tracking. I'll shoot you an email."
+        transcript: "Voicemail: Please leave a message after the tone.\n\nAlex: Hi Dr. Grant, Alex from QuantumPunch here. calling regarding the inventory tracking. I'll shoot you an email."
     },
     { 
         id: "call-9", 
@@ -493,7 +493,7 @@ export const MOCK_CALLS: RecordedCall[] = [
         date: "Last Week, 2:00 PM", 
         status: "Not Interested", 
         score: 0,
-        transcript: "Alex: Hi Mark, Alex calling from Quo.\n\nMark: Look, we're happy with our current vendor.\n\nAlex: I understand. Even if you could save 20%?\n\nMark: We're under contract. Not interested right now."
+        transcript: "Alex: Hi Mark, Alex calling from QuantumPunch.\n\nMark: Look, we're happy with our current vendor.\n\nAlex: I understand. Even if you could save 20%?\n\nMark: We're under contract. Not interested right now."
     },
     { 
         id: "call-11", 

@@ -46,7 +46,7 @@ export function Sidebar() {
         <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
           <Phone className="h-5 w-5 text-primary-foreground" />
         </div>
-        <span className="font-heading font-bold text-xl text-foreground">QuoCRM</span>
+        <span className="font-heading font-bold text-xl text-foreground">QuantumPunch CRM</span>
       </div>
 
       <div className="flex-1 px-4 space-y-1 overflow-y-auto">
