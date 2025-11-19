@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Contact, CallStatus } from "@/lib/mockData";
+import { Contact, CallStatus, SubContact } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Phone, MapPin, Building2, Clock, DollarSign, Stethoscope, History, Check, ArrowRight, Loader2, Trophy, Mail, MessageSquare, Users, Briefcase, Shield, UserCog, Stethoscope as DoctorIcon } from "lucide-react";
+import { Phone, MapPin, Building2, Clock, DollarSign, Stethoscope, History, Check, ArrowRight, Loader2, Trophy, Mail, MessageSquare, Users, Briefcase, Shield, UserCog, Stethoscope as DoctorIcon, Plus, X, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { EmailComposer } from "@/components/crm/EmailComposer";
@@ -15,6 +15,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import avatar from "@assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
 import managerAvatar from "@assets/generated_images/Professional_user_avatar_2_9f00e114.png";
 import { getStatuses } from "@/lib/statusUtils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface DialerCardProps {
   contact: Contact;
@@ -53,6 +56,42 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
   const statuses = getStatuses(); // Get dynamic statuses
   
   const team = getAccountTeam(contact.id);
+
+  // Local state for contacts to allow adding/removing
+  const [clientAdmins, setClientAdmins] = useState<SubContact[]>(contact.clientAdmins || []);
+  const [providerContacts, setProviderContacts] = useState<SubContact[]>(contact.providerContacts || []);
+
+  // New contact form state
+  const [isAddContactOpen, setIsAddContactOpen] = useState(false);
+  const [newContactType, setNewContactType] = useState<"admin" | "provider">("admin");
+  const [newContact, setNewContact] = useState({ name: "", role: "", email: "", phone: "" });
+
+  const handleAddContact = () => {
+    const newId = `new-${Date.now()}`;
+    const contactToAdd: SubContact = {
+        id: newId,
+        ...newContact
+    };
+
+    if (newContactType === "admin") {
+        setClientAdmins([...clientAdmins, contactToAdd]);
+    } else {
+        setProviderContacts([...providerContacts, contactToAdd]);
+    }
+    
+    setIsAddContactOpen(false);
+    setNewContact({ name: "", role: "", email: "", phone: "" });
+    toast({ title: "Contact Added", description: `${newContact.name} added to stakeholders.` });
+  };
+
+  const handleRemoveContact = (id: string, type: "admin" | "provider") => {
+      if (type === "admin") {
+          setClientAdmins(clientAdmins.filter(c => c.id !== id));
+      } else {
+          setProviderContacts(providerContacts.filter(c => c.id !== id));
+      }
+      toast({ title: "Contact Removed", description: "Stakeholder removed from list." });
+  };
 
   // Simple timer effect
   React.useEffect(() => {
@@ -181,48 +220,116 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
         </Card>
 
         {/* KEY CONTACTS SECTION (NEW) */}
-        {(contact.clientAdmins?.length || contact.providerContacts?.length) ? (
-           <Card className="border-none shadow-sm">
-             <CardContent className="pt-6">
-                <h3 className="font-heading font-semibold flex items-center gap-2 mb-4 text-muted-foreground text-sm uppercase tracking-wider">
-                  <Users className="h-4 w-4" />
-                  Key Stakeholders
-                </h3>
-
-                <div className="space-y-4">
-                   {/* Client Admins */}
-                   {contact.clientAdmins && contact.clientAdmins.length > 0 && (
-                     <div>
-                        <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase flex items-center gap-1">
-                           <UserCog className="h-3 w-3" /> Client Admins
-                        </p>
-                        <div className="space-y-2">
-                           {contact.clientAdmins.map((admin) => (
-                              <ContactRow key={admin.id} contact={admin} />
-                           ))}
-                        </div>
-                     </div>
-                   )}
-
-                   {(contact.clientAdmins?.length && contact.providerContacts?.length) ? <Separator /> : null}
-                   
-                   {/* Provider Contacts */}
-                   {contact.providerContacts && contact.providerContacts.length > 0 && (
-                     <div>
-                        <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase flex items-center gap-1">
-                           <DoctorIcon className="h-3 w-3" /> Providers
-                        </p>
-                         <div className="space-y-2">
-                           {contact.providerContacts.map((provider) => (
-                              <ContactRow key={provider.id} contact={provider} />
-                           ))}
-                        </div>
-                     </div>
-                   )}
+        <Card className="border-none shadow-sm">
+            <CardContent className="pt-6">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-heading font-semibold flex items-center gap-2 text-muted-foreground text-sm uppercase tracking-wider">
+                        <Users className="h-4 w-4" />
+                        Key Stakeholders
+                    </h3>
+                    
+                    <Dialog open={isAddContactOpen} onOpenChange={setIsAddContactOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-6 text-xs gap-1">
+                                <Plus className="h-3 w-3" /> Add
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Add New Stakeholder</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                    <Label>Stakeholder Type</Label>
+                                    <div className="flex gap-2">
+                                        <Button 
+                                            variant={newContactType === "admin" ? "default" : "outline"} 
+                                            onClick={() => setNewContactType("admin")}
+                                            className="flex-1"
+                                        >
+                                            Client Admin
+                                        </Button>
+                                        <Button 
+                                            variant={newContactType === "provider" ? "default" : "outline"} 
+                                            onClick={() => setNewContactType("provider")}
+                                            className="flex-1"
+                                        >
+                                            Provider
+                                        </Button>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Name</Label>
+                                    <Input value={newContact.name} onChange={e => setNewContact({...newContact, name: e.target.value})} placeholder="Full Name" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Role / Title</Label>
+                                    <Input value={newContact.role} onChange={e => setNewContact({...newContact, role: e.target.value})} placeholder="e.g. Office Manager" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Email</Label>
+                                        <Input value={newContact.email} onChange={e => setNewContact({...newContact, email: e.target.value})} placeholder="email@example.com" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Phone</Label>
+                                        <Input value={newContact.phone} onChange={e => setNewContact({...newContact, phone: e.target.value})} placeholder="(555) 000-0000" />
+                                    </div>
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsAddContactOpen(false)}>Cancel</Button>
+                                <Button onClick={handleAddContact} disabled={!newContact.name}>Add Contact</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                 </div>
-             </CardContent>
-           </Card>
-        ) : null}
+
+                <div className="space-y-6">
+                    {/* Client Admins */}
+                    <div>
+                        <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase flex items-center gap-1">
+                            <UserCog className="h-3 w-3" /> Client Admins
+                        </p>
+                        {clientAdmins.length > 0 ? (
+                            <div className="space-y-2">
+                                {clientAdmins.map((admin) => (
+                                    <ContactRow 
+                                        key={admin.id} 
+                                        contact={admin} 
+                                        onRemove={() => handleRemoveContact(admin.id, "admin")}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-xs text-muted-foreground italic">No admins listed.</p>
+                        )}
+                    </div>
+
+                    <Separator />
+                    
+                    {/* Provider Contacts */}
+                    <div>
+                        <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase flex items-center gap-1">
+                            <DoctorIcon className="h-3 w-3" /> Providers
+                        </p>
+                        {providerContacts.length > 0 ? (
+                            <div className="space-y-2">
+                                {providerContacts.map((provider) => (
+                                    <ContactRow 
+                                        key={provider.id} 
+                                        contact={provider} 
+                                        onRemove={() => handleRemoveContact(provider.id, "provider")}
+                                    />
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-xs text-muted-foreground italic">No providers listed.</p>
+                        )}
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
         
         {/* Account Team Section */}
         <Card className="border-none shadow-sm">
@@ -402,9 +509,9 @@ function TeamMemberRow({ member }: { member: any }) {
    );
 }
 
-function ContactRow({ contact }: { contact: any }) {
+function ContactRow({ contact, onRemove }: { contact: any, onRemove: () => void }) {
    return (
-      <div className="flex items-center justify-between p-2.5 hover:bg-muted/50 rounded-lg transition-colors border border-transparent hover:border-border/40">
+      <div className="group/row flex items-center justify-between p-2.5 hover:bg-muted/50 rounded-lg transition-colors border border-transparent hover:border-border/40 relative">
          <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
                <p className="text-sm font-medium text-foreground truncate">{contact.name}</p>
@@ -422,12 +529,20 @@ function ContactRow({ contact }: { contact: any }) {
                </span>
             </div>
          </div>
-         <div className="flex gap-1">
+         <div className="flex gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
             <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary">
                <Phone className="h-3.5 w-3.5" />
             </Button>
             <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary">
                <Mail className="h-3.5 w-3.5" />
+            </Button>
+            <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                onClick={onRemove}
+            >
+               <Trash2 className="h-3.5 w-3.5" />
             </Button>
          </div>
       </div>
