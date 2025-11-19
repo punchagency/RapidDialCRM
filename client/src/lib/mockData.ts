@@ -9,6 +9,7 @@ export type CallStatus =
   | "Qualified"
   | "Meeting Scheduled"
   | "Visit Scheduled"
+  | "Call Scheduled" 
   | "Demo/Presentation Complete"
   | "Proposal Sent"
   | "Negotiating"
@@ -61,6 +62,7 @@ export interface RecordedCall {
   date: string;
   status: string;
   score: number;
+  transcript?: string;
 }
 
 export const DEFAULT_PROFESSIONS = [
@@ -393,16 +395,124 @@ export const MOCK_CONTACTS: Contact[] = [
 ];
 
 export const MOCK_CALLS: RecordedCall[] = [
-    { id: "call-1", rep: "Alex Johnson", customer: "Dr. Sarah Jenkins", duration: "4:12", date: "Today, 10:30 AM", status: "Meeting Scheduled", score: 0 },
-    { id: "call-2", rep: "Alex Johnson", customer: "James Wilson", duration: "1:45", date: "Today, 9:15 AM", status: "Connected", score: 5 },
-    { id: "call-3", rep: "Alex Johnson", customer: "Apex Health Systems", duration: "3:05", date: "Yesterday, 4:45 PM", status: "Qualified", score: 15 },
-    { id: "call-4", rep: "Alex Johnson", customer: "Evergreen Clinic", duration: "0:45", date: "Yesterday, 2:15 PM", status: "Called - No Answer", score: 0 },
-    { id: "call-5", rep: "Alex Johnson", customer: "Dr. Emily Chen", duration: "5:30", date: "Yesterday, 11:00 AM", status: "Meeting Scheduled", score: 25 },
-    { id: "call-6", rep: "Alex Johnson", customer: "Seattle Children's", duration: "2:10", date: "2 days ago, 3:30 PM", status: "Follow-up Needed", score: 5 },
-    { id: "call-7", rep: "Alex Johnson", customer: "Providence Regional", duration: "6:15", date: "2 days ago, 1:00 PM", status: "Demo/Presentation Complete", score: 10 },
-    { id: "call-8", rep: "Alex Johnson", customer: "Swedish Edmonds", duration: "0:30", date: "3 days ago, 9:45 AM", status: "Called - No Answer", score: 0 },
-    { id: "call-9", rep: "Alex Johnson", customer: "Pacific Dermatology", duration: "4:00", date: "3 days ago, 11:20 AM", status: "Qualified", score: 10 },
-    { id: "call-10", rep: "Alex Johnson", customer: "Western WA Medical", duration: "1:15", date: "Last Week, 2:00 PM", status: "Not Interested", score: 0 },
-    { id: "call-11", rep: "Alex Johnson", customer: "Mill Creek Family", duration: "3:45", date: "Last Week, 10:00 AM", status: "Meeting Scheduled", score: 20 },
-    { id: "call-12", rep: "Alex Johnson", customer: "Kaiser Permanente", duration: "2:50", date: "Last Week, 4:15 PM", status: "Follow-up Needed", score: 5 },
+    { 
+        id: "call-1", 
+        rep: "Alex Johnson", 
+        customer: "Dr. Sarah Jenkins", 
+        duration: "4:12", 
+        date: "Today, 10:30 AM", 
+        status: "Meeting Scheduled", 
+        score: 0,
+        transcript: "Alex: Hi Dr. Jenkins, this is Alex from Quo. I wanted to follow up on the email I sent regarding our inventory tracking for orthopedics.\n\nDr. Jenkins: Oh, yes, I saw that. We're actually struggling with our current system.\n\nAlex: I hear that a lot. Specifically with surgical kits?\n\nDr. Jenkins: Exactly. It's a mess.\n\nAlex: Well, our new module is designed exactly for that. Could we set up a 15-minute demo next week?\n\nDr. Jenkins: That sounds reasonable. How about Tuesday at 10?\n\nAlex: Tuesday at 10 works perfectly. I'll send the invite. Thanks!"
+    },
+    { 
+        id: "call-2", 
+        rep: "Alex Johnson", 
+        customer: "James Wilson", 
+        duration: "1:45", 
+        date: "Today, 9:15 AM", 
+        status: "Connected", 
+        score: 5,
+        transcript: "Alex: Hello James, Alex here from Quo. Do you have a quick minute?\n\nJames: Honestly, I'm about to step into a meeting.\n\nAlex: No problem at all. I'll keep it super brief. Just wanted to see if your procurement cycle is opening up next month as we discussed?\n\nJames: Yes, it is. Call me back next Thursday.\n\nAlex: Will do. Thanks James."
+    },
+    { 
+        id: "call-3", 
+        rep: "Alex Johnson", 
+        customer: "Apex Health Systems", 
+        duration: "3:05", 
+        date: "Yesterday, 4:45 PM", 
+        status: "Qualified", 
+        score: 15,
+        transcript: "Alex: Hi, may I speak with the practice manager?\n\nReceptionist: This is she.\n\nAlex: Hi, this is Alex with Quo. We're working with several other clinics in the area to streamline patient communication.\n\nManager: Oh, we use standard email for that.\n\nAlex: I understand. Many of our partners did too, but found text messaging increased response rates by 40%. Is that something you'd be interested in exploring?\n\nManager: Actually, yes. We have a lot of no-shows."
+    },
+    { 
+        id: "call-4", 
+        rep: "Alex Johnson", 
+        customer: "Evergreen Clinic", 
+        duration: "0:45", 
+        date: "Yesterday, 2:15 PM", 
+        status: "Called - No Answer", 
+        score: 0,
+        transcript: "Voicemail: You have reached the Evergreen Clinic. Please leave a message.\n\nAlex: Hi, this is Alex from Quo calling for the practice administrator. I'll try again later. Thanks."
+    },
+    { 
+        id: "call-5", 
+        rep: "Alex Johnson", 
+        customer: "Dr. Emily Chen", 
+        duration: "5:30", 
+        date: "Yesterday, 11:00 AM", 
+        status: "Meeting Scheduled", 
+        score: 25,
+        transcript: "Alex: Dr. Chen, thanks for taking the time.\n\nDr. Chen: No problem. I have about 5 minutes.\n\nAlex: Perfect. I wanted to show you how we handle multi-location scheduling.\n\nDr. Chen: That is our biggest headache right now.\n\nAlex: I imagined so. With Quo, you can view all provider schedules in a single view. Let me describe how it works..."
+    },
+    { 
+        id: "call-6", 
+        rep: "Alex Johnson", 
+        customer: "Seattle Children's", 
+        duration: "2:10", 
+        date: "2 days ago, 3:30 PM", 
+        status: "Follow-up Needed", 
+        score: 5,
+        transcript: "Alex: Hi Michael, checking in on the brochure I sent.\n\nMichael: Hey Alex. Yes, I got it. Haven't had a chance to review it yet.\n\nAlex: Totally understand. What's the best time to circle back? Next week?\n\nMichael: Yeah, try me Wednesday afternoon."
+    },
+    { 
+        id: "call-7", 
+        rep: "Alex Johnson", 
+        customer: "Providence Regional", 
+        duration: "6:15", 
+        date: "2 days ago, 1:00 PM", 
+        status: "Demo/Presentation Complete", 
+        score: 10,
+        transcript: "Alex: ...and that concludes the pricing module. Any questions?\n\nClient: It looks comprehensive. But does it integrate with Epic?\n\nAlex: Yes, we have a native integration. I can send you the technical documentation.\n\nClient: That would be great. Send that over."
+    },
+    { 
+        id: "call-8", 
+        rep: "Alex Johnson", 
+        customer: "Swedish Edmonds", 
+        duration: "0:30", 
+        date: "3 days ago, 9:45 AM", 
+        status: "Called - No Answer", 
+        score: 0,
+        transcript: "Voicemail: Please leave a message after the tone.\n\nAlex: Hi Dr. Grant, Alex from Quo here. calling regarding the inventory tracking. I'll shoot you an email."
+    },
+    { 
+        id: "call-9", 
+        rep: "Alex Johnson", 
+        customer: "Pacific Dermatology", 
+        duration: "4:00", 
+        date: "3 days ago, 11:20 AM", 
+        status: "Qualified", 
+        score: 10,
+        transcript: "Alex: Hi Dr. Chang, saw your presentation at the conference.\n\nDr. Chang: Oh, thank you. Did you enjoy it?\n\nAlex: Very much so. Especially the part about patient retention. That's actually what we specialize in.\n\nDr. Chang: Interesting. Tell me more."
+    },
+    { 
+        id: "call-10", 
+        rep: "Alex Johnson", 
+        customer: "Western WA Medical", 
+        duration: "1:15", 
+        date: "Last Week, 2:00 PM", 
+        status: "Not Interested", 
+        score: 0,
+        transcript: "Alex: Hi Mark, Alex calling from Quo.\n\nMark: Look, we're happy with our current vendor.\n\nAlex: I understand. Even if you could save 20%?\n\nMark: We're under contract. Not interested right now."
+    },
+    { 
+        id: "call-11", 
+        rep: "Alex Johnson", 
+        customer: "Mill Creek Family", 
+        duration: "3:45", 
+        date: "Last Week, 10:00 AM", 
+        status: "Meeting Scheduled", 
+        score: 20,
+        transcript: "Alex: Good morning Dr. Patel.\n\nDr. Patel: Good morning.\n\nAlex: I'm calling about the partnership program for family practices.\n\nDr. Patel: I've heard a bit about that. Is it true you offer free onboarding?\n\nAlex: For this month, yes we do."
+    },
+    { 
+        id: "call-12", 
+        rep: "Alex Johnson", 
+        customer: "Kaiser Permanente", 
+        duration: "2:50", 
+        date: "Last Week, 4:15 PM", 
+        status: "Follow-up Needed", 
+        score: 5,
+        transcript: "Alex: Hi Sarah, just checking on the inventory needs.\n\nSarah: We're still assessing. Can you give us another week?\n\nAlex: Absolutely. I'll mark my calendar for next Friday."
+    }
 ];

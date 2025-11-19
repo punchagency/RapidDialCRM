@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Play, Pause, SkipBack, SkipForward, ThumbsUp, ThumbsDown, Star, Award, Clock, Trophy } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, ThumbsUp, ThumbsDown, Star, Award, Clock, Trophy, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import avatar from "@assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
 import { MOCK_CALLS } from "@/lib/mockData";
@@ -12,8 +12,40 @@ export default function CallReview() {
   const [activeCall, setActiveCall] = React.useState<string | null>(MOCK_CALLS[0].id);
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [points, setPoints] = React.useState(0);
+  const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   const selectedCall = MOCK_CALLS.find(c => c.id === activeCall) || MOCK_CALLS[0];
+
+  // Handle Speech Synthesis
+  useEffect(() => {
+    // Stop any existing speech when switching calls or unmounting
+    window.speechSynthesis.cancel();
+    setIsPlaying(false);
+  }, [activeCall]);
+
+  const togglePlay = () => {
+    if (isPlaying) {
+      window.speechSynthesis.cancel();
+      setIsPlaying(false);
+    } else {
+      if (selectedCall.transcript) {
+        const utterance = new SpeechSynthesisUtterance(selectedCall.transcript);
+        utterance.rate = 1.1; // Slightly faster for natural feel
+        utterance.pitch = 1.0;
+        
+        // Try to select a natural voice if available
+        const voices = window.speechSynthesis.getVoices();
+        const naturalVoice = voices.find(v => v.name.includes("Natural") || v.name.includes("Google US English"));
+        if (naturalVoice) utterance.voice = naturalVoice;
+
+        utterance.onend = () => setIsPlaying(false);
+        
+        speechRef.current = utterance;
+        window.speechSynthesis.speak(utterance);
+        setIsPlaying(true);
+      }
+    }
+  };
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -89,29 +121,48 @@ export default function CallReview() {
                        </div>
                      </CardHeader>
                      
-                     <CardContent className="flex-1 flex flex-col justify-center items-center space-y-8 bg-muted/20 m-6 rounded-xl border border-dashed border-border">
-                        {/* Mock Waveform */}
-                        <div className="flex items-center gap-1 h-16 w-full px-12 justify-center">
-                           {Array.from({ length: 40 }).map((_, i) => (
-                             <div 
-                                key={i}
-                                className={cn("w-1.5 rounded-full bg-primary/40 transition-all duration-300", isPlaying && "animate-pulse")}
-                                style={{ height: `${Math.random() * 100}%` }}
-                             />
-                           ))}
+                     <CardContent className="flex-1 flex flex-col space-y-8 p-8">
+                        {/* Audio Visualizer */}
+                        <div className="bg-muted/30 rounded-2xl p-8 border border-dashed border-border flex flex-col items-center justify-center gap-8 min-h-[200px]">
+                            <div className="flex items-center gap-1 h-16 w-full px-12 justify-center">
+                                {Array.from({ length: 40 }).map((_, i) => (
+                                    <div 
+                                        key={i}
+                                        className={cn("w-1.5 rounded-full bg-primary/40 transition-all duration-300", isPlaying && "animate-pulse bg-primary")}
+                                        style={{ height: isPlaying ? `${Math.random() * 100}%` : '30%' }}
+                                    />
+                                ))}
+                            </div>
+
+                            <div className="flex items-center gap-6">
+                                <Button variant="outline" size="icon" className="rounded-full"><SkipBack className="h-4 w-4" /></Button>
+                                <Button 
+                                    size="lg" 
+                                    className="rounded-full h-16 w-16 shadow-xl" 
+                                    onClick={togglePlay}
+                                >
+                                    {isPlaying ? <Pause className="h-8 w-8 fill-current" /> : <Play className="h-8 w-8 fill-current ml-1" />}
+                                </Button>
+                                <Button variant="outline" size="icon" className="rounded-full"><SkipForward className="h-4 w-4" /></Button>
+                            </div>
+                            
+                            {selectedCall.transcript && (
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-background/50 px-3 py-1 rounded-full border">
+                                    <FileText className="h-3 w-3" />
+                                    Transcript Available • Auto-generated
+                                </div>
+                            )}
                         </div>
 
-                        <div className="flex items-center gap-6">
-                          <Button variant="outline" size="icon" className="rounded-full"><SkipBack className="h-4 w-4" /></Button>
-                          <Button 
-                            size="lg" 
-                            className="rounded-full h-14 w-14" 
-                            onClick={() => setIsPlaying(!isPlaying)}
-                          >
-                            {isPlaying ? <Pause className="h-6 w-6 fill-current" /> : <Play className="h-6 w-6 fill-current ml-1" />}
-                          </Button>
-                          <Button variant="outline" size="icon" className="rounded-full"><SkipForward className="h-4 w-4" /></Button>
-                        </div>
+                        {/* Transcript Preview */}
+                        {selectedCall.transcript && (
+                             <div className="space-y-2">
+                                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Transcript Preview</h3>
+                                <div className="bg-card border rounded-lg p-4 text-sm leading-relaxed text-muted-foreground h-40 overflow-y-auto whitespace-pre-line font-mono">
+                                    {selectedCall.transcript}
+                                </div>
+                             </div>
+                        )}
                      </CardContent>
                    </Card>
 
