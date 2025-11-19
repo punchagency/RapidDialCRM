@@ -1,26 +1,50 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Navigation, Calendar, Clock, Phone, CheckCircle2, User, FileText, Camera } from "lucide-react";
-import mapBg from "@assets/generated_images/Subtle_abstract_map_background_for_CRM_7b808988.png";
-import { MOCK_CONTACTS, Contact } from "@/lib/mockData";
+import { MapPin, Navigation, Calendar, Phone, CheckCircle2, User, FileText, Camera, Loader2 } from "lucide-react";
+import { MOCK_CONTACTS } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+// Fix Leaflet icon issue
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+let DefaultIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41]
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
+
+// Helper component to center map on active stop
+function MapUpdater({ center }: { center: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo(center, 13);
+  }, [center, map]);
+  return null;
+}
 
 export default function FieldSales() {
   const [selectedStop, setSelectedStop] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const { toast } = useToast();
 
-  // Filter contacts that are relevant for field sales (e.g., meetings or visits)
-  // For demo purposes, we'll just grab a few specific ones and mock times
+  // Mock coords for Seattle area since MOCK_CONTACTS have Seattle addresses
+  // We'll add coords to the route items
   const todaysRoute = [
-    { ...MOCK_CONTACTS[0], time: "09:00 AM", type: "Visit Scheduled", distance: "1.2 mi" },
-    { ...MOCK_CONTACTS[3], time: "11:30 AM", type: "Meeting Scheduled", distance: "4.5 mi" },
-    { ...MOCK_CONTACTS[1], time: "02:00 PM", type: "Visit Scheduled", distance: "2.1 mi" },
+    { ...MOCK_CONTACTS[0], time: "09:00 AM", type: "Visit Scheduled", distance: "1.2 mi", coords: [47.6062, -122.3321] as [number, number] },
+    { ...MOCK_CONTACTS[3], time: "11:30 AM", type: "Meeting Scheduled", distance: "4.5 mi", coords: [47.6150, -122.3400] as [number, number] },
+    { ...MOCK_CONTACTS[1], time: "02:00 PM", type: "Visit Scheduled", distance: "2.1 mi", coords: [47.6200, -122.3200] as [number, number] },
   ];
 
   const activeStop = todaysRoute.find(s => s.id === selectedStop) || todaysRoute[0];
@@ -111,22 +135,35 @@ export default function FieldSales() {
                 "flex-1 bg-muted/10 relative flex flex-col transition-all duration-300",
                 viewMode === "list" ? "hidden md:flex" : "flex"
             )}>
-                {/* Mock Map Background */}
-                <div className="absolute inset-0 bg-cover bg-center opacity-40" style={{ backgroundImage: `url(${mapBg})` }} />
-                
-                {/* Map Pins (Mock) */}
-                <div className="absolute top-1/4 left-1/4 transform -translate-x-1/2 -translate-y-1/2">
-                    <div className="relative group cursor-pointer">
-                        <div className="h-8 w-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center shadow-lg animate-bounce">1</div>
-                        <div className="absolute top-full mt-1 left-1/2 -translate-x-1/2 bg-card px-2 py-1 rounded text-xs font-bold shadow-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-                            Mercy General
-                        </div>
-                    </div>
-                </div>
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                    <div className="relative group cursor-pointer">
-                         <div className="h-8 w-8 bg-muted text-muted-foreground border-2 border-primary rounded-full flex items-center justify-center shadow-lg">2</div>
-                    </div>
+                {/* Real Map Layer */}
+                <div className="absolute inset-0 z-0">
+                    <MapContainer 
+                        center={activeStop.coords} 
+                        zoom={13} 
+                        style={{ height: "100%", width: "100%" }}
+                        zoomControl={false}
+                    >
+                        <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        <MapUpdater center={activeStop.coords} />
+                        
+                        {todaysRoute.map((stop, index) => (
+                            <Marker 
+                                key={stop.id} 
+                                position={stop.coords}
+                                eventHandlers={{
+                                    click: () => setSelectedStop(stop.id),
+                                }}
+                            >
+                                <Popup>
+                                    <div className="font-semibold">{stop.company}</div>
+                                    <div className="text-xs">{stop.address}</div>
+                                </Popup>
+                            </Marker>
+                        ))}
+                    </MapContainer>
                 </div>
 
                 {/* Mobile Toggle for List/Map */}
@@ -148,8 +185,8 @@ export default function FieldSales() {
                 </div>
 
                 {/* Active Stop Detail Card (Floating) */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 z-20">
-                   <Card className="shadow-xl border-t-4 border-t-primary max-w-2xl mx-auto animate-in slide-in-from-bottom-10">
+                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 z-20 pointer-events-none">
+                   <Card className="shadow-xl border-t-4 border-t-primary max-w-2xl mx-auto animate-in slide-in-from-bottom-10 pointer-events-auto bg-card/95 backdrop-blur-sm">
                       <CardContent className="p-6">
                          <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
                             <div>
