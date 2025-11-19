@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Contact, CALL_STATUSES, CallStatus } from "@/lib/mockData";
+import { Contact, CallStatus } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import { EmailComposer } from "@/components/crm/EmailComposer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import avatar from "@assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
 import managerAvatar from "@assets/generated_images/Professional_user_avatar_2_9f00e114.png";
+import { getStatuses } from "@/lib/statusUtils";
 
 interface DialerCardProps {
   contact: Contact;
@@ -49,6 +50,7 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
   const [timer, setTimer] = useState(0);
   const [activeTab, setActiveTab] = useState("notes");
   const { toast } = useToast();
+  const statuses = getStatuses(); // Get dynamic statuses
   
   const team = getAccountTeam(contact.id);
 
@@ -297,17 +299,17 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
                     </h3>
                     
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                      {CALL_STATUSES.map((status) => (
+                      {statuses.map((status) => (
                         <button
                           key={status.value}
-                          onClick={() => onComplete(status.value, notes)}
+                          onClick={() => onComplete(status.value as CallStatus, notes)}
                           className={cn(
                             "flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
                             status.color,
                             "bg-opacity-5 hover:bg-opacity-10 bg-card dark:bg-card" // Override transparency for better contrast
                           )}
                         >
-                          <status.icon className="h-6 w-6 mb-2 opacity-80" />
+                          {status.icon && <status.icon className="h-6 w-6 mb-2 opacity-80" />}
                           <span className="text-xs font-semibold text-center">{status.label}</span>
                         </button>
                       ))}
