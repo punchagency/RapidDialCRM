@@ -8,6 +8,7 @@ import Dashboard from "@/pages/Dashboard";
 import Dialer from "@/pages/Dialer";
 import Settings from "@/pages/Settings";
 import Contacts from "@/pages/Contacts";
+import CallReview from "@/pages/CallReview";
 
 function Router() {
   return (
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/dialer" component={Dialer} />
       <Route path="/settings" component={Settings} />
       <Route path="/contacts" component={Contacts} />
+      <Route path="/call-review" component={CallReview} />
       <Route path="/map" component={Dashboard} />
       <Route path="/analytics" component={Dashboard} />
       

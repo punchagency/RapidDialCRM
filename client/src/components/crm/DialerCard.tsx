@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Phone, MapPin, Building2, Clock, DollarSign, Stethoscope, History, Check, ArrowRight, Loader2 } from "lucide-react";
+import { Phone, MapPin, Building2, Clock, DollarSign, Stethoscope, History, Check, ArrowRight, Loader2, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -40,6 +40,8 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
+  
+  const isBonusUnlocked = timer > 180; // 3 minutes
 
   const handleCallClick = async () => {
     const apiKey = localStorage.getItem("quo_api_key");
@@ -87,15 +89,27 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
                </Badge>
              </div>
 
-             <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl border border-border/50 mb-6">
-               <div className="text-2xl font-mono font-semibold tracking-tight text-foreground">
-                 {contact.phone}
+             <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl border border-border/50 mb-6 relative overflow-hidden">
+               {isBonusUnlocked && (
+                  <div className="absolute inset-0 bg-purple-500/10 flex items-center justify-center z-0 pointer-events-none animate-in fade-in duration-500" />
+               )}
+               
+               <div className="z-10">
+                 <div className={cn("text-2xl font-mono font-semibold tracking-tight transition-colors", isBonusUnlocked ? "text-purple-600" : "text-foreground")}>
+                   {contact.phone}
+                 </div>
+                 {isBonusUnlocked && (
+                    <div className="text-xs text-purple-600 font-bold flex items-center gap-1 animate-bounce mt-1">
+                      <Trophy className="h-3 w-3" /> BONUS UNLOCKED
+                    </div>
+                 )}
                </div>
+               
                {isCallActive ? (
                   <Button 
                     variant="destructive" 
                     size="lg"
-                    className="rounded-full px-6 shadow-lg shadow-destructive/20 animate-pulse"
+                    className="rounded-full px-6 shadow-lg shadow-destructive/20 animate-pulse z-10"
                     onClick={() => setIsCallActive(false)}
                   >
                     <Phone className="h-5 w-5 mr-2" />
@@ -104,7 +118,7 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
                ) : (
                  <Button 
                     size="lg" 
-                    className="rounded-full px-6 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20 transition-all hover:scale-105"
+                    className="rounded-full px-6 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20 transition-all hover:scale-105 z-10"
                     onClick={handleCallClick}
                     disabled={isConnecting}
                   >
