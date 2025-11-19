@@ -55,37 +55,39 @@ export default function Dashboard() {
                 <div className="space-y-3 overflow-y-auto pr-2 pb-4">
                   {upNextContacts.length > 0 ? (
                     upNextContacts.map((contact, i) => (
-                      <Card key={contact.id} className="group hover:shadow-lg transition-all border-none shadow-sm rounded-xl bg-white overflow-hidden">
-                        <CardContent className="p-4 flex items-center gap-4">
-                          <div className="h-8 w-8 rounded-full bg-pink-50 text-pink-600 flex items-center justify-center text-sm font-bold shrink-0">
-                            {i + 1}
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3 mb-1">
-                              <p className="font-bold text-gray-900 truncate">{contact.name}</p>
-                              <Badge 
-                                variant="secondary" 
-                                className={cn(
-                                  "text-[10px] h-5 px-2 rounded-full font-semibold border-none", 
-                                  getStatusColor(contact.status)
-                                )}
-                              >
-                                {contact.status}
-                              </Badge>
+                      <Link key={contact.id} href={`/dialer?contactId=${contact.id}`}>
+                        <Card className="group hover:shadow-lg transition-all border-none shadow-sm rounded-xl bg-white overflow-hidden cursor-pointer mb-3">
+                            <CardContent className="p-4 flex items-center gap-4">
+                            <div className="h-8 w-8 rounded-full bg-pink-50 text-pink-600 flex items-center justify-center text-sm font-bold shrink-0">
+                                {i + 1}
                             </div>
-                            <p className="text-xs text-gray-500 font-medium truncate flex items-center gap-1.5">
-                               {contact.company}
-                               <span className="w-1 h-1 rounded-full bg-gray-300" />
-                               {contact.address}
-                            </p>
-                          </div>
-                          
-                          <Button size="sm" variant="ghost" className="text-gray-400 hover:text-pink-600 hover:bg-pink-50 rounded-full h-9 w-9 p-0 shrink-0">
-                            <Phone className="h-4 w-4" />
-                          </Button>
-                        </CardContent>
-                      </Card>
+                            
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-3 mb-1">
+                                <p className="font-bold text-gray-900 truncate">{contact.name}</p>
+                                <Badge 
+                                    variant="secondary" 
+                                    className={cn(
+                                    "text-[10px] h-5 px-2 rounded-full font-semibold border-none", 
+                                    getStatusColor(contact.status)
+                                    )}
+                                >
+                                    {contact.status}
+                                </Badge>
+                                </div>
+                                <p className="text-xs text-gray-500 font-medium truncate flex items-center gap-1.5">
+                                {contact.company}
+                                <span className="w-1 h-1 rounded-full bg-gray-300" />
+                                {contact.address}
+                                </p>
+                            </div>
+                            
+                            <Button size="sm" variant="ghost" className="text-gray-400 hover:text-pink-600 hover:bg-pink-50 rounded-full h-9 w-9 p-0 shrink-0">
+                                <Phone className="h-4 w-4" />
+                            </Button>
+                            </CardContent>
+                        </Card>
+                      </Link>
                     ))
                   ) : (
                     <div className="p-8 text-center text-gray-500 bg-white rounded-xl shadow-sm">

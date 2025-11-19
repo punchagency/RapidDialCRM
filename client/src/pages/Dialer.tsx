@@ -1,15 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { DialerCard } from "@/components/crm/DialerCard";
 import { MOCK_CONTACTS, CallStatus } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { AnimatePresence, motion } from "framer-motion";
 
 export default function Dialer() {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [location] = useLocation();
+  
+  // Initialize index based on URL param if present
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const contactId = params.get("contactId");
+    if (contactId) {
+      const idx = MOCK_CONTACTS.findIndex(c => c.id === contactId);
+      return idx >= 0 ? idx : 0;
+    }
+    return 0;
+  });
+
   const [isTransitioning, setIsTransitioning] = useState(false);
   const { toast } = useToast();
 
