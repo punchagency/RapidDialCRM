@@ -117,22 +117,21 @@ export default function FieldReps() {
   const [location] = useLocation();
 
   // Sync active tab with URL query parameter
+  // Use a polling check to catch query param changes that wouter might miss if path is same
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tab = params.get("tab");
-    if (tab && (tab === "field" || tab === "inside")) {
-        setActiveTab(tab);
-    }
-  }, [location]); // Re-run when location (path) changes, though query params might not trigger this in wouter depending on implementation, window check helps.
+    const checkTab = () => {
+        const params = new URLSearchParams(window.location.search);
+        const tab = params.get("tab");
+        if (tab && tab !== activeTab && (tab === "field" || tab === "inside")) {
+            setActiveTab(tab);
+        }
+    };
 
-  // Also check on initial load in case wouter doesn't fire effect immediately
-  useEffect(() => {
-      const params = new URLSearchParams(window.location.search);
-      const tab = params.get("tab");
-      if (tab && (tab === "field" || tab === "inside")) {
-          setActiveTab(tab);
-      }
-  }, []);
+    checkTab(); // Check immediately
+
+    const interval = setInterval(checkTab, 200); // Check periodically
+    return () => clearInterval(interval);
+  }, [activeTab, location]);
 
   const filteredFieldReps = mockFieldReps.filter(rep => {
     const matchesSearch = rep.name.toLowerCase().includes(searchTerm.toLowerCase()) || rep.territory.toLowerCase().includes(searchTerm.toLowerCase());
