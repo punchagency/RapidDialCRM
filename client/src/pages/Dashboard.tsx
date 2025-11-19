@@ -21,6 +21,9 @@ export default function Dashboard() {
     return status ? status.color : "bg-secondary text-secondary-foreground";
   };
 
+  // Filter contacts to only show "New" ones for "Up Next"
+  const upNextContacts = MOCK_CONTACTS.filter(contact => contact.status === "New");
+
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
       <Sidebar />
@@ -50,39 +53,45 @@ export default function Dashboard() {
                 </div>
 
                 <div className="space-y-3 overflow-y-auto pr-2 pb-4">
-                  {MOCK_CONTACTS.map((contact, i) => (
-                    <Card key={contact.id} className="group hover:shadow-lg transition-all border-none shadow-sm rounded-xl bg-white overflow-hidden">
-                      <CardContent className="p-4 flex items-center gap-4">
-                        <div className="h-8 w-8 rounded-full bg-pink-50 text-pink-600 flex items-center justify-center text-sm font-bold shrink-0">
-                          {i + 1}
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-1">
-                            <p className="font-bold text-gray-900 truncate">{contact.name}</p>
-                            <Badge 
-                              variant="secondary" 
-                              className={cn(
-                                "text-[10px] h-5 px-2 rounded-full font-semibold border-none", 
-                                getStatusColor(contact.status)
-                              )}
-                            >
-                              {contact.status}
-                            </Badge>
+                  {upNextContacts.length > 0 ? (
+                    upNextContacts.map((contact, i) => (
+                      <Card key={contact.id} className="group hover:shadow-lg transition-all border-none shadow-sm rounded-xl bg-white overflow-hidden">
+                        <CardContent className="p-4 flex items-center gap-4">
+                          <div className="h-8 w-8 rounded-full bg-pink-50 text-pink-600 flex items-center justify-center text-sm font-bold shrink-0">
+                            {i + 1}
                           </div>
-                          <p className="text-xs text-gray-500 font-medium truncate flex items-center gap-1.5">
-                             {contact.company}
-                             <span className="w-1 h-1 rounded-full bg-gray-300" />
-                             {contact.address}
-                          </p>
-                        </div>
-                        
-                        <Button size="sm" variant="ghost" className="text-gray-400 hover:text-pink-600 hover:bg-pink-50 rounded-full h-9 w-9 p-0 shrink-0">
-                          <Phone className="h-4 w-4" />
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
+                          
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-3 mb-1">
+                              <p className="font-bold text-gray-900 truncate">{contact.name}</p>
+                              <Badge 
+                                variant="secondary" 
+                                className={cn(
+                                  "text-[10px] h-5 px-2 rounded-full font-semibold border-none", 
+                                  getStatusColor(contact.status)
+                                )}
+                              >
+                                {contact.status}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-gray-500 font-medium truncate flex items-center gap-1.5">
+                               {contact.company}
+                               <span className="w-1 h-1 rounded-full bg-gray-300" />
+                               {contact.address}
+                            </p>
+                          </div>
+                          
+                          <Button size="sm" variant="ghost" className="text-gray-400 hover:text-pink-600 hover:bg-pink-50 rounded-full h-9 w-9 p-0 shrink-0">
+                            <Phone className="h-4 w-4" />
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))
+                  ) : (
+                    <div className="p-8 text-center text-gray-500 bg-white rounded-xl shadow-sm">
+                      No new contacts remaining for today. Great job!
+                    </div>
+                  )}
                 </div>
               </div>
 
