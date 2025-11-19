@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Phone, MapPin, Building2, Clock, DollarSign, Stethoscope, History, Check, ArrowRight, Loader2, Trophy, Mail, MessageSquare, Users, Briefcase, Shield, UserCog, Stethoscope as DoctorIcon, Plus, X, Trash2 } from "lucide-react";
+import { Phone, MapPin, Building2, Clock, DollarSign, Stethoscope, History, Check, ArrowRight, Loader2, Trophy, Mail, MessageSquare, Users, Briefcase, Shield, UserCog, Stethoscope as DoctorIcon, Plus, X, Trash2, ChevronDown, ChevronRight, Network } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { EmailComposer } from "@/components/crm/EmailComposer";
@@ -28,22 +28,41 @@ interface DialerCardProps {
 const getAccountTeam = (contactId: string) => {
   const idNum = parseInt(contactId) || 0;
   
-  // Logic: Every account has Alex (Inside), plus assigned Field Rep & Manager based on "territory" (simulated by ID)
+  // Field Rep
   const fieldRep = idNum % 2 === 0 
     ? { name: "Mike Field", role: "Field Sales", initial: "MF", color: "bg-green-100 text-green-700" }
     : { name: "Jessica Wong", role: "Field Sales", initial: "JW", color: "bg-green-100 text-green-700" };
 
-  const manager = idNum % 3 === 0
-    ? { name: "Robert Stone", role: "Territory Manager", initial: "RS", color: "bg-blue-100 text-blue-700", image: null }
-    : { name: "Sarah Miller", role: "Regional Manager", initial: "SM", color: "bg-blue-100 text-blue-700", image: managerAvatar };
-
-  return {
-    inside: [
-      { name: "Alex Johnson", role: "Inside Sales", initial: "AJ", color: "bg-purple-100 text-purple-700", image: avatar }
-    ],
-    field: [fieldRep],
-    managers: [manager]
+  // Inside Rep
+  const insideRep = { 
+      name: "Alex Johnson", 
+      role: "Inside Sales", 
+      initial: "AJ", 
+      color: "bg-purple-100 text-purple-700", 
+      image: avatar,
+      fieldReps: [fieldRep] 
   };
+
+  // Manager
+  const manager = idNum % 3 === 0
+    ? { 
+        name: "Robert Stone", 
+        role: "Territory Manager", 
+        initial: "RS", 
+        color: "bg-blue-100 text-blue-700", 
+        image: null,
+        insideReps: [insideRep]
+      }
+    : { 
+        name: "Sarah Miller", 
+        role: "Regional Manager", 
+        initial: "SM", 
+        color: "bg-blue-100 text-blue-700", 
+        image: managerAvatar,
+        insideReps: [insideRep]
+      };
+
+  return [manager]; // Return as a hierarchy tree root
 };
 
 export function DialerCard({ contact, onComplete }: DialerCardProps) {
@@ -55,7 +74,7 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
   const { toast } = useToast();
   const statuses = getStatuses(); // Get dynamic statuses
   
-  const team = getAccountTeam(contact.id);
+  const teamHierarchy = getAccountTeam(contact.id);
 
   // Local state for contacts to allow adding/removing
   const [clientAdmins, setClientAdmins] = useState<SubContact[]>(contact.clientAdmins || []);
@@ -147,7 +166,7 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
       {/* Left Column: Contact Info */}
       <div className="lg:col-span-5 flex flex-col gap-4 h-full overflow-y-auto pr-2">
         <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm">
-           <div className="h-2 bg-primary w-full rounded-t-lg" />
+           <div className="h-2 bg-pink-500 w-full rounded-t-lg" />
            <CardContent className="p-6">
              <div className="flex justify-between items-start mb-4">
                <div>
@@ -219,7 +238,7 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
            </CardContent>
         </Card>
 
-        {/* KEY CONTACTS SECTION (NEW) */}
+        {/* KEY CONTACTS SECTION */}
         <Card className="border-none shadow-sm">
             <CardContent className="pt-6">
                 <div className="flex items-center justify-between mb-4">
@@ -238,6 +257,7 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
                             <DialogHeader>
                                 <DialogTitle>Add New Stakeholder</DialogTitle>
                             </DialogHeader>
+                            {/* ... Form ... */}
                             <div className="space-y-4 py-4">
                                 <div className="space-y-2">
                                     <Label>Stakeholder Type</Label>
@@ -331,40 +351,42 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
             </CardContent>
         </Card>
         
-        {/* Account Team Section */}
+        {/* Account Team Section (HIERARCHICAL) */}
         <Card className="border-none shadow-sm">
           <CardContent className="pt-6">
              <h3 className="font-heading font-semibold flex items-center gap-2 mb-4 text-muted-foreground text-sm uppercase tracking-wider">
-               <Briefcase className="h-4 w-4" />
-               Internal Team
+               <Network className="h-4 w-4" />
+               Internal Team Structure
              </h3>
              
              <div className="space-y-4">
-                {/* Inside Sales */}
-                <div>
-                   <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase">Inside Sales</p>
-                   {team.inside.map((member, i) => (
-                      <TeamMemberRow key={i} member={member} />
-                   ))}
-                </div>
-                <Separator />
-                
-                {/* Field Sales */}
-                <div>
-                   <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase">Field Sales</p>
-                   {team.field.map((member, i) => (
-                      <TeamMemberRow key={i} member={member} />
-                   ))}
-                </div>
-                <Separator />
+                {teamHierarchy.map((mgr: any) => (
+                    <div key={mgr.name}>
+                        {/* Manager Level */}
+                        <div className="mb-2">
+                             <p className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase ml-1">Account Manager</p>
+                             <TeamMemberRow member={mgr} />
+                        </div>
 
-                {/* Management */}
-                <div>
-                   <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase">Field Management</p>
-                   {team.managers.map((member, i) => (
-                      <TeamMemberRow key={i} member={member} />
-                   ))}
-                </div>
+                        {/* Inside Reps Level */}
+                        {mgr.insideReps?.map((ir: any) => (
+                            <div key={ir.name} className="ml-6 border-l-2 border-border/50 pl-4 py-2 relative">
+                                 <div className="absolute -left-[18px] top-6 w-4 h-0.5 bg-border/50 rounded-full" />
+                                 <p className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase ml-1">Inside Sales</p>
+                                 <TeamMemberRow member={ir} />
+
+                                 {/* Field Reps Level */}
+                                 {ir.fieldReps?.map((fr: any) => (
+                                     <div key={fr.name} className="ml-6 mt-3 border-l-2 border-border/50 pl-4 py-1 relative">
+                                         <div className="absolute -left-[18px] top-5 w-4 h-0.5 bg-border/50 rounded-full" />
+                                         <p className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase ml-1">Field Sales</p>
+                                         <TeamMemberRow member={fr} />
+                                     </div>
+                                 ))}
+                            </div>
+                        ))}
+                    </div>
+                ))}
              </div>
           </CardContent>
         </Card>
