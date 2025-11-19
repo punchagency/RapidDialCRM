@@ -7,15 +7,40 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Phone, MapPin, Building2, Clock, DollarSign, Stethoscope, History, Check, ArrowRight, Loader2, Trophy, Mail, MessageSquare } from "lucide-react";
+import { Phone, MapPin, Building2, Clock, DollarSign, Stethoscope, History, Check, ArrowRight, Loader2, Trophy, Mail, MessageSquare, Users, Briefcase, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { EmailComposer } from "@/components/crm/EmailComposer";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import avatar from "@assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
+import managerAvatar from "@assets/generated_images/Professional_user_avatar_2_9f00e114.png";
 
 interface DialerCardProps {
   contact: Contact;
   onComplete: (status: CallStatus, notes: string) => void;
 }
+
+// Mock Team Generator based on Contact ID to simulate Org Chart logic
+const getAccountTeam = (contactId: string) => {
+  const idNum = parseInt(contactId) || 0;
+  
+  // Logic: Every account has Alex (Inside), plus assigned Field Rep & Manager based on "territory" (simulated by ID)
+  const fieldRep = idNum % 2 === 0 
+    ? { name: "Mike Field", role: "Field Sales", initial: "MF", color: "bg-green-100 text-green-700" }
+    : { name: "Jessica Wong", role: "Field Sales", initial: "JW", color: "bg-green-100 text-green-700" };
+
+  const manager = idNum % 3 === 0
+    ? { name: "Robert Stone", role: "Territory Manager", initial: "RS", color: "bg-blue-100 text-blue-700", image: null }
+    : { name: "Sarah Miller", role: "Regional Manager", initial: "SM", color: "bg-blue-100 text-blue-700", image: managerAvatar };
+
+  return {
+    inside: [
+      { name: "Alex Johnson", role: "Inside Sales", initial: "AJ", color: "bg-purple-100 text-purple-700", image: avatar }
+    ],
+    field: [fieldRep],
+    managers: [manager]
+  };
+};
 
 export function DialerCard({ contact, onComplete }: DialerCardProps) {
   const [notes, setNotes] = useState("");
@@ -24,6 +49,8 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
   const [timer, setTimer] = useState(0);
   const [activeTab, setActiveTab] = useState("notes");
   const { toast } = useToast();
+  
+  const team = getAccountTeam(contact.id);
 
   // Simple timer effect
   React.useEffect(() => {
@@ -147,6 +174,44 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
              </div>
            </CardContent>
         </Card>
+        
+        {/* Account Team Section */}
+        <Card className="border-none shadow-sm">
+          <CardContent className="pt-6">
+             <h3 className="font-heading font-semibold flex items-center gap-2 mb-4 text-muted-foreground text-sm uppercase tracking-wider">
+               <Users className="h-4 w-4" />
+               Account Team
+             </h3>
+             
+             <div className="space-y-4">
+                {/* Inside Sales */}
+                <div>
+                   <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase">Inside Sales</p>
+                   {team.inside.map((member, i) => (
+                      <TeamMemberRow key={i} member={member} />
+                   ))}
+                </div>
+                <Separator />
+                
+                {/* Field Sales */}
+                <div>
+                   <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase">Field Sales</p>
+                   {team.field.map((member, i) => (
+                      <TeamMemberRow key={i} member={member} />
+                   ))}
+                </div>
+                <Separator />
+
+                {/* Management */}
+                <div>
+                   <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase">Field Management</p>
+                   {team.managers.map((member, i) => (
+                      <TeamMemberRow key={i} member={member} />
+                   ))}
+                </div>
+             </div>
+          </CardContent>
+        </Card>
 
         <Card className="border-none shadow-sm flex-1">
           <CardContent className="pt-6">
@@ -267,4 +332,23 @@ function InfoItem({ icon: Icon, label, value }: { icon: any, label: string, valu
       </div>
     </div>
   );
+}
+
+function TeamMemberRow({ member }: { member: any }) {
+   return (
+      <div className="flex items-center gap-3 p-2 hover:bg-muted/50 rounded-lg transition-colors">
+         <Avatar className="h-8 w-8 border border-border/50">
+            {member.image ? (
+               <AvatarImage src={member.image} />
+            ) : null}
+            <AvatarFallback className={cn("text-[10px] font-medium", member.color)}>
+               {member.initial}
+            </AvatarFallback>
+         </Avatar>
+         <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground truncate">{member.name}</p>
+            <p className="text-[10px] text-muted-foreground truncate">{member.role}</p>
+         </div>
+      </div>
+   );
 }
