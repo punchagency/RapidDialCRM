@@ -6,7 +6,7 @@ import avatar from "@assets/generated_images/Professional_user_avatar_1_a4d3e764
 import managerAvatar from "@assets/generated_images/Professional_user_avatar_2_9f00e114.png";
 
 export function Sidebar() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   // Initialize state from localStorage to persist across page loads
   const [userRole, setUserRole] = useState<"rep" | "manager" | "field">(() => {
     const saved = localStorage.getItem("user_role");
@@ -17,6 +17,10 @@ export function Sidebar() {
   useEffect(() => {
     localStorage.setItem("user_role", userRole);
   }, [userRole]);
+
+  const handleLogout = () => {
+    setLocation("/auth");
+  };
 
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/" },
@@ -132,7 +136,8 @@ export function Sidebar() {
           </div>
         </Link>
         
-        <div className="grid grid-cols-3 gap-1 mt-2">
+        {/* Role Switching Buttons */}
+        <div className="grid grid-cols-3 gap-1 mt-2 mb-2">
            <button 
              onClick={() => setUserRole("rep")}
              className={cn(
@@ -161,6 +166,13 @@ export function Sidebar() {
               Manager
            </button>
         </div>
+
+        <button 
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 text-xs text-muted-foreground hover:text-destructive transition-colors py-2 mt-1 border-t border-border border-dashed"
+        >
+          <LogOut className="h-3 w-3" /> Sign Out
+        </button>
       </div>
     </div>
   );

@@ -10,10 +10,14 @@ import Settings from "@/pages/Settings";
 import Contacts from "@/pages/Contacts";
 import CallReview from "@/pages/CallReview";
 import FieldSales from "@/pages/FieldSales";
+import Login from "@/pages/Login";
 
 function Router() {
   return (
     <Switch>
+      <Route path="/auth" component={Login} />
+      
+      {/* Protected Routes */}
       <Route path="/" component={Dashboard} />
       <Route path="/dialer" component={Dialer} />
       <Route path="/settings" component={Settings} />
