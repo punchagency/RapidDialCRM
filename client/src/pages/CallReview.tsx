@@ -7,12 +7,19 @@ import { Play, Pause, SkipBack, SkipForward, ThumbsUp, ThumbsDown, Star, Award, 
 import { cn } from "@/lib/utils";
 import avatar from "@assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
 import { MOCK_CALLS } from "@/lib/mockData";
+import { getStatuses } from "@/lib/statusUtils";
 
 export default function CallReview() {
   const [activeCall, setActiveCall] = React.useState<string | null>(MOCK_CALLS[0].id);
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [points, setPoints] = React.useState(0);
   const speechRef = useRef<SpeechSynthesisUtterance | null>(null);
+  
+  const statuses = getStatuses();
+  const getStatusColor = (statusValue: string) => {
+    const status = statuses.find(s => s.value === statusValue);
+    return status ? status.color : "bg-secondary text-secondary-foreground";
+  };
 
   const selectedCall = MOCK_CALLS.find(c => c.id === activeCall) || MOCK_CALLS[0];
 
@@ -82,7 +89,12 @@ export default function CallReview() {
                     </div>
                     <p className="font-semibold mb-1">{call.customer}</p>
                     <div className="flex items-center gap-3 text-sm">
-                      <Badge variant="secondary" className="font-normal">{call.status}</Badge>
+                      <Badge 
+                        variant="secondary" 
+                        className={cn("font-normal border", getStatusColor(call.status))}
+                      >
+                        {call.status}
+                      </Badge>
                       <span className={cn("flex items-center gap-1 text-xs font-medium", 
                         parseInt(call.duration.split(":")[0]) >= 3 ? "text-purple-600" : "text-muted-foreground"
                       )}>
