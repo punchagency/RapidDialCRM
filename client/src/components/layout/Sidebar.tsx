@@ -52,6 +52,19 @@ export function Sidebar() {
     return navItems; // Default for Rep and Manager (Manager adds extra below)
   };
 
+  // Helper to check if a link is active, including query params
+  const isLinkActive = (href: string) => {
+    if (href.includes("?")) {
+      // For links with query params (like tabs), we need to check both path and search string
+      const [path, query] = href.split("?");
+      const currentSearch = window.location.search;
+      return location === path && currentSearch.includes(query);
+    }
+    // For standard links, exact match or simple prefix for sub-routes if needed
+    // Using exact match for now as per existing behavior logic mostly
+    return location === href;
+  };
+
   return (
     <div className="h-screen w-64 bg-card border-r border-border flex flex-col shrink-0 z-20 relative">
       <div className="p-6 flex items-center gap-2">
@@ -67,7 +80,7 @@ export function Sidebar() {
             <a
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
-                location === item.href
+                isLinkActive(item.href)
                   ? "bg-primary/10 text-primary font-semibold"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
@@ -75,7 +88,7 @@ export function Sidebar() {
               <item.icon
                 className={cn(
                   "h-4 w-4 transition-colors",
-                  location === item.href ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                  isLinkActive(item.href) ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
                 )}
               />
               {item.label}
@@ -88,28 +101,31 @@ export function Sidebar() {
             <div className="mt-6 mb-2 px-3">
                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider opacity-70">Manager Views</p>
             </div>
-            {managerItems.map((item) => (
-              <Link key={item.href} href={item.href}>
-                <a
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
-                    location === item.href || (item.href.includes("?tab=") && location.startsWith(item.href.split("?")[0]))
-                      ? "bg-accent text-accent-foreground font-semibold"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                >
-                  <item.icon
+            {managerItems.map((item) => {
+              const active = isLinkActive(item.href);
+              return (
+                <Link key={item.href} href={item.href}>
+                  <a
                     className={cn(
-                      "h-4 w-4 transition-colors",
-                      location === item.href || (item.href.includes("?tab=") && location.startsWith(item.href.split("?")[0]))
-                       ? "text-accent-foreground" 
-                       : "text-muted-foreground group-hover:text-foreground"
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
+                      active
+                        ? "bg-accent text-accent-foreground font-semibold"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     )}
-                  />
-                  {item.label}
-                </a>
-              </Link>
-            ))}
+                  >
+                    <item.icon
+                      className={cn(
+                        "h-4 w-4 transition-colors",
+                        active
+                         ? "text-accent-foreground" 
+                         : "text-muted-foreground group-hover:text-foreground"
+                      )}
+                    />
+                    {item.label}
+                  </a>
+                </Link>
+              );
+            })}
           </>
         )}
       </div>
