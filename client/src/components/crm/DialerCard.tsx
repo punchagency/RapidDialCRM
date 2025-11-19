@@ -6,8 +6,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Phone, MapPin, Building2, Clock, DollarSign, Stethoscope, History, Check, ArrowRight } from "lucide-react";
+import { Phone, MapPin, Building2, Clock, DollarSign, Stethoscope, History, Check, ArrowRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface DialerCardProps {
   contact: Contact;
@@ -17,7 +18,9 @@ interface DialerCardProps {
 export function DialerCard({ contact, onComplete }: DialerCardProps) {
   const [notes, setNotes] = useState("");
   const [isCallActive, setIsCallActive] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [timer, setTimer] = useState(0);
+  const { toast } = useToast();
 
   // Simple timer effect
   React.useEffect(() => {
@@ -36,6 +39,32 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const handleCallClick = async () => {
+    const apiKey = localStorage.getItem("quo_api_key");
+    
+    if (!apiKey) {
+      toast({
+        variant: "destructive",
+        title: "API Key Missing",
+        description: "Please configure your Quo API key in Settings > Integrations first.",
+      });
+      return;
+    }
+
+    setIsConnecting(true);
+    
+    // Simulate API Handshake
+    // In a real app, this would be: await fetch('https://api.openphone.com/v1/calls', { headers: { Authorization: apiKey } })
+    setTimeout(() => {
+      setIsConnecting(false);
+      setIsCallActive(true);
+      toast({
+        title: "Call Initiated",
+        description: `Calling ${contact.phone} via Quo Network...`,
+      });
+    }, 1500);
   };
 
   return (
@@ -76,10 +105,20 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
                  <Button 
                     size="lg" 
                     className="rounded-full px-6 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20 transition-all hover:scale-105"
-                    onClick={() => setIsCallActive(true)}
+                    onClick={handleCallClick}
+                    disabled={isConnecting}
                   >
-                    <Phone className="h-5 w-5 mr-2" />
-                    Call with Quo
+                    {isConnecting ? (
+                      <>
+                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                        Connecting...
+                      </>
+                    ) : (
+                      <>
+                        <Phone className="h-5 w-5 mr-2" />
+                        Call with Quo
+                      </>
+                    )}
                   </Button>
                )}
              </div>

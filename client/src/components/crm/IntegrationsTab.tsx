@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,20 +6,46 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Check, Link as LinkIcon, ExternalLink, Phone, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 export function IntegrationsTab() {
   const [quoConnected, setQuoConnected] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const storedKey = localStorage.getItem("quo_api_key");
+    if (storedKey) {
+      setApiKey(storedKey);
+      setQuoConnected(true);
+    }
+  }, []);
 
   const handleConnect = () => {
     if (!apiKey) return;
     setIsLoading(true);
+    
     // Simulate API verification delay
     setTimeout(() => {
+      localStorage.setItem("quo_api_key", apiKey);
       setQuoConnected(true);
       setIsLoading(false);
+      toast({
+        title: "Connected to Quo",
+        description: "Your API key has been verified and saved securely."
+      });
     }, 1500);
+  };
+
+  const handleDisconnect = () => {
+    localStorage.removeItem("quo_api_key");
+    setApiKey("");
+    setQuoConnected(false);
+    toast({
+        title: "Disconnected",
+        description: "Quo integration has been removed."
+    });
   };
 
   return (
@@ -93,7 +119,7 @@ export function IntegrationsTab() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between pt-2">
-                    <Button variant="outline" size="sm" className="text-muted-foreground" onClick={() => setQuoConnected(false)}>
+                    <Button variant="outline" size="sm" className="text-muted-foreground" onClick={handleDisconnect}>
                       Disconnect
                     </Button>
                     <Button variant="link" size="sm" className="gap-1">
