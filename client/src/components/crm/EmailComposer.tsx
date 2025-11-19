@@ -1,43 +1,66 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Send, Paperclip, Sparkles } from "lucide-react";
+import { Send, Paperclip, Sparkles, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { MOCK_TEMPLATES, EmailTemplate } from "@/lib/mockData";
 
 interface EmailComposerProps {
   recipientEmail: string;
   recipientName: string;
+  recipientCompany?: string;
+  specialty?: string;
   onSend: () => void;
 }
 
-export function EmailComposer({ recipientEmail, recipientName, onSend }: EmailComposerProps) {
+export function EmailComposer({ recipientEmail, recipientName, recipientCompany = "their company", specialty, onSend }: EmailComposerProps) {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
-  const [template, setTemplate] = useState("none");
+  const [templateId, setTemplateId] = useState("none");
   const { toast } = useToast();
 
-  const templates = {
-    intro: {
-      subject: "Introduction: Quo x " + recipientName,
-      body: `Hi ${recipientName.split(" ")[0]},\n\nI noticed your work at your company and wanted to reach out.\n\nWe help teams like yours streamline their sales calls. Would you be open to a 10-minute chat next week?\n\nBest,\nAlex`
-    },
-    followup: {
-      subject: "Following up on our call",
-      body: `Hi ${recipientName.split(" ")[0]},\n\nGreat connecting with you just now. As discussed, I'm sending over the brochure we talked about.\n\nLet me know if you have any questions.\n\nBest,\nAlex`
-    },
-    nurture: {
-      subject: "Thought this might be relevant",
-      body: `Hi ${recipientName.split(" ")[0]},\n\nSaw this article and thought of your team. Hope things are going well!\n\nBest,\nAlex`
+  // Auto-select template based on specialty
+  useEffect(() => {
+    if (specialty) {
+      const defaultTemplate = MOCK_TEMPLATES.find(t => t.specialty === specialty);
+      if (defaultTemplate) {
+        setTemplateId(defaultTemplate.id);
+        applyTemplate(defaultTemplate);
+        toast({
+            title: "Template Auto-Applied",
+            description: `Loaded default template for ${specialty}.`
+        });
+      }
     }
+  }, [specialty]);
+
+  const applyTemplate = (template: EmailTemplate) => {
+      let processedBody = template.body
+        .replace("{{firstName}}", recipientName.split(" ")[0])
+        .replace("{{lastName}}", recipientName.split(" ")[1] || "")
+        .replace("{{company}}", recipientCompany);
+      
+      let processedSubject = template.subject
+        .replace("{{firstName}}", recipientName.split(" ")[0])
+        .replace("{{company}}", recipientCompany);
+
+      setSubject(processedSubject);
+      setBody(processedBody);
   };
 
   const handleTemplateChange = (value: string) => {
-    setTemplate(value);
-    if (value !== "none" && templates[value as keyof typeof templates]) {
-      setSubject(templates[value as keyof typeof templates].subject);
-      setBody(templates[value as keyof typeof templates].body);
+    setTemplateId(value);
+    if (value === "none") {
+        setSubject("");
+        setBody("");
+        return;
+    }
+
+    const selected = MOCK_TEMPLATES.find(t => t.id === value);
+    if (selected) {
+        applyTemplate(selected);
     }
   };
 
@@ -58,25 +81,35 @@ export function EmailComposer({ recipientEmail, recipientName, onSend }: EmailCo
     
     setSubject("");
     setBody("");
-    setTemplate("none");
+    setTemplateId("none");
     onSend();
   };
 
   return (
     <div className="flex flex-col h-full space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <Select value={template} onValueChange={handleTemplateChange}>
-          <SelectTrigger className="w-[200px] h-8 text-xs">
+        <Select value={templateId} onValueChange={handleTemplateChange}>
+          <SelectTrigger className="w-[240px] h-8 text-xs">
             <SelectValue placeholder="Load Template..." />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="none">No Template</SelectItem>
-            <SelectItem value="intro">Cold Intro</SelectItem>
-            <SelectItem value="followup">Post-Call Follow Up</SelectItem>
-            <SelectItem value="nurture">Nurture Check-in</SelectItem>
+            {MOCK_TEMPLATES.map(t => (
+                <SelectItem key={t.id} value={t.id}>
+                    {t.name} {t.specialty ? `(${t.specialty})` : ""}
+                </SelectItem>
+            ))}
           </SelectContent>
         </Select>
-        <Button variant="ghost" size="sm" className="h-8 text-xs gap-1 text-purple-600 hover:text-purple-700 hover:bg-purple-50">
+        
+        {specialty && (
+            <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 rounded text-[10px] font-medium border border-purple-100">
+                <Info className="h-3 w-3" />
+                Specialty: {specialty}
+            </div>
+        )}
+
+        <Button variant="ghost" size="sm" className="h-8 text-xs gap-1 text-purple-600 hover:text-purple-700 hover:bg-purple-50 ml-auto">
           <Sparkles className="h-3 w-3" /> AI Assist
         </Button>
       </div>

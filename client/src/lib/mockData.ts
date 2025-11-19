@@ -45,6 +45,14 @@ export interface Contact {
   emailHistory?: EmailLog[];
 }
 
+export interface EmailTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  body: string;
+  specialty?: string; // If set, this is the default for this specialty
+}
+
 export const CALL_STATUSES: { label: string; value: CallStatus; color: string; icon: LucideIcon }[] = [
   { label: "No Answer", value: "Called - No Answer", color: "bg-yellow-500/10 text-yellow-600 border-yellow-200", icon: Phone },
   { label: "Connected", value: "Connected", color: "bg-blue-500/10 text-blue-600 border-blue-200", icon: User },
@@ -52,6 +60,43 @@ export const CALL_STATUSES: { label: string; value: CallStatus; color: string; i
   { label: "Follow Up", value: "Follow-up Needed", color: "bg-purple-500/10 text-purple-600 border-purple-200", icon: Clock },
   { label: "Not Interested", value: "Closed Lost", color: "bg-red-500/10 text-red-600 border-red-200", icon: XCircle },
   { label: "DNC", value: "DNC", color: "bg-gray-500/10 text-gray-600 border-gray-200", icon: XCircle },
+];
+
+export const MOCK_TEMPLATES: EmailTemplate[] = [
+  {
+    id: "t1",
+    name: "General Introduction",
+    subject: "Introduction: Quo x {{company}}",
+    body: "Hi {{firstName}},\n\nI noticed your work at {{company}} and wanted to reach out.\n\nWe help teams like yours streamline their sales calls. Would you be open to a 10-minute chat next week?\n\nBest,\nAlex"
+  },
+  {
+    id: "t2",
+    name: "Orthopedics Intro",
+    subject: "Better surgical tool tracking for {{company}}",
+    body: "Hi {{firstName}},\n\nI know running an orthopedics practice comes with unique inventory challenges.\n\nOur new module helps track surgical kits specifically for orthopedic procedures. Worth a quick look?\n\nBest,\nAlex",
+    specialty: "Orthopedics"
+  },
+  {
+    id: "t3",
+    name: "Pediatrics Follow-up",
+    subject: "Following up: Patient family communication",
+    body: "Hi {{firstName}},\n\nGreat speaking with you. As we discussed, improving communication with parents is key for pediatric clinics.\n\nHere's that case study I mentioned.\n\nBest,\nAlex",
+    specialty: "Pediatrics"
+  },
+  {
+    id: "t4",
+    name: "General Practice Check-in",
+    subject: "Checking in on your practice volume",
+    body: "Hi {{firstName}},\n\nHope you're having a great week. I know general practices are seeing high volume right now.\n\nAre you still looking for ways to reduce admin time?\n\nBest,\nAlex",
+    specialty: "General Practice"
+  },
+   {
+    id: "t5",
+    name: "Dentist Special Offer",
+    subject: "Exclusive offer for dental partners",
+    body: "Hi {{firstName}},\n\nWe have a special partnership program for dental clinics this month.\n\nWould love to share the details if you have 5 minutes.\n\nBest,\nAlex",
+    specialty: "Dentistry"
+  }
 ];
 
 export const MOCK_CONTACTS: Contact[] = [

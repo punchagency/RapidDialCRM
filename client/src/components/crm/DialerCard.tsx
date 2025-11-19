@@ -217,6 +217,8 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
                     <EmailComposer 
                       recipientEmail={contact.email} 
                       recipientName={contact.name} 
+                      recipientCompany={contact.company}
+                      specialty={contact.drServed}
                       onSend={() => onComplete("Email Sent", "Sent email via composer")}
                     />
                   </div>

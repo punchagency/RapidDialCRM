@@ -1,13 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { IntegrationsTab } from "@/components/crm/IntegrationsTab";
+import { TemplatesTab } from "@/components/crm/TemplatesTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { User, Bell, Shield, Plug } from "lucide-react";
+import { User, Bell, Shield, Plug, FileText } from "lucide-react";
 
 export default function Settings() {
   return (
@@ -24,8 +25,9 @@ export default function Settings() {
             <Tabs defaultValue="integrations" className="space-y-6">
               <TabsList className="bg-card border border-border p-1">
                 <TabsTrigger value="profile" className="gap-2"><User className="h-4 w-4" /> Profile</TabsTrigger>
-                <TabsTrigger value="notifications" className="gap-2"><Bell className="h-4 w-4" /> Notifications</TabsTrigger>
+                <TabsTrigger value="templates" className="gap-2"><FileText className="h-4 w-4" /> Templates</TabsTrigger>
                 <TabsTrigger value="integrations" className="gap-2"><Plug className="h-4 w-4" /> Integrations</TabsTrigger>
+                <TabsTrigger value="notifications" className="gap-2"><Bell className="h-4 w-4" /> Notifications</TabsTrigger>
                 <TabsTrigger value="security" className="gap-2"><Shield className="h-4 w-4" /> Security</TabsTrigger>
               </TabsList>
 
@@ -46,6 +48,10 @@ export default function Settings() {
                     </div>
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="templates">
+                <TemplatesTab />
               </TabsContent>
 
               <TabsContent value="integrations">
