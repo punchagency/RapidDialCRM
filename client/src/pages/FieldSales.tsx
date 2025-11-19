@@ -48,22 +48,16 @@ export default function FieldSales() {
     }
   }, []);
 
-  // Build routes based on date
+  // Build routes based on date - FILTERED TO ONLY "Visit Scheduled"
   const todaysRoute = [
     { ...MOCK_CONTACTS[0], time: "09:00 AM", type: "Visit Scheduled", distance: "1.2 mi" }, // Swedish First Hill
-    { ...MOCK_CONTACTS[1], time: "10:30 AM", type: "Drop-in", distance: "0.8 mi" },        // Harborview
-    { ...MOCK_CONTACTS[4], time: "01:00 PM", type: "Lunch Meeting", distance: "0.5 mi" },  // Virginia Mason
-    { ...MOCK_CONTACTS[2], time: "02:45 PM", type: "Meeting Scheduled", distance: "3.2 mi" }, // UW Medical
     { ...MOCK_CONTACTS[3], time: "04:15 PM", type: "Visit Scheduled", distance: "1.5 mi" },   // Seattle Children's
   ];
 
   const tomorrowsRoute = [
     { ...MOCK_CONTACTS[5], time: "08:30 AM", type: "Visit Scheduled", distance: "22.1 mi" }, // Providence Everett
-    { ...MOCK_CONTACTS[6], time: "10:00 AM", type: "Meeting Scheduled", distance: "1.5 mi" }, // Everett Clinic
-    { ...MOCK_CONTACTS[10], time: "11:30 AM", type: "Meeting Scheduled", distance: "4.2 mi" }, // Western WA Med
     { ...MOCK_CONTACTS[7], time: "01:30 PM", type: "Visit Scheduled", distance: "8.1 mi" }, // Swedish Edmonds
     { ...MOCK_CONTACTS[13], time: "03:00 PM", type: "Visit Scheduled", distance: "2.5 mi" }, // Puget Sound Kidney
-    { ...MOCK_CONTACTS[8], time: "04:30 PM", type: "Follow-up", distance: "1.8 mi" }, // VM Lynnwood
   ];
 
   const currentRoute = selectedDate === "today" ? todaysRoute : tomorrowsRoute;
@@ -71,11 +65,12 @@ export default function FieldSales() {
   
   // Fallback coords if data missing
   const activeCoords: [number, number] = [
-      activeStop.location_lat || (selectedDate === "today" ? 47.6062 : 47.9789), 
-      activeStop.location_lng || (selectedDate === "today" ? -122.3321 : -122.2020)
+      activeStop?.location_lat || (selectedDate === "today" ? 47.6062 : 47.9789), 
+      activeStop?.location_lng || (selectedDate === "today" ? -122.3321 : -122.2020)
   ];
 
   const handleCheckIn = () => {
+    if (!activeStop) return;
     toast({
       title: "Checked In",
       description: `You've arrived at ${activeStop.company}.`
@@ -83,6 +78,7 @@ export default function FieldSales() {
   };
 
   const handleAddToCalendar = () => {
+    if (!activeStop) return;
     if (!gcalConnected) {
         toast({
             title: "Calendar Not Connected",
@@ -153,44 +149,50 @@ export default function FieldSales() {
                 viewMode === "map" ? "translate-x-full md:translate-x-0 opacity-0 md:opacity-100" : "translate-x-0 opacity-100"
             )}>
                 <div className="p-4 space-y-4">
-                    {currentRoute.map((stop, index) => (
-                        <div 
-                           key={stop.id}
-                           onClick={() => setSelectedStop(stop.id)}
-                           className={cn(
-                             "relative pl-6 pb-6 border-l-2 cursor-pointer transition-all group",
-                             activeStop.id === stop.id ? "border-primary" : "border-muted-foreground/20",
-                             index === currentRoute.length - 1 && "pb-0"
-                           )}
-                        >
-                           <div className={cn(
-                             "absolute -left-[9px] top-0 h-4 w-4 rounded-full border-2 bg-background transition-colors",
-                             activeStop.id === stop.id ? "border-primary ring-4 ring-primary/10" : "border-muted-foreground/40 group-hover:border-primary/60"
-                           )} />
-                           
-                           <Card className={cn(
-                              "ml-2 transition-all duration-200",
-                              activeStop.id === stop.id ? "shadow-md border-primary/50 bg-primary/5" : "shadow-sm hover:bg-muted/50"
-                           )}>
-                              <CardContent className="p-4">
-                                 <div className="flex justify-between items-start mb-2">
-                                    <Badge variant="secondary" className="font-normal">{stop.time}</Badge>
-                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                       <MapPin className="h-3 w-3" /> {stop.distance}
-                                    </span>
-                                 </div>
-                                 <h3 className="font-semibold text-foreground">{stop.company}</h3>
-                                 <p className="text-sm text-muted-foreground mb-3">{stop.address}</p>
-                                 <div className="flex items-center gap-2">
-                                    <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
-                                        {stop.name.charAt(0)}
-                                    </div>
-                                    <span className="text-xs font-medium">{stop.name}</span>
-                                 </div>
-                              </CardContent>
-                           </Card>
+                    {currentRoute.length > 0 ? (
+                        currentRoute.map((stop, index) => (
+                            <div 
+                               key={stop.id}
+                               onClick={() => setSelectedStop(stop.id)}
+                               className={cn(
+                                 "relative pl-6 pb-6 border-l-2 cursor-pointer transition-all group",
+                                 activeStop?.id === stop.id ? "border-primary" : "border-muted-foreground/20",
+                                 index === currentRoute.length - 1 && "pb-0"
+                               )}
+                            >
+                               <div className={cn(
+                                 "absolute -left-[9px] top-0 h-4 w-4 rounded-full border-2 bg-background transition-colors",
+                                 activeStop?.id === stop.id ? "border-primary ring-4 ring-primary/10" : "border-muted-foreground/40 group-hover:border-primary/60"
+                               )} />
+                               
+                               <Card className={cn(
+                                  "ml-2 transition-all duration-200",
+                                  activeStop?.id === stop.id ? "shadow-md border-primary/50 bg-primary/5" : "shadow-sm hover:bg-muted/50"
+                               )}>
+                                  <CardContent className="p-4">
+                                     <div className="flex justify-between items-start mb-2">
+                                        <Badge variant="secondary" className="font-normal">{stop.time}</Badge>
+                                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                           <MapPin className="h-3 w-3" /> {stop.distance}
+                                        </span>
+                                     </div>
+                                     <h3 className="font-semibold text-foreground">{stop.company}</h3>
+                                     <p className="text-sm text-muted-foreground mb-3">{stop.address}</p>
+                                     <div className="flex items-center gap-2">
+                                        <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
+                                            {stop.name.charAt(0)}
+                                        </div>
+                                        <span className="text-xs font-medium">{stop.name}</span>
+                                     </div>
+                                  </CardContent>
+                               </Card>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="p-8 text-center text-muted-foreground">
+                            No visits scheduled for this day.
                         </div>
-                    ))}
+                    )}
                 </div>
             </div>
 
@@ -252,42 +254,44 @@ export default function FieldSales() {
                 </div>
 
                 {/* Active Stop Detail Card (Floating) */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 z-20 pointer-events-none">
-                   <Card className="shadow-xl border-t-4 border-t-primary max-w-2xl mx-auto animate-in slide-in-from-bottom-10 pointer-events-auto bg-card/95 backdrop-blur-sm">
-                      <CardContent className="p-6">
-                         <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
-                            <div>
-                               <h2 className="text-2xl font-heading font-bold">{activeStop.company}</h2>
-                               <p className="text-muted-foreground flex items-center gap-2 mt-1">
-                                  <User className="h-4 w-4" /> {activeStop.name} • {activeStop.title}
-                               </p>
-                            </div>
-                            <div className="flex gap-2">
-                               <Button variant="outline" size="icon" className="rounded-full h-12 w-12" onClick={handleAddToCalendar} title="Add to Calendar">
-                                  <CalendarPlus className="h-5 w-5" />
-                               </Button>
-                               <Button variant="outline" size="icon" className="rounded-full h-12 w-12">
-                                  <Navigation className="h-5 w-5" />
-                               </Button>
-                               <Button size="lg" className="rounded-full px-8 bg-green-600 hover:bg-green-700" onClick={handleCheckIn}>
-                                  <CheckCircle2 className="h-5 w-5 mr-2" /> Check In
-                               </Button>
-                            </div>
-                         </div>
-                         
-                         <div className="grid grid-cols-2 gap-4">
-                            <Button variant="ghost" className="h-auto py-4 flex flex-col gap-2 border border-dashed border-border hover:border-primary/50 hover:bg-primary/5">
-                               <Camera className="h-6 w-6 text-muted-foreground" />
-                               <span className="text-xs font-medium">Add Photo</span>
-                            </Button>
-                            <Button variant="ghost" className="h-auto py-4 flex flex-col gap-2 border border-dashed border-border hover:border-primary/50 hover:bg-primary/5">
-                               <FileText className="h-6 w-6 text-muted-foreground" />
-                               <span className="text-xs font-medium">Visit Notes</span>
-                            </Button>
-                         </div>
-                      </CardContent>
-                   </Card>
-                </div>
+                {activeStop && (
+                  <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8 z-20 pointer-events-none">
+                     <Card className="shadow-xl border-t-4 border-t-primary max-w-2xl mx-auto animate-in slide-in-from-bottom-10 pointer-events-auto bg-card/95 backdrop-blur-sm">
+                        <CardContent className="p-6">
+                           <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6">
+                              <div>
+                                 <h2 className="text-2xl font-heading font-bold">{activeStop.company}</h2>
+                                 <p className="text-muted-foreground flex items-center gap-2 mt-1">
+                                    <User className="h-4 w-4" /> {activeStop.name} • {activeStop.title}
+                                 </p>
+                              </div>
+                              <div className="flex gap-2">
+                                 <Button variant="outline" size="icon" className="rounded-full h-12 w-12" onClick={handleAddToCalendar} title="Add to Calendar">
+                                    <CalendarPlus className="h-5 w-5" />
+                                 </Button>
+                                 <Button variant="outline" size="icon" className="rounded-full h-12 w-12">
+                                    <Navigation className="h-5 w-5" />
+                                 </Button>
+                                 <Button size="lg" className="rounded-full px-8 bg-green-600 hover:bg-green-700" onClick={handleCheckIn}>
+                                    <CheckCircle2 className="h-5 w-5 mr-2" /> Check In
+                                 </Button>
+                              </div>
+                           </div>
+                           
+                           <div className="grid grid-cols-2 gap-4">
+                              <Button variant="ghost" className="h-auto py-4 flex flex-col gap-2 border border-dashed border-border hover:border-primary/50 hover:bg-primary/5">
+                                 <Camera className="h-6 w-6 text-muted-foreground" />
+                                 <span className="text-xs font-medium">Add Photo</span>
+                              </Button>
+                              <Button variant="ghost" className="h-auto py-4 flex flex-col gap-2 border border-dashed border-border hover:border-primary/50 hover:bg-primary/5">
+                                 <FileText className="h-6 w-6 text-muted-foreground" />
+                                 <span className="text-xs font-medium">Visit Notes</span>
+                              </Button>
+                           </div>
+                        </CardContent>
+                     </Card>
+                  </div>
+                )}
             </div>
 
         </div>
