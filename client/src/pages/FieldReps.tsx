@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import avatar1 from "@assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
 import { cn } from "@/lib/utils";
+import { useLocation } from "wouter";
 
 // Mock Data for Field Reps
 const mockFieldReps = [
@@ -113,6 +114,25 @@ export default function FieldReps() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("field");
+  const [location] = useLocation();
+
+  // Sync active tab with URL query parameter
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    if (tab && (tab === "field" || tab === "inside")) {
+        setActiveTab(tab);
+    }
+  }, [location]); // Re-run when location (path) changes, though query params might not trigger this in wouter depending on implementation, window check helps.
+
+  // Also check on initial load in case wouter doesn't fire effect immediately
+  useEffect(() => {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab");
+      if (tab && (tab === "field" || tab === "inside")) {
+          setActiveTab(tab);
+      }
+  }, []);
 
   const filteredFieldReps = mockFieldReps.filter(rep => {
     const matchesSearch = rep.name.toLowerCase().includes(searchTerm.toLowerCase()) || rep.territory.toLowerCase().includes(searchTerm.toLowerCase());
@@ -125,6 +145,13 @@ export default function FieldReps() {
     const matchesStatus = statusFilter === "all" || rep.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  // Update URL when tab changes
+  const handleTabChange = (value: string) => {
+      setActiveTab(value);
+      const newUrl = `${window.location.pathname}?tab=${value}`;
+      window.history.pushState({}, '', newUrl);
+  };
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -144,7 +171,7 @@ export default function FieldReps() {
         </header>
 
         <div className="flex-1 overflow-y-auto p-6">
-          {/* Stats Cards */}
+          {/* Stats Cards - Dynamic based on tab */}
           <div className="grid grid-cols-4 gap-4 mb-6">
              <Card>
                 <CardContent className="p-4 flex items-center gap-4">
@@ -152,8 +179,12 @@ export default function FieldReps() {
                       <Users className="h-5 w-5" />
                    </div>
                    <div>
-                      <p className="text-xs text-muted-foreground font-medium uppercase">Total Team</p>
-                      <p className="text-2xl font-bold">{mockFieldReps.length + mockInsideReps.length}</p>
+                      <p className="text-xs text-muted-foreground font-medium uppercase">
+                          {activeTab === 'field' ? 'Total Field Reps' : 'Total Inside Reps'}
+                      </p>
+                      <p className="text-2xl font-bold">
+                          {activeTab === 'field' ? mockFieldReps.length : mockInsideReps.length}
+                      </p>
                    </div>
                 </CardContent>
              </Card>
@@ -165,7 +196,9 @@ export default function FieldReps() {
                    <div>
                       <p className="text-xs text-muted-foreground font-medium uppercase">Active Now</p>
                       <p className="text-2xl font-bold">
-                        {mockFieldReps.filter(r => r.status === 'active').length + mockInsideReps.filter(r => r.status === 'active').length}
+                        {activeTab === 'field' 
+                            ? mockFieldReps.filter(r => r.status === 'active').length 
+                            : mockInsideReps.filter(r => r.status === 'active').length}
                       </p>
                    </div>
                 </CardContent>
@@ -177,7 +210,7 @@ export default function FieldReps() {
                    </div>
                    <div>
                       <p className="text-xs text-muted-foreground font-medium uppercase">Total Activities</p>
-                      <p className="text-2xl font-bold">150</p>
+                      <p className="text-2xl font-bold">{activeTab === 'field' ? '89' : '142'}</p>
                    </div>
                 </CardContent>
              </Card>
@@ -188,13 +221,13 @@ export default function FieldReps() {
                    </div>
                    <div>
                       <p className="text-xs text-muted-foreground font-medium uppercase">Avg Performance</p>
-                      <p className="text-2xl font-bold">89%</p>
+                      <p className="text-2xl font-bold">{activeTab === 'field' ? '89%' : '92%'}</p>
                    </div>
                 </CardContent>
              </Card>
           </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
             <div className="flex items-center justify-between">
                 <TabsList>
                     <TabsTrigger value="field" className="gap-2">
