@@ -1,4 +1,4 @@
-import { LucideIcon, Phone, Mail, User, CheckCircle, XCircle, Clock, Calendar, DollarSign, FileText, MapPin } from "lucide-react";
+import { LucideIcon, Phone, Mail, User, CheckCircle, XCircle, Clock, Calendar, DollarSign, FileText, MapPin, Star, PhoneOff, MessageSquare, MonitorPlay, Briefcase, Trophy, Heart, Bell, Ghost, Ban, Scale } from "lucide-react";
 
 export type CallStatus = 
   | "New"
@@ -78,12 +78,24 @@ export const DEFAULT_PROFESSIONS = [
 ];
 
 export const CALL_STATUSES: { label: string; value: CallStatus; color: string; icon: LucideIcon }[] = [
-  { label: "No Answer", value: "Called - No Answer", color: "bg-yellow-500/10 text-yellow-600 border-yellow-200", icon: Phone },
-  { label: "Connected", value: "Connected", color: "bg-blue-500/10 text-blue-600 border-blue-200", icon: User },
-  { label: "Meeting Set", value: "Meeting Scheduled", color: "bg-green-500/10 text-green-600 border-green-200", icon: Calendar },
-  { label: "Follow Up", value: "Follow-up Needed", color: "bg-purple-500/10 text-purple-600 border-purple-200", icon: Clock },
-  { label: "Not Interested", value: "Closed Lost", color: "bg-red-500/10 text-red-600 border-red-200", icon: XCircle },
-  { label: "DNC", value: "DNC", color: "bg-gray-500/10 text-gray-600 border-gray-200", icon: XCircle },
+  { label: "New", value: "New", color: "bg-slate-100 text-slate-800 border-slate-200 hover:bg-slate-200", icon: Star },
+  { label: "Email Sent", value: "Email Sent", color: "bg-sky-100 text-sky-800 border-sky-200 hover:bg-sky-200", icon: Mail },
+  { label: "No Answer", value: "Called - No Answer", color: "bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200", icon: PhoneOff },
+  { label: "Connected", value: "Connected", color: "bg-indigo-100 text-indigo-800 border-indigo-200 hover:bg-indigo-200", icon: Phone },
+  { label: "Responded", value: "Responded", color: "bg-violet-100 text-violet-800 border-violet-200 hover:bg-violet-200", icon: MessageSquare },
+  { label: "Qualified", value: "Qualified", color: "bg-emerald-100 text-emerald-800 border-emerald-200 hover:bg-emerald-200", icon: CheckCircle },
+  { label: "Meeting Set", value: "Meeting Scheduled", color: "bg-teal-100 text-teal-800 border-teal-200 hover:bg-teal-200", icon: Calendar },
+  { label: "Visit Set", value: "Visit Scheduled", color: "bg-cyan-100 text-cyan-800 border-cyan-200 hover:bg-cyan-200", icon: MapPin },
+  { label: "Call Set", value: "Call Scheduled", color: "bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200", icon: Clock },
+  { label: "Demo Done", value: "Demo/Presentation Complete", color: "bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200 hover:bg-fuchsia-200", icon: MonitorPlay },
+  { label: "Proposal", value: "Proposal Sent", color: "bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200", icon: FileText },
+  { label: "Negotiating", value: "Negotiating", color: "bg-pink-100 text-pink-800 border-pink-200 hover:bg-pink-200", icon: Scale },
+  { label: "Closed Won", value: "Closed Won", color: "bg-green-100 text-green-800 border-green-200 hover:bg-green-200", icon: Trophy },
+  { label: "Closed Lost", value: "Closed Lost", color: "bg-red-100 text-red-800 border-red-200 hover:bg-red-200", icon: XCircle },
+  { label: "Nurture", value: "Nurture", color: "bg-lime-100 text-lime-800 border-lime-200 hover:bg-lime-200", icon: Heart },
+  { label: "Follow Up", value: "Follow-up Needed", color: "bg-orange-100 text-orange-800 border-orange-200 hover:bg-orange-200", icon: Bell },
+  { label: "No Response", value: "No Response", color: "bg-stone-100 text-stone-800 border-stone-200 hover:bg-stone-200", icon: Ghost },
+  { label: "DNC", value: "DNC", color: "bg-zinc-100 text-zinc-800 border-zinc-200 hover:bg-zinc-200", icon: Ban },
 ];
 
 export const MOCK_TEMPLATES: EmailTemplate[] = [
