@@ -53,6 +53,16 @@ export interface EmailTemplate {
   specialty?: string; // If set, this is the default for this specialty/profession
 }
 
+export interface RecordedCall {
+  id: string;
+  rep: string;
+  customer: string;
+  duration: string;
+  date: string;
+  status: string;
+  score: number;
+}
+
 export const DEFAULT_PROFESSIONS = [
   "Dentist",
   "Aesthetic Doctor",
@@ -380,4 +390,19 @@ export const MOCK_CONTACTS: Contact[] = [
     location_lat: 47.9445,
     location_lng: -122.3046
   }
+];
+
+export const MOCK_CALLS: RecordedCall[] = [
+    { id: "call-1", rep: "Alex Johnson", customer: "Dr. Sarah Jenkins", duration: "4:12", date: "Today, 10:30 AM", status: "Meeting Scheduled", score: 0 },
+    { id: "call-2", rep: "Alex Johnson", customer: "James Wilson", duration: "1:45", date: "Today, 9:15 AM", status: "Connected", score: 5 },
+    { id: "call-3", rep: "Alex Johnson", customer: "Apex Health Systems", duration: "3:05", date: "Yesterday, 4:45 PM", status: "Qualified", score: 15 },
+    { id: "call-4", rep: "Alex Johnson", customer: "Evergreen Clinic", duration: "0:45", date: "Yesterday, 2:15 PM", status: "Called - No Answer", score: 0 },
+    { id: "call-5", rep: "Alex Johnson", customer: "Dr. Emily Chen", duration: "5:30", date: "Yesterday, 11:00 AM", status: "Meeting Scheduled", score: 25 },
+    { id: "call-6", rep: "Alex Johnson", customer: "Seattle Children's", duration: "2:10", date: "2 days ago, 3:30 PM", status: "Follow-up Needed", score: 5 },
+    { id: "call-7", rep: "Alex Johnson", customer: "Providence Regional", duration: "6:15", date: "2 days ago, 1:00 PM", status: "Demo/Presentation Complete", score: 10 },
+    { id: "call-8", rep: "Alex Johnson", customer: "Swedish Edmonds", duration: "0:30", date: "3 days ago, 9:45 AM", status: "Called - No Answer", score: 0 },
+    { id: "call-9", rep: "Alex Johnson", customer: "Pacific Dermatology", duration: "4:00", date: "3 days ago, 11:20 AM", status: "Qualified", score: 10 },
+    { id: "call-10", rep: "Alex Johnson", customer: "Western WA Medical", duration: "1:15", date: "Last Week, 2:00 PM", status: "Not Interested", score: 0 },
+    { id: "call-11", rep: "Alex Johnson", customer: "Mill Creek Family", duration: "3:45", date: "Last Week, 10:00 AM", status: "Meeting Scheduled", score: 20 },
+    { id: "call-12", rep: "Alex Johnson", customer: "Kaiser Permanente", duration: "2:50", date: "Last Week, 4:15 PM", status: "Follow-up Needed", score: 5 },
 ];

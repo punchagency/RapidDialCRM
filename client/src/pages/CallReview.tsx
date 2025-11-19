@@ -6,19 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Play, Pause, SkipBack, SkipForward, ThumbsUp, ThumbsDown, Star, Award, Clock, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import avatar from "@assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
+import { MOCK_CALLS } from "@/lib/mockData";
 
 export default function CallReview() {
-  const [activeCall, setActiveCall] = React.useState<string | null>("call-1");
+  const [activeCall, setActiveCall] = React.useState<string | null>(MOCK_CALLS[0].id);
   const [isPlaying, setIsPlaying] = React.useState(false);
   const [points, setPoints] = React.useState(0);
 
-  const calls = [
-    { id: "call-1", rep: "Alex Johnson", customer: "Dr. Sarah Jenkins", duration: "4:12", date: "Today, 10:30 AM", status: "Meeting Scheduled", score: 0 },
-    { id: "call-2", rep: "Alex Johnson", customer: "James Wilson", duration: "1:45", date: "Today, 9:15 AM", status: "Connected", score: 5 },
-    { id: "call-3", rep: "Alex Johnson", customer: "Apex Health Systems", duration: "3:05", date: "Yesterday, 4:45 PM", status: "Qualified", score: 15 },
-  ];
-
-  const selectedCall = calls.find(c => c.id === activeCall);
+  const selectedCall = MOCK_CALLS.find(c => c.id === activeCall) || MOCK_CALLS[0];
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -34,7 +29,7 @@ export default function CallReview() {
             
             {/* Left: Call List */}
             <div className="lg:col-span-4 space-y-4 overflow-y-auto pr-2">
-              {calls.map((call) => (
+              {MOCK_CALLS.map((call) => (
                 <Card 
                   key={call.id} 
                   className={cn(
