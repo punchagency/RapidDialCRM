@@ -6,9 +6,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Phone, MapPin, Building2, Clock, DollarSign, Stethoscope, History, Check, ArrowRight, Loader2, Trophy } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Phone, MapPin, Building2, Clock, DollarSign, Stethoscope, History, Check, ArrowRight, Loader2, Trophy, Mail, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { EmailComposer } from "@/components/crm/EmailComposer";
 
 interface DialerCardProps {
   contact: Contact;
@@ -20,6 +22,7 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
   const [isCallActive, setIsCallActive] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [timer, setTimer] = useState(0);
+  const [activeTab, setActiveTab] = useState("notes");
   const { toast } = useToast();
 
   // Simple timer effect
@@ -58,7 +61,6 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
     setIsConnecting(true);
     
     // Simulate API Handshake
-    // In a real app, this would be: await fetch('https://api.openphone.com/v1/calls', { headers: { Authorization: apiKey } })
     setTimeout(() => {
       setIsConnecting(false);
       setIsCallActive(true);
@@ -155,6 +157,28 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
             <div className="p-4 bg-yellow-50/50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/30 rounded-lg">
               <p className="text-sm text-foreground/80 leading-relaxed">"{contact.lastNotes}"</p>
             </div>
+
+            {contact.emailHistory && contact.emailHistory.length > 0 && (
+              <div className="mt-6">
+                 <h3 className="font-heading font-semibold flex items-center gap-2 mb-4 text-muted-foreground text-sm uppercase tracking-wider">
+                   <Mail className="h-4 w-4" />
+                   Recent Emails
+                 </h3>
+                 <div className="space-y-2">
+                   {contact.emailHistory.map((email) => (
+                     <div key={email.id} className="p-3 bg-muted/30 rounded-lg flex justify-between items-center">
+                        <div>
+                          <p className="text-sm font-medium">{email.subject}</p>
+                          <p className="text-xs text-muted-foreground">{email.date}</p>
+                        </div>
+                        <Badge variant="outline" className="text-[10px] capitalize">
+                          {email.status}
+                        </Badge>
+                     </div>
+                   ))}
+                 </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -163,41 +187,67 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
       <div className="lg:col-span-7 flex flex-col h-full">
         <Card className="border-none shadow-md flex-1 flex flex-col overflow-hidden">
           <CardContent className="p-0 flex flex-col h-full">
-             {/* Tabs / Modes could go here, but we'll focus on Notes + Disposition */}
-             <div className="p-6 flex-1 flex flex-col">
-                <label className="text-sm font-medium text-muted-foreground mb-2">Call Notes & Enrichment</label>
-                <Textarea 
-                  placeholder="Type notes while you talk... (Supports markdown shortcuts)" 
-                  className="flex-1 resize-none border-border/50 bg-muted/20 text-lg focus:ring-primary/20 p-4"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  autoFocus
-                />
-             </div>
-             
-             <div className="bg-muted/30 border-t border-border p-6">
-               <h3 className="text-sm font-medium text-muted-foreground mb-4 flex items-center">
-                 Select Outcome to Complete
-                 <span className="ml-auto text-xs font-normal text-muted-foreground/70">Press appropriate shortcut key</span>
-               </h3>
-               
-               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                 {CALL_STATUSES.map((status) => (
-                   <button
-                     key={status.value}
-                     onClick={() => onComplete(status.value, notes)}
-                     className={cn(
-                       "flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-                       status.color,
-                       "bg-opacity-5 hover:bg-opacity-10 bg-card dark:bg-card" // Override transparency for better contrast
-                     )}
-                   >
-                     <status.icon className="h-6 w-6 mb-2 opacity-80" />
-                     <span className="text-xs font-semibold text-center">{status.label}</span>
-                   </button>
-                 ))}
-               </div>
-             </div>
+             <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
+                <div className="px-6 pt-4 border-b border-border">
+                  <TabsList className="grid w-full grid-cols-2 mb-2">
+                    <TabsTrigger value="notes" className="gap-2">
+                      <MessageSquare className="h-4 w-4" /> Call Notes
+                    </TabsTrigger>
+                    <TabsTrigger value="email" className="gap-2">
+                      <Mail className="h-4 w-4" /> Send Email
+                    </TabsTrigger>
+                  </TabsList>
+                </div>
+
+                <TabsContent value="notes" className="flex-1 flex flex-col m-0">
+                   <div className="p-6 flex-1 flex flex-col">
+                      <label className="text-sm font-medium text-muted-foreground mb-2">Log Call Details</label>
+                      <Textarea 
+                        placeholder="Type notes while you talk... (Supports markdown shortcuts)" 
+                        className="flex-1 resize-none border-border/50 bg-muted/20 text-lg focus:ring-primary/20 p-4"
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        autoFocus={activeTab === "notes"}
+                      />
+                   </div>
+                </TabsContent>
+                
+                <TabsContent value="email" className="flex-1 flex flex-col m-0">
+                  <div className="p-6 flex-1 overflow-y-auto">
+                    <EmailComposer 
+                      recipientEmail={contact.email} 
+                      recipientName={contact.name} 
+                      onSend={() => onComplete("Email Sent", "Sent email via composer")}
+                    />
+                  </div>
+                </TabsContent>
+
+                {activeTab === "notes" && (
+                  <div className="bg-muted/30 border-t border-border p-6">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-4 flex items-center">
+                      Select Outcome to Complete
+                      <span className="ml-auto text-xs font-normal text-muted-foreground/70">Press appropriate shortcut key</span>
+                    </h3>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                      {CALL_STATUSES.map((status) => (
+                        <button
+                          key={status.value}
+                          onClick={() => onComplete(status.value, notes)}
+                          className={cn(
+                            "flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                            status.color,
+                            "bg-opacity-5 hover:bg-opacity-10 bg-card dark:bg-card" // Override transparency for better contrast
+                          )}
+                        >
+                          <status.icon className="h-6 w-6 mb-2 opacity-80" />
+                          <span className="text-xs font-semibold text-center">{status.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+             </Tabs>
           </CardContent>
         </Card>
       </div>

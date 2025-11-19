@@ -19,6 +19,13 @@ export type CallStatus =
   | "No Response"
   | "DNC";
 
+export interface EmailLog {
+  id: string;
+  subject: string;
+  date: string;
+  status: "sent" | "opened" | "replied";
+}
+
 export interface Contact {
   id: string;
   name: string;
@@ -35,6 +42,7 @@ export interface Contact {
   status: CallStatus;
   location_lat?: number; // Mock for map
   location_lng?: number;
+  emailHistory?: EmailLog[];
 }
 
 export const CALL_STATUSES: { label: string; value: CallStatus; color: string; icon: LucideIcon }[] = [
@@ -60,7 +68,10 @@ export const MOCK_CONTACTS: Contact[] = [
     lastNotes: "Spoke to gatekeeper last week. Interested in new surgical tools. Call back Tuesday morning.",
     dealSize: "$50k",
     drServed: "Orthopedics",
-    status: "New"
+    status: "New",
+    emailHistory: [
+      { id: "e1", subject: "Intro to Quo for Surgeons", date: "2 days ago", status: "opened" }
+    ]
   },
   {
     id: "2",
@@ -75,7 +86,8 @@ export const MOCK_CONTACTS: Contact[] = [
     lastNotes: "Left voicemail. Need to confirm budget cycle.",
     dealSize: "$120k",
     drServed: "General Practice",
-    status: "New"
+    status: "New",
+    emailHistory: []
   },
   {
     id: "3",
@@ -89,7 +101,10 @@ export const MOCK_CONTACTS: Contact[] = [
     timezone: "PST",
     lastNotes: "Initial email sent. No response yet.",
     dealSize: "$25k",
-    status: "Email Sent"
+    status: "Email Sent",
+    emailHistory: [
+      { id: "e2", subject: "Quo: Better Patient Management", date: "Yesterday", status: "sent" }
+    ]
   },
   {
     id: "4",
@@ -104,7 +119,11 @@ export const MOCK_CONTACTS: Contact[] = [
     lastNotes: "Asked for brochure. Sent yesterday.",
     dealSize: "$75k",
     drServed: "Pediatrics",
-    status: "New"
+    status: "New",
+    emailHistory: [
+      { id: "e3", subject: "Requested Brochure", date: "Yesterday", status: "opened" },
+      { id: "e4", subject: "Meeting Follow up", date: "Last Week", status: "replied" }
+    ]
   },
   {
     id: "5",
@@ -117,6 +136,7 @@ export const MOCK_CONTACTS: Contact[] = [
     zip: "90001",
     timezone: "PST",
     lastNotes: "Gatekeeper is tough. Try calling during lunch.",
-    status: "Called - No Answer"
+    status: "Called - No Answer",
+    emailHistory: []
   }
 ];
