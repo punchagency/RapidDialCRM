@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,14 +6,23 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, Edit2, Save } from "lucide-react";
-import { MOCK_TEMPLATES, EmailTemplate } from "@/lib/mockData";
+import { MOCK_TEMPLATES, EmailTemplate, DEFAULT_PROFESSIONS } from "@/lib/mockData";
 import { useToast } from "@/hooks/use-toast";
 
 export function TemplatesTab() {
   const [templates, setTemplates] = useState<EmailTemplate[]>(MOCK_TEMPLATES);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<Partial<EmailTemplate>>({});
+  const [professions, setProfessions] = useState<string[]>(DEFAULT_PROFESSIONS);
   const { toast } = useToast();
+
+  // Load professions from local storage to stay in sync
+  useEffect(() => {
+    const stored = localStorage.getItem("crm_professions");
+    if (stored) {
+        setProfessions(JSON.parse(stored));
+    }
+  }, [editingId]); // Reload when entering edit mode
 
   const handleEdit = (template: EmailTemplate) => {
     setEditingId(template.id);
@@ -96,11 +105,9 @@ export function TemplatesTab() {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="none">None (General)</SelectItem>
-                                <SelectItem value="Orthopedics">Orthopedics</SelectItem>
-                                <SelectItem value="Pediatrics">Pediatrics</SelectItem>
-                                <SelectItem value="General Practice">General Practice</SelectItem>
-                                <SelectItem value="Dentistry">Dentistry</SelectItem>
-                                <SelectItem value="Cardiology">Cardiology</SelectItem>
+                                {professions.map(p => (
+                                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>

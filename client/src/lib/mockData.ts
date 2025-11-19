@@ -38,7 +38,7 @@ export interface Contact {
   timezone: string;
   lastNotes: string;
   dealSize?: string;
-  drServed?: string; // For medical sales context
+  drServed?: string; // This corresponds to the Profession Type
   status: CallStatus;
   location_lat?: number; // Mock for map
   location_lng?: number;
@@ -50,8 +50,20 @@ export interface EmailTemplate {
   name: string;
   subject: string;
   body: string;
-  specialty?: string; // If set, this is the default for this specialty
+  specialty?: string; // If set, this is the default for this specialty/profession
 }
+
+export const DEFAULT_PROFESSIONS = [
+  "Dentist",
+  "Aesthetic Doctor",
+  "Plastic Surgeon",
+  "Med Spa Owner",
+  "Orthopedics",
+  "General Practice",
+  "Pediatrics",
+  "Cardiology",
+  "Dermatology"
+];
 
 export const CALL_STATUSES: { label: string; value: CallStatus; color: string; icon: LucideIcon }[] = [
   { label: "No Answer", value: "Called - No Answer", color: "bg-yellow-500/10 text-yellow-600 border-yellow-200", icon: Phone },
@@ -95,7 +107,7 @@ export const MOCK_TEMPLATES: EmailTemplate[] = [
     name: "Dentist Special Offer",
     subject: "Exclusive offer for dental partners",
     body: "Hi {{firstName}},\n\nWe have a special partnership program for dental clinics this month.\n\nWould love to share the details if you have 5 minutes.\n\nBest,\nAlex",
-    specialty: "Dentistry"
+    specialty: "Dentist"
   }
 ];
 
