@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Phone, MapPin, Building2, Clock, DollarSign, Stethoscope, History, Check, ArrowRight, Loader2, Trophy, Mail, MessageSquare, Users, Briefcase, Shield, UserCog, Stethoscope as DoctorIcon, Plus, X, Trash2, ChevronDown, ChevronRight, Network } from "lucide-react";
+import { Phone, MapPin, Building2, Clock, DollarSign, Stethoscope, History, Check, ArrowRight, Loader2, Trophy, Mail, MessageSquare, Users, Briefcase, Shield, UserCog, Stethoscope as DoctorIcon, Plus, X, Trash2, ChevronDown, ChevronRight, Network, Headset, Map } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { EmailComposer } from "@/components/crm/EmailComposer";
@@ -39,8 +39,7 @@ const getAccountTeam = (contactId: string) => {
       role: "Inside Sales", 
       initial: "AJ", 
       color: "bg-purple-100 text-purple-700", 
-      image: avatar,
-      fieldReps: [fieldRep] 
+      image: avatar
   };
 
   // Manager
@@ -50,19 +49,17 @@ const getAccountTeam = (contactId: string) => {
         role: "Territory Manager", 
         initial: "RS", 
         color: "bg-blue-100 text-blue-700", 
-        image: null,
-        insideReps: [insideRep]
+        image: null
       }
     : { 
         name: "Sarah Miller", 
         role: "Regional Manager", 
         initial: "SM", 
         color: "bg-blue-100 text-blue-700", 
-        image: managerAvatar,
-        insideReps: [insideRep]
+        image: managerAvatar
       };
 
-  return [manager]; // Return as a hierarchy tree root
+  return { manager, insideRep, fieldRep }; 
 };
 
 export function DialerCard({ contact, onComplete }: DialerCardProps) {
@@ -74,7 +71,7 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
   const { toast } = useToast();
   const statuses = getStatuses(); // Get dynamic statuses
   
-  const teamHierarchy = getAccountTeam(contact.id);
+  const { manager, insideRep, fieldRep } = getAccountTeam(contact.id);
 
   // Local state for contacts to allow adding/removing
   const [clientAdmins, setClientAdmins] = useState<SubContact[]>(contact.clientAdmins || []);
@@ -351,7 +348,7 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
             </CardContent>
         </Card>
         
-        {/* Account Team Section (HIERARCHICAL) */}
+        {/* Account Team Section (SEPARATED LISTS) */}
         <Card className="border-none shadow-sm">
           <CardContent className="pt-6">
              <h3 className="font-heading font-semibold flex items-center gap-2 mb-4 text-muted-foreground text-sm uppercase tracking-wider">
@@ -359,34 +356,34 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
                Internal Team Structure
              </h3>
              
-             <div className="space-y-4">
-                {teamHierarchy.map((mgr: any) => (
-                    <div key={mgr.name}>
-                        {/* Manager Level */}
-                        <div className="mb-2">
-                             <p className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase ml-1">Account Manager</p>
-                             <TeamMemberRow member={mgr} />
-                        </div>
+             <div className="space-y-6">
+                {/* Manager */}
+                <div>
+                     <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase flex items-center gap-1">
+                        <Briefcase className="h-3 w-3" /> Account Manager
+                     </p>
+                     <TeamMemberRow member={manager} />
+                </div>
 
-                        {/* Inside Reps Level */}
-                        {mgr.insideReps?.map((ir: any) => (
-                            <div key={ir.name} className="ml-6 border-l-2 border-border/50 pl-4 py-2 relative">
-                                 <div className="absolute -left-[18px] top-6 w-4 h-0.5 bg-border/50 rounded-full" />
-                                 <p className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase ml-1">Inside Sales</p>
-                                 <TeamMemberRow member={ir} />
+                <Separator />
 
-                                 {/* Field Reps Level */}
-                                 {ir.fieldReps?.map((fr: any) => (
-                                     <div key={fr.name} className="ml-6 mt-3 border-l-2 border-border/50 pl-4 py-1 relative">
-                                         <div className="absolute -left-[18px] top-5 w-4 h-0.5 bg-border/50 rounded-full" />
-                                         <p className="text-[10px] font-semibold text-muted-foreground mb-1 uppercase ml-1">Field Sales</p>
-                                         <TeamMemberRow member={fr} />
-                                     </div>
-                                 ))}
-                            </div>
-                        ))}
-                    </div>
-                ))}
+                {/* Inside Reps */}
+                <div>
+                     <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase flex items-center gap-1">
+                        <Headset className="h-3 w-3" /> Inside Sales
+                     </p>
+                     <TeamMemberRow member={insideRep} />
+                </div>
+
+                <Separator />
+
+                {/* Field Reps */}
+                <div>
+                     <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase flex items-center gap-1">
+                        <Map className="h-3 w-3" /> Field Sales
+                     </p>
+                     <TeamMemberRow member={fieldRep} />
+                </div>
              </div>
           </CardContent>
         </Card>

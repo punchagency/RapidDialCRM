@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Phone, LayoutDashboard, Users, BarChart3, Settings, LogOut, Map, Plug, Headphones, Star, Briefcase, ShieldCheck, Network, UserCog, Database } from "lucide-react";
+import { Phone, LayoutDashboard, Users, BarChart3, Settings, LogOut, Map, Plug, Headphones, Star, Briefcase, ShieldCheck, Network, UserCog, Database, Headset } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import avatar from "@assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
 import managerAvatar from "@assets/generated_images/Professional_user_avatar_2_9f00e114.png";
@@ -32,7 +32,8 @@ export function Sidebar() {
 
   const managerItems = [
     { icon: Headphones, label: "Call Review", href: "/call-review" },
-    { icon: UserCog, label: "Field Reps", href: "/field-reps" },
+    { icon: UserCog, label: "Field Reps", href: "/field-reps?tab=field" },
+    { icon: Headset, label: "Inside Reps", href: "/field-reps?tab=inside" }, // Separated link
     { icon: Network, label: "Org Chart", href: "/org-chart" },
   ];
 
@@ -92,7 +93,7 @@ export function Sidebar() {
                 <a
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
-                    location === item.href
+                    location === item.href || (item.href.includes("?tab=") && location.startsWith(item.href.split("?")[0]))
                       ? "bg-accent text-accent-foreground font-semibold"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
@@ -100,7 +101,9 @@ export function Sidebar() {
                   <item.icon
                     className={cn(
                       "h-4 w-4 transition-colors",
-                      location === item.href ? "text-accent-foreground" : "text-muted-foreground group-hover:text-foreground"
+                      location === item.href || (item.href.includes("?tab=") && location.startsWith(item.href.split("?")[0]))
+                       ? "text-accent-foreground" 
+                       : "text-muted-foreground group-hover:text-foreground"
                     )}
                   />
                   {item.label}
