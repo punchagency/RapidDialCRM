@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Phone, LayoutDashboard, Users, BarChart3, Settings, LogOut, Map, Plug, Headphones, Star, Briefcase, ShieldCheck } from "lucide-react";
+import { Phone, LayoutDashboard, Users, BarChart3, Settings, LogOut, Map, Plug, Headphones, Star, Briefcase, ShieldCheck, Network, UserCog } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import avatar from "@assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
 import managerAvatar from "@assets/generated_images/Professional_user_avatar_2_9f00e114.png";
@@ -32,6 +32,8 @@ export function Sidebar() {
 
   const managerItems = [
     { icon: Headphones, label: "Call Review", href: "/call-review" },
+    { icon: UserCog, label: "Field Reps", href: "/field-reps" },
+    { icon: Network, label: "Org Chart", href: "/org-chart" },
   ];
 
   const fieldItems = [

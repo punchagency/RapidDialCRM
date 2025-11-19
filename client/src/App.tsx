@@ -10,6 +10,8 @@ import Settings from "@/pages/Settings";
 import Contacts from "@/pages/Contacts";
 import CallReview from "@/pages/CallReview";
 import FieldSales from "@/pages/FieldSales";
+import FieldReps from "@/pages/FieldReps";
+import OrgChart from "@/pages/OrgChart";
 import Login from "@/pages/Login";
 
 function Router() {
@@ -24,6 +26,8 @@ function Router() {
       <Route path="/contacts" component={Contacts} />
       <Route path="/call-review" component={CallReview} />
       <Route path="/map" component={FieldSales} />
+      <Route path="/field-reps" component={FieldReps} />
+      <Route path="/org-chart" component={OrgChart} />
       <Route path="/analytics" component={Dashboard} />
       
       <Route component={NotFound} />
