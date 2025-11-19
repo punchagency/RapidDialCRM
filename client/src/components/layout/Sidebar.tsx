@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Phone, LayoutDashboard, Users, BarChart3, Settings, LogOut, Map, Plug, Headphones, Star, Briefcase, ShieldCheck } from "lucide-react";
 import { Link, useLocation } from "wouter";
@@ -7,7 +7,16 @@ import managerAvatar from "@assets/generated_images/Professional_user_avatar_2_9
 
 export function Sidebar() {
   const [location] = useLocation();
-  const [userRole, setUserRole] = useState<"rep" | "manager" | "field">("rep");
+  // Initialize state from localStorage to persist across page loads
+  const [userRole, setUserRole] = useState<"rep" | "manager" | "field">(() => {
+    const saved = localStorage.getItem("user_role");
+    return (saved as "rep" | "manager" | "field") || "rep";
+  });
+
+  // Update localStorage whenever role changes
+  useEffect(() => {
+    localStorage.setItem("user_role", userRole);
+  }, [userRole]);
 
   const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/" },

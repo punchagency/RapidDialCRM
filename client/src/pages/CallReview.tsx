@@ -3,7 +3,7 @@ import { Sidebar } from "@/components/layout/Sidebar";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Play, Pause, SkipBack, SkipForward, ThumbsUp, ThumbsDown, Star, Award, Clock } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, ThumbsUp, ThumbsDown, Star, Award, Clock, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import avatar from "@assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
 
