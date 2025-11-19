@@ -116,22 +116,44 @@ export default function FieldReps() {
   const [activeTab, setActiveTab] = useState("field");
   const [location] = useLocation();
 
-  // Sync active tab with URL query parameter
-  // Use a polling check to catch query param changes that wouter might miss if path is same
+  // Sync active tab with URL query parameter instantly
   useEffect(() => {
     const checkTab = () => {
         const params = new URLSearchParams(window.location.search);
         const tab = params.get("tab");
-        if (tab && tab !== activeTab && (tab === "field" || tab === "inside")) {
+        if (tab && (tab === "field" || tab === "inside")) {
             setActiveTab(tab);
         }
     };
 
-    checkTab(); // Check immediately
+    checkTab(); // Check immediately on mount
 
-    const interval = setInterval(checkTab, 200); // Check periodically
-    return () => clearInterval(interval);
-  }, [activeTab, location]);
+    // Listen for popstate (browser back/forward)
+    window.addEventListener('popstate', checkTab);
+    
+    // Patch history methods to detect pushState/replaceState (for in-app navigation)
+    // This ensures instant updates when Sidebar links are clicked
+    const originalPush = history.pushState;
+    const originalReplace = history.replaceState;
+
+    history.pushState = function(...args) {
+        const res = originalPush.apply(this, args);
+        checkTab();
+        return res;
+    };
+    
+    history.replaceState = function(...args) {
+        const res = originalReplace.apply(this, args);
+        checkTab();
+        return res;
+    };
+
+    return () => {
+        window.removeEventListener('popstate', checkTab);
+        history.pushState = originalPush;
+        history.replaceState = originalReplace;
+    };
+  }, []);
 
   const filteredFieldReps = mockFieldReps.filter(rep => {
     const matchesSearch = rep.name.toLowerCase().includes(searchTerm.toLowerCase()) || rep.territory.toLowerCase().includes(searchTerm.toLowerCase());

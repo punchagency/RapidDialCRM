@@ -13,10 +13,41 @@ export function Sidebar() {
     return (saved as "rep" | "manager" | "field" | "loader") || "rep";
   });
 
+  const [, forceUpdate] = useState(0);
+
   // Update localStorage whenever role changes
   useEffect(() => {
     localStorage.setItem("user_role", userRole);
   }, [userRole]);
+
+  // Listen to history changes to force re-render for query params
+  useEffect(() => {
+    const update = () => forceUpdate(n => n + 1);
+    
+    window.addEventListener('popstate', update);
+    
+    // Patch history to catch pushState/replaceState (instant updates)
+    const originalPush = history.pushState;
+    const originalReplace = history.replaceState;
+
+    history.pushState = function(...args) {
+        const res = originalPush.apply(this, args);
+        update();
+        return res;
+    };
+    
+    history.replaceState = function(...args) {
+        const res = originalReplace.apply(this, args);
+        update();
+        return res;
+    };
+
+    return () => {
+        window.removeEventListener('popstate', update);
+        history.pushState = originalPush;
+        history.replaceState = originalReplace;
+    };
+  }, []);
 
   const handleLogout = () => {
     setLocation("/auth");
