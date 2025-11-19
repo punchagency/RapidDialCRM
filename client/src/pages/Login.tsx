@@ -61,29 +61,29 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
       {/* Background Pattern */}
-      <div className="absolute inset-0 z-0 opacity-5">
-        <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px]" />
+      <div className="absolute inset-0 z-0 opacity-10">
+        <div className="absolute inset-0 bg-[radial-gradient(hsl(var(--primary))_1px,transparent_1px)] [background-size:20px_20px]" />
       </div>
 
       <div className="w-full max-w-md z-10 px-4">
         <div className="text-center mb-8">
-          <div className="inline-flex h-12 w-12 bg-primary rounded-xl items-center justify-center mb-4 shadow-lg shadow-primary/20">
+          <div className="inline-flex h-12 w-12 bg-primary rounded-xl items-center justify-center mb-4 shadow-lg shadow-primary/30">
             <Phone className="h-6 w-6 text-primary-foreground" />
           </div>
-          <h1 className="text-3xl font-heading font-bold tracking-tight">QuantumPunch</h1>
+          <h1 className="text-3xl font-heading font-bold tracking-tight text-foreground">QuantumPunch</h1>
           <p className="text-muted-foreground mt-2">High-velocity sales CRM for healthcare.</p>
         </div>
 
-        <Card className="border-border/50 shadow-xl backdrop-blur-sm bg-card/95">
+        <Card className="border-border/50 shadow-2xl shadow-primary/5 backdrop-blur-md bg-card/80">
           <CardHeader>
             <CardTitle>Sign in to your account</CardTitle>
             <CardDescription>Select your role to continue</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="rep" value={role} onValueChange={(v) => setRole(v as any)} className="mb-6">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-3 bg-muted/50">
                 <TabsTrigger value="rep">Inside</TabsTrigger>
                 <TabsTrigger value="field">Field</TabsTrigger>
                 <TabsTrigger value="manager">Manager</TabsTrigger>
@@ -91,7 +91,7 @@ export default function Login() {
             </Tabs>
 
             <div className="space-y-4">
-              <Button variant="outline" className="w-full" onClick={handleGoogleLoginClick} disabled={isGoogleLoading || isLoading}>
+              <Button variant="outline" className="w-full hover:bg-muted/50 border-border/60" onClick={handleGoogleLoginClick} disabled={isGoogleLoading || isLoading}>
                 {isGoogleLoading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
@@ -119,7 +119,7 @@ export default function Login() {
 
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
+                  <span className="w-full border-t border-border/60" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
@@ -140,7 +140,7 @@ export default function Login() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password">Password</Label>
-                    <a href="#" className="text-xs text-primary hover:underline">Forgot password?</a>
+                    <a href="#" className="text-xs text-primary hover:text-primary/80 hover:underline">Forgot password?</a>
                   </div>
                   <Input id="password" type="password" defaultValue="password123" required />
                 </div>
@@ -155,7 +155,7 @@ export default function Login() {
                   </label>
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
+                <Button type="submit" className="w-full shadow-lg shadow-primary/20" disabled={isLoading || isGoogleLoading}>
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -170,11 +170,11 @@ export default function Login() {
               </form>
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col space-y-4 border-t bg-muted/20 p-6">
+          <CardFooter className="flex flex-col space-y-4 border-t border-border/60 bg-muted/30 p-6">
             <div className="text-xs text-center text-muted-foreground">
               <p className="flex items-center justify-center gap-1.5 mb-2">
-                <Shield className="h-3 w-3 text-green-600" />
-                <span className="font-medium text-green-600">HIPAA Compliant Environment</span>
+                <Shield className="h-3 w-3 text-secondary" />
+                <span className="font-medium text-secondary">HIPAA Compliant Environment</span>
               </p>
               <p>Protected Health Information (PHI) is monitored and audited.</p>
             </div>

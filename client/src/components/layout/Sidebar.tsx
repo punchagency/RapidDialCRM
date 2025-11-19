@@ -49,10 +49,10 @@ export function Sidebar() {
   return (
     <div className="h-screen w-64 bg-card border-r border-border flex flex-col shrink-0 z-20 relative">
       <div className="p-6 flex items-center gap-2">
-        <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
+        <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
           <Phone className="h-5 w-5 text-primary-foreground" />
         </div>
-        <span className="font-heading font-bold text-xl text-foreground">QuantumPunch</span>
+        <span className="font-heading font-bold text-xl text-foreground tracking-tight">QuantumPunch</span>
       </div>
 
       <div className="flex-1 px-4 space-y-1 overflow-y-auto">
@@ -62,7 +62,7 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
                 location === item.href
-                  ? "bg-primary/10 text-primary"
+                  ? "bg-primary/10 text-primary font-semibold"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
             >
@@ -80,7 +80,7 @@ export function Sidebar() {
         {userRole === "manager" && (
           <>
             <div className="mt-6 mb-2 px-3">
-               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Manager Views</p>
+               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider opacity-70">Manager Views</p>
             </div>
             {managerItems.map((item) => (
               <Link key={item.href} href={item.href}>
@@ -88,14 +88,14 @@ export function Sidebar() {
                   className={cn(
                     "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group",
                     location === item.href
-                      ? "bg-purple-500/10 text-purple-600"
+                      ? "bg-accent text-accent-foreground font-semibold"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
                   <item.icon
                     className={cn(
                       "h-4 w-4 transition-colors",
-                      location === item.href ? "text-purple-600" : "text-muted-foreground group-hover:text-foreground"
+                      location === item.href ? "text-accent-foreground" : "text-muted-foreground group-hover:text-foreground"
                     )}
                   />
                   {item.label}
@@ -108,9 +108,9 @@ export function Sidebar() {
 
       {/* HIPAA Compliance Indicator */}
       <div className="px-6 py-2">
-         <div className="flex items-center gap-2 text-[10px] text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded border border-green-200 dark:border-green-900/50 w-fit">
-            <ShieldCheck className="h-3 w-3" />
-            <span className="font-medium">HIPAA Secure</span>
+         <div className="flex items-center gap-2 text-[10px] text-secondary-foreground bg-secondary/20 px-2 py-1 rounded border border-secondary/30 w-fit">
+            <ShieldCheck className="h-3 w-3 text-secondary" />
+            <span className="font-medium text-secondary-foreground/80">HIPAA Secure</span>
          </div>
       </div>
 
@@ -126,7 +126,7 @@ export function Sidebar() {
               className="h-9 w-9 rounded-full object-cover border border-border" 
             />
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">
+              <p className="text-sm font-medium truncate text-foreground">
                   {userRole === "manager" ? "Sarah Miller" : userRole === "field" ? "Mike Field" : "Alex Johnson"}
               </p>
               <p className="text-xs text-muted-foreground truncate capitalize">{userRole} Role</p>
@@ -143,8 +143,8 @@ export function Sidebar() {
            <button 
              onClick={() => setUserRole("rep")}
              className={cn(
-                 "text-[10px] py-1 rounded border", 
-                 userRole === "rep" ? "bg-primary/10 border-primary text-primary" : "bg-background border-border text-muted-foreground"
+                 "text-[10px] py-1 rounded border transition-all", 
+                 userRole === "rep" ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
              )}
            >
               Inside
@@ -152,8 +152,8 @@ export function Sidebar() {
            <button 
              onClick={() => setUserRole("field")}
              className={cn(
-                 "text-[10px] py-1 rounded border", 
-                 userRole === "field" ? "bg-primary/10 border-primary text-primary" : "bg-background border-border text-muted-foreground"
+                 "text-[10px] py-1 rounded border transition-all", 
+                 userRole === "field" ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
              )}
            >
               Field
@@ -161,8 +161,8 @@ export function Sidebar() {
            <button 
              onClick={() => setUserRole("manager")}
              className={cn(
-                 "text-[10px] py-1 rounded border", 
-                 userRole === "manager" ? "bg-primary/10 border-primary text-primary" : "bg-background border-border text-muted-foreground"
+                 "text-[10px] py-1 rounded border transition-all", 
+                 userRole === "manager" ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
              )}
            >
               Manager
