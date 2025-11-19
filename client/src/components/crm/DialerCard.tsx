@@ -100,6 +100,9 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
     }, 1500);
   };
 
+  // Helper to get color for the current contact status
+  const currentStatusColor = statuses.find(s => s.value === contact.status)?.color || "bg-primary/5 text-primary border-primary/20";
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full max-h-[calc(100vh-140px)]">
       {/* Left Column: Contact Info */}
@@ -115,7 +118,7 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
                    {contact.company}
                  </p>
                </div>
-               <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20">
+               <Badge variant="secondary" className={cn("border", currentStatusColor)}>
                  {contact.status}
                </Badge>
              </div>
