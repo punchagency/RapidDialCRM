@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Phone, MapPin, Building2, Clock, DollarSign, Stethoscope, History, Check, ArrowRight, Loader2, Trophy, Mail, MessageSquare, Users, Briefcase, Shield } from "lucide-react";
+import { Phone, MapPin, Building2, Clock, DollarSign, Stethoscope, History, Check, ArrowRight, Loader2, Trophy, Mail, MessageSquare, Users, Briefcase, Shield, UserCog, Stethoscope as DoctorIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { EmailComposer } from "@/components/crm/EmailComposer";
@@ -176,13 +176,57 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
              </div>
            </CardContent>
         </Card>
+
+        {/* KEY CONTACTS SECTION (NEW) */}
+        {(contact.clientAdmins?.length || contact.providerContacts?.length) ? (
+           <Card className="border-none shadow-sm">
+             <CardContent className="pt-6">
+                <h3 className="font-heading font-semibold flex items-center gap-2 mb-4 text-muted-foreground text-sm uppercase tracking-wider">
+                  <Users className="h-4 w-4" />
+                  Key Stakeholders
+                </h3>
+
+                <div className="space-y-4">
+                   {/* Client Admins */}
+                   {contact.clientAdmins && contact.clientAdmins.length > 0 && (
+                     <div>
+                        <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase flex items-center gap-1">
+                           <UserCog className="h-3 w-3" /> Client Admins
+                        </p>
+                        <div className="space-y-2">
+                           {contact.clientAdmins.map((admin) => (
+                              <ContactRow key={admin.id} contact={admin} />
+                           ))}
+                        </div>
+                     </div>
+                   )}
+
+                   {(contact.clientAdmins?.length && contact.providerContacts?.length) ? <Separator /> : null}
+                   
+                   {/* Provider Contacts */}
+                   {contact.providerContacts && contact.providerContacts.length > 0 && (
+                     <div>
+                        <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase flex items-center gap-1">
+                           <DoctorIcon className="h-3 w-3" /> Providers
+                        </p>
+                         <div className="space-y-2">
+                           {contact.providerContacts.map((provider) => (
+                              <ContactRow key={provider.id} contact={provider} />
+                           ))}
+                        </div>
+                     </div>
+                   )}
+                </div>
+             </CardContent>
+           </Card>
+        ) : null}
         
         {/* Account Team Section */}
         <Card className="border-none shadow-sm">
           <CardContent className="pt-6">
              <h3 className="font-heading font-semibold flex items-center gap-2 mb-4 text-muted-foreground text-sm uppercase tracking-wider">
-               <Users className="h-4 w-4" />
-               Account Team
+               <Briefcase className="h-4 w-4" />
+               Internal Team
              </h3>
              
              <div className="space-y-4">
@@ -350,6 +394,38 @@ function TeamMemberRow({ member }: { member: any }) {
          <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-foreground truncate">{member.name}</p>
             <p className="text-[10px] text-muted-foreground truncate">{member.role}</p>
+         </div>
+      </div>
+   );
+}
+
+function ContactRow({ contact }: { contact: any }) {
+   return (
+      <div className="flex items-center justify-between p-2.5 hover:bg-muted/50 rounded-lg transition-colors border border-transparent hover:border-border/40">
+         <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+               <p className="text-sm font-medium text-foreground truncate">{contact.name}</p>
+               {contact.isPrimary && (
+                  <span className="px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-wider">Primary</span>
+               )}
+            </div>
+            <p className="text-xs text-muted-foreground truncate">{contact.role}</p>
+            <div className="flex items-center gap-3 mt-1">
+               <span className="text-[10px] text-muted-foreground flex items-center gap-1 hover:text-primary cursor-pointer">
+                  <Mail className="h-3 w-3" /> {contact.email}
+               </span>
+               <span className="text-[10px] text-muted-foreground flex items-center gap-1 hover:text-primary cursor-pointer">
+                  <Phone className="h-3 w-3" /> {contact.phone}
+               </span>
+            </div>
+         </div>
+         <div className="flex gap-1">
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary">
+               <Phone className="h-3.5 w-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary">
+               <Mail className="h-3.5 w-3.5" />
+            </Button>
          </div>
       </div>
    );

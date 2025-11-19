@@ -27,6 +27,15 @@ export interface EmailLog {
   status: "sent" | "opened" | "replied";
 }
 
+export interface SubContact {
+  id: string;
+  name: string;
+  role: string;
+  email: string;
+  phone: string;
+  isPrimary?: boolean;
+}
+
 export interface Contact {
   id: string;
   name: string;
@@ -44,6 +53,8 @@ export interface Contact {
   location_lat?: number; // Mock for map
   location_lng?: number;
   emailHistory?: EmailLog[];
+  clientAdmins?: SubContact[];
+  providerContacts?: SubContact[];
 }
 
 export interface EmailTemplate {
@@ -156,6 +167,14 @@ export const MOCK_CONTACTS: Contact[] = [
     location_lng: -122.3223,
     emailHistory: [
       { id: "e1", subject: "Intro to QuantumPunch for Surgeons", date: "2 days ago", status: "opened" }
+    ],
+    clientAdmins: [
+      { id: "ca1", name: "Martha Jones", role: "Office Manager", email: "mjones@swedish.org", phone: "(555) 123-4500", isPrimary: true },
+      { id: "ca2", name: "Bill Smith", role: "Billing Coordinator", email: "bsmith@swedish.org", phone: "(555) 123-4501" }
+    ],
+    providerContacts: [
+      { id: "pc1", name: "Dr. Sarah Jenkins", role: "Chief Surgeon", email: "sjenkins@swedish.org", phone: "(555) 123-4567", isPrimary: true },
+      { id: "pc2", name: "Dr. Mark Liu", role: "Associate Surgeon", email: "mliu@swedish.org", phone: "(555) 123-4568" }
     ]
   },
   {
@@ -174,7 +193,13 @@ export const MOCK_CONTACTS: Contact[] = [
     status: "New",
     location_lat: 47.6023,
     location_lng: -122.3242,
-    emailHistory: []
+    emailHistory: [],
+    clientAdmins: [
+       { id: "ca3", name: "Tina Fay", role: "Admin Assistant", email: "tfay@uw.edu", phone: "(555) 987-6000", isPrimary: true }
+    ],
+    providerContacts: [
+       { id: "pc3", name: "Dr. Gregory House", role: "Diagnostician", email: "ghouse@uw.edu", phone: "(555) 987-6666", isPrimary: true }
+    ]
   },
   {
     id: "3",

@@ -8,9 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Upload, Plus, Database, Globe, CheckCircle, MapPin, Building, Briefcase, FileUp, Loader2, Info, Trash2 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Search, Upload, Plus, Database, Globe, CheckCircle, MapPin, Building, Briefcase, FileUp, Loader2, Info, Trash2, UserCog, Stethoscope, X, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { SubContact } from "@/lib/mockData";
 
 // Mock Search Results
 const MOCK_SEARCH_RESULTS = [
@@ -36,6 +38,30 @@ export default function LeadLoader() {
   const [searchResults, setSearchResults] = useState<typeof MOCK_SEARCH_RESULTS>([]);
   const [pool, setPool] = useState(MOCK_POOL);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Manual Entry State
+  const [clientAdmins, setClientAdmins] = useState<SubContact[]>([{ id: "ca-1", name: "", role: "", email: "", phone: "" }]);
+  const [providers, setProviders] = useState<SubContact[]>([{ id: "pv-1", name: "", role: "", email: "", phone: "" }]);
+
+  const addAdminRow = () => {
+    setClientAdmins([...clientAdmins, { id: `ca-${Date.now()}`, name: "", role: "", email: "", phone: "" }]);
+  };
+
+  const removeAdminRow = (id: string) => {
+    if (clientAdmins.length > 1) {
+      setClientAdmins(clientAdmins.filter(a => a.id !== id));
+    }
+  };
+
+  const addProviderRow = () => {
+    setProviders([...providers, { id: `pv-${Date.now()}`, name: "", role: "", email: "", phone: "" }]);
+  };
+
+  const removeProviderRow = (id: string) => {
+    if (providers.length > 1) {
+      setProviders(providers.filter(p => p.id !== id));
+    }
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -213,42 +239,114 @@ export default function LeadLoader() {
                     <CardDescription>Enter a single lead record manually.</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Business Name</Label>
-                        <Input placeholder="e.g. Northside Clinic" />
+                    <div className="space-y-8">
+                      {/* Business Info */}
+                      <div>
+                        <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wider flex items-center gap-2">
+                           <Building className="h-4 w-4" /> Business Information
+                        </h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Business Name</Label>
+                            <Input placeholder="e.g. Northside Clinic" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Main Phone</Label>
+                            <Input placeholder="(555) 000-0000" />
+                          </div>
+                          <div className="col-span-2 space-y-2">
+                            <Label>Address</Label>
+                            <Input placeholder="123 Medical Way" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>City</Label>
+                            <Input placeholder="Seattle" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Zip Code</Label>
+                            <Input placeholder="98101" />
+                          </div>
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label>Contact Person</Label>
-                        <Input placeholder="e.g. Dr. Smith" />
+
+                      <Separator />
+
+                      {/* Client Admins */}
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                              <UserCog className="h-4 w-4" /> Client Admin Contacts
+                           </h3>
+                           <Button size="sm" variant="outline" onClick={addAdminRow} className="h-7 text-xs gap-1">
+                              <Plus className="h-3 w-3" /> Add Admin
+                           </Button>
+                        </div>
+                        <div className="space-y-3">
+                           {clientAdmins.map((admin, idx) => (
+                              <div key={admin.id} className="flex gap-3 items-start">
+                                 <div className="grid grid-cols-4 gap-3 flex-1">
+                                    <Input placeholder="Name" defaultValue={admin.name} className="bg-muted/20" />
+                                    <Input placeholder="Role (e.g. Office Mgr)" defaultValue={admin.role} className="bg-muted/20" />
+                                    <Input placeholder="Email" defaultValue={admin.email} className="bg-muted/20" />
+                                    <Input placeholder="Phone" defaultValue={admin.phone} className="bg-muted/20" />
+                                 </div>
+                                 <Button 
+                                    size="icon" 
+                                    variant="ghost" 
+                                    className="h-10 w-10 text-muted-foreground hover:text-destructive"
+                                    onClick={() => removeAdminRow(admin.id)}
+                                    disabled={clientAdmins.length === 1}
+                                 >
+                                    <X className="h-4 w-4" />
+                                 </Button>
+                              </div>
+                           ))}
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label>Phone</Label>
-                        <Input placeholder="(555) 000-0000" />
+
+                      <Separator />
+
+                      {/* Providers */}
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                              <Stethoscope className="h-4 w-4" /> Provider Contacts
+                           </h3>
+                           <Button size="sm" variant="outline" onClick={addProviderRow} className="h-7 text-xs gap-1">
+                              <Plus className="h-3 w-3" /> Add Provider
+                           </Button>
+                        </div>
+                        <div className="space-y-3">
+                           {providers.map((provider, idx) => (
+                              <div key={provider.id} className="flex gap-3 items-start">
+                                 <div className="grid grid-cols-4 gap-3 flex-1">
+                                    <Input placeholder="Name (e.g. Dr. Smith)" defaultValue={provider.name} className="bg-muted/20" />
+                                    <Input placeholder="Title (e.g. Surgeon)" defaultValue={provider.role} className="bg-muted/20" />
+                                    <Input placeholder="Email" defaultValue={provider.email} className="bg-muted/20" />
+                                    <Input placeholder="Phone" defaultValue={provider.phone} className="bg-muted/20" />
+                                 </div>
+                                 <Button 
+                                    size="icon" 
+                                    variant="ghost" 
+                                    className="h-10 w-10 text-muted-foreground hover:text-destructive"
+                                    onClick={() => removeProviderRow(provider.id)}
+                                    disabled={providers.length === 1}
+                                 >
+                                    <X className="h-4 w-4" />
+                                 </Button>
+                              </div>
+                           ))}
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label>Email</Label>
-                        <Input placeholder="contact@example.com" />
-                      </div>
-                      <div className="col-span-2 space-y-2">
-                        <Label>Address</Label>
-                        <Input placeholder="123 Medical Way" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>City</Label>
-                        <Input placeholder="Seattle" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Zip Code</Label>
-                        <Input placeholder="98101" />
-                      </div>
+
                     </div>
-                    <div className="mt-6 flex justify-end gap-2">
-                      <Button variant="outline">Clear</Button>
+
+                    <div className="mt-8 flex justify-end gap-2 border-t pt-6">
+                      <Button variant="outline">Clear Form</Button>
                       <Button onClick={() => {
-                        toast({ title: "Lead Added", description: "Manual entry added to unassigned pool." });
+                        toast({ title: "Lead Added", description: `Added with ${clientAdmins.length} admins and ${providers.length} providers.` });
                         setPool([{ id: `man-${Date.now()}`, name: "Northside Clinic", location: "Seattle, WA", type: "Unknown", source: "Manual", date: "Just now" }, ...pool]);
-                      }}>Add Lead</Button>
+                      }}>Save Lead</Button>
                     </div>
                   </CardContent>
                 </Card>
