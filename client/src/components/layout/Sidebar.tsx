@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Phone, LayoutDashboard, Users, BarChart3, Settings, LogOut, Map } from "lucide-react";
+import { Phone, LayoutDashboard, Users, BarChart3, Settings, LogOut, Map, Plug } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import avatar from "@assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
 
@@ -48,14 +48,22 @@ export function Sidebar() {
       </div>
 
       <div className="p-4 border-t border-border">
-        <div className="flex items-center gap-3 px-3 py-3 rounded-lg bg-muted/50">
-          <img src={avatar} alt="User" className="h-9 w-9 rounded-full object-cover border border-border" />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">Alex Johnson</p>
-            <p className="text-xs text-muted-foreground truncate">Sales Rep</p>
+        <Link href="/settings">
+          <div className={cn(
+            "flex items-center gap-3 px-3 py-3 rounded-lg transition-colors cursor-pointer",
+            location === "/settings" ? "bg-primary/10" : "bg-muted/50 hover:bg-muted"
+          )}>
+            <img src={avatar} alt="User" className="h-9 w-9 rounded-full object-cover border border-border" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium truncate">Alex Johnson</p>
+              <p className="text-xs text-muted-foreground truncate">Sales Rep</p>
+            </div>
+            <Settings className={cn(
+              "h-4 w-4 transition-colors", 
+              location === "/settings" ? "text-primary" : "text-muted-foreground hover:text-foreground"
+            )} />
           </div>
-          <Settings className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" />
-        </div>
+        </Link>
       </div>
     </div>
   );
