@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { Phone, LayoutDashboard, Users, BarChart3, Settings, LogOut, Map, Plug, Headphones, Star, Briefcase } from "lucide-react";
+import { Phone, LayoutDashboard, Users, BarChart3, Settings, LogOut, Map, Plug, Headphones, Star, Briefcase, ShieldCheck } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import avatar from "@assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
 import managerAvatar from "@assets/generated_images/Professional_user_avatar_2_9f00e114.png";
@@ -89,6 +89,14 @@ export function Sidebar() {
             ))}
           </>
         )}
+      </div>
+
+      {/* HIPAA Compliance Indicator */}
+      <div className="px-6 py-2">
+         <div className="flex items-center gap-2 text-[10px] text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded border border-green-200 dark:border-green-900/50 w-fit">
+            <ShieldCheck className="h-3 w-3" />
+            <span className="font-medium">HIPAA Secure</span>
+         </div>
       </div>
 
       <div className="p-4 border-t border-border">
