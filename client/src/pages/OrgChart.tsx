@@ -68,104 +68,129 @@ export default function OrgChart() {
               className="w-full h-full flex items-center justify-center overflow-auto"
               style={{ transform: `scale(${zoom})`, transition: "transform 0.2s ease-in-out" }}
            >
-              <div className="flex flex-col items-center gap-16 min-w-[1000px]">
+              <div className="flex items-start gap-24 min-w-[1000px]">
                  
-                 {/* Level 1: Managers */}
-                 <div className="flex gap-24 relative">
-                    {orgData.managers.map(mgr => (
-                       <div key={mgr.id} className="relative group">
-                          <Card className={cn("w-64 border shadow-sm transition-all hover:shadow-md cursor-pointer relative z-10", mgr.color)}>
-                             <CardContent className="p-4 flex items-center gap-4">
-                                <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
-                                   <AvatarImage src={mgr.avatar || ""} />
-                                   <AvatarFallback>{mgr.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                   <p className="font-semibold text-sm">{mgr.name}</p>
-                                   <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">{mgr.role}</p>
-                                </div>
-                             </CardContent>
-                             {/* Connector Line Down */}
-                             <div className="absolute left-1/2 top-full h-16 w-px bg-border/60 -translate-x-1/2" />
-                          </Card>
-                       </div>
-                    ))}
+                 {/* Level 1: Managers Loop */}
+                 {orgData.managers.map(mgr => {
+                    const myInsideReps = orgData.insideReps.filter(r => r.manager === mgr.id);
                     
-                    {/* Horizontal Connector for Managers */}
-                    <div className="absolute top-full left-[128px] right-[128px] h-px bg-border/60 mt-8" />
-                 </div>
+                    return (
+                       <div key={mgr.id} className="flex flex-col items-center">
+                          {/* Level 1: Manager Card */}
+                          <div className="relative mb-16 z-20">
+                              <Card className={cn("w-64 border shadow-sm transition-all hover:shadow-md cursor-pointer relative z-10", mgr.color)}>
+                                 <CardContent className="p-4 flex items-center gap-4">
+                                    <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
+                                       <AvatarImage src={mgr.avatar || ""} />
+                                       <AvatarFallback>{mgr.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                       <p className="font-semibold text-sm">{mgr.name}</p>
+                                       <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">{mgr.role}</p>
+                                    </div>
+                                 </CardContent>
+                              </Card>
+                              
+                              {/* Connector down if has children */}
+                              {myInsideReps.length > 0 && (
+                                 <div className="absolute left-1/2 top-full h-16 w-px bg-border/60 -translate-x-1/2" />
+                              )}
+                          </div>
 
-                 {/* Level 2: Inside Reps */}
-                 <div className="flex gap-12 relative">
-                    {orgData.insideReps.map(rep => (
-                       <div key={rep.id} className="flex flex-col items-center relative">
-                          {/* Vertical Connector Up */}
-                          <div className="h-8 w-px bg-border/60 absolute bottom-full left-1/2 -translate-x-1/2" />
-                          
-                          <Card className={cn("w-60 border shadow-sm transition-all hover:shadow-md cursor-pointer z-10", rep.color)}>
-                             <CardContent className="p-3 flex items-center gap-3">
-                                <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
-                                   <AvatarImage src={rep.avatar || ""} />
-                                   <AvatarFallback>{rep.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                   <p className="font-semibold text-sm">{rep.name}</p>
-                                   <p className="text-xs text-muted-foreground">{rep.role}</p>
-                                </div>
-                             </CardContent>
-                             {/* Connector Line Down */}
-                             <div className="absolute left-1/2 top-full h-12 w-px bg-border/60 -translate-x-1/2" />
-                          </Card>
-
-                          {/* Level 3: Field Reps */}
-                          <div className="flex gap-4 mt-12 relative">
-                             {/* Horizontal Connector for Field Reps under this Inside Rep */}
-                             {rep.supports.length > 1 && (
-                                <div className="absolute top-0 left-1/2 right-1/2 h-px bg-border/60 -mt-6 w-[calc(100%-2rem)] -translate-x-1/2" />
-                             )}
-
-                             {rep.supports.map((fieldId, idx) => {
-                                const fieldRep = orgData.fieldReps.find(fr => fr.id === fieldId);
-                                if (!fieldRep) return null;
-                                return (
-                                   <div key={fieldId} className="relative pt-6">
-                                      {/* Connector from horizontal line */}
-                                      <div className={cn(
-                                         "absolute top-[-24px] left-1/2 w-px h-6 bg-border/60 -translate-x-1/2",
-                                         // Adjust for single child vs multiple
-                                         rep.supports.length === 1 && "h-12 top-[-48px]"
-                                      )} />
-                                      
-                                      {rep.supports.length > 1 && (
+                          {/* Level 2: Inside Reps (Nested under Manager) */}
+                          {myInsideReps.length > 0 && (
+                             <div className="relative flex gap-12 pt-8">
+                                {/* Horizontal Bar connecting children */}
+                                {myInsideReps.length > 1 && (
+                                   <div className="absolute top-0 left-1/2 right-1/2 h-px bg-border/60 w-[calc(100%-2rem)] -translate-x-1/2" />
+                                )}
+                                
+                                {myInsideReps.map((rep, idx) => (
+                                   <div key={rep.id} className="flex flex-col items-center relative">
+                                      {/* Connector up to horizontal bar */}
+                                       <div className={cn(
+                                         "absolute top-[-32px] left-1/2 w-px h-8 bg-border/60 -translate-x-1/2",
+                                         myInsideReps.length === 1 && "h-16 top-[-64px]" // Direct line if single child
+                                       )} />
+                                       
+                                       {/* Horizontal connector logic adjustment for tree structure */}
+                                       {myInsideReps.length > 1 && (
                                           <div className={cn(
-                                            "absolute top-[-24px] h-px bg-border/60",
+                                            "absolute top-[-32px] h-px bg-border/60",
                                             idx === 0 ? "left-1/2 right-[-1rem]" : 
-                                            idx === rep.supports.length - 1 ? "left-[-1rem] right-1/2" : 
+                                            idx === myInsideReps.length - 1 ? "left-[-1rem] right-1/2" : 
                                             "left-[-1rem] right-[-1rem]"
                                           )} />
-                                      )}
+                                       )}
 
-                                      <Card className={cn("w-48 border shadow-sm transition-all hover:shadow-md cursor-pointer group/card", fieldRep.color)}>
-                                         <CardContent className="p-3 text-center">
-                                            <div className="flex justify-center mb-2">
-                                               <Avatar className="h-8 w-8 border-2 border-white shadow-sm">
-                                                  <AvatarImage src={fieldRep.avatar || ""} />
-                                                  <AvatarFallback className="text-xs">{fieldRep.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                                               </Avatar>
+                                      <Card className={cn("w-60 border shadow-sm transition-all hover:shadow-md cursor-pointer z-10", rep.color)}>
+                                         <CardContent className="p-3 flex items-center gap-3">
+                                            <Avatar className="h-10 w-10 border-2 border-white shadow-sm">
+                                               <AvatarImage src={rep.avatar || ""} />
+                                               <AvatarFallback>{rep.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                               <p className="font-semibold text-sm">{rep.name}</p>
+                                               <p className="text-xs text-muted-foreground">{rep.role}</p>
                                             </div>
-                                            <p className="font-semibold text-sm truncate">{fieldRep.name}</p>
-                                            <Badge variant="secondary" className="mt-1 text-[10px] px-1.5 py-0 h-5 font-normal bg-white/50 hover:bg-white/60">
-                                               {fieldRep.territory}
-                                            </Badge>
                                          </CardContent>
+                                         {/* Connector Line Down */}
+                                         <div className="absolute left-1/2 top-full h-12 w-px bg-border/60 -translate-x-1/2" />
                                       </Card>
+
+                                      {/* Level 3: Field Reps */}
+                                      <div className="flex gap-4 mt-12 relative">
+                                         {/* Horizontal Connector for Field Reps under this Inside Rep */}
+                                         {rep.supports.length > 1 && (
+                                            <div className="absolute top-0 left-1/2 right-1/2 h-px bg-border/60 -mt-6 w-[calc(100%-2rem)] -translate-x-1/2" />
+                                         )}
+
+                                         {rep.supports.map((fieldId, fIdx) => {
+                                            const fieldRep = orgData.fieldReps.find(fr => fr.id === fieldId);
+                                            if (!fieldRep) return null;
+                                            return (
+                                               <div key={fieldId} className="relative pt-6">
+                                                  {/* Connector from horizontal line */}
+                                                  <div className={cn(
+                                                     "absolute top-[-24px] left-1/2 w-px h-6 bg-border/60 -translate-x-1/2",
+                                                     // Adjust for single child vs multiple
+                                                     rep.supports.length === 1 && "h-12 top-[-48px]"
+                                                  )} />
+                                                  
+                                                  {rep.supports.length > 1 && (
+                                                      <div className={cn(
+                                                        "absolute top-[-24px] h-px bg-border/60",
+                                                        fIdx === 0 ? "left-1/2 right-[-1rem]" : 
+                                                        fIdx === rep.supports.length - 1 ? "left-[-1rem] right-1/2" : 
+                                                        "left-[-1rem] right-[-1rem]"
+                                                      )} />
+                                                  )}
+
+                                                  <Card className={cn("w-48 border shadow-sm transition-all hover:shadow-md cursor-pointer group/card", fieldRep.color)}>
+                                                     <CardContent className="p-3 text-center">
+                                                        <div className="flex justify-center mb-2">
+                                                           <Avatar className="h-8 w-8 border-2 border-white shadow-sm">
+                                                              <AvatarImage src={fieldRep.avatar || ""} />
+                                                              <AvatarFallback className="text-xs">{fieldRep.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                                                           </Avatar>
+                                                        </div>
+                                                        <p className="font-semibold text-sm truncate">{fieldRep.name}</p>
+                                                        <Badge variant="secondary" className="mt-1 text-[10px] px-1.5 py-0 h-5 font-normal bg-white/50 hover:bg-white/60">
+                                                           {fieldRep.territory}
+                                                        </Badge>
+                                                     </CardContent>
+                                                  </Card>
+                                               </div>
+                                            );
+                                         })}
+                                      </div>
                                    </div>
-                                );
-                             })}
-                          </div>
+                                ))}
+                             </div>
+                          )}
                        </div>
-                    ))}
-                 </div>
+                    );
+                 })}
 
               </div>
            </div>
