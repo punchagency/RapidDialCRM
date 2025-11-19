@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Navigation, Calendar, Phone, CheckCircle2, User, FileText, Camera, Loader2, ChevronRight, ChevronLeft } from "lucide-react";
+import { MapPin, Navigation, Calendar, Phone, CheckCircle2, User, FileText, Camera, Loader2, ChevronRight, ChevronLeft, CalendarPlus } from "lucide-react";
 import { MOCK_CONTACTS } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -39,6 +39,14 @@ export default function FieldSales() {
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [selectedDate, setSelectedDate] = useState<"today" | "tomorrow">("today");
   const { toast } = useToast();
+  const [gcalConnected, setGcalConnected] = useState(false);
+
+  useEffect(() => {
+    const storedGcal = localStorage.getItem("gcal_connected");
+    if (storedGcal === "true") {
+      setGcalConnected(true);
+    }
+  }, []);
 
   // Build routes based on date
   const todaysRoute = [
@@ -71,6 +79,22 @@ export default function FieldSales() {
     toast({
       title: "Checked In",
       description: `You've arrived at ${activeStop.company}.`
+    });
+  };
+
+  const handleAddToCalendar = () => {
+    if (!gcalConnected) {
+        toast({
+            title: "Calendar Not Connected",
+            description: "Please connect Google Calendar in Settings > Integrations first.",
+            variant: "destructive"
+        });
+        return;
+    }
+    
+    toast({
+        title: "Added to Google Calendar",
+        description: `Event created: ${activeStop.type} at ${activeStop.company} (${activeStop.time})`
     });
   };
 
@@ -239,8 +263,8 @@ export default function FieldSales() {
                                </p>
                             </div>
                             <div className="flex gap-2">
-                               <Button variant="outline" size="icon" className="rounded-full h-12 w-12">
-                                  <Phone className="h-5 w-5" />
+                               <Button variant="outline" size="icon" className="rounded-full h-12 w-12" onClick={handleAddToCalendar} title="Add to Calendar">
+                                  <CalendarPlus className="h-5 w-5" />
                                </Button>
                                <Button variant="outline" size="icon" className="rounded-full h-12 w-12">
                                   <Navigation className="h-5 w-5" />
