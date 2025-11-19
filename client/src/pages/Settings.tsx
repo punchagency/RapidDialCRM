@@ -5,13 +5,14 @@ import { TemplatesTab } from "@/components/crm/TemplatesTab";
 import { ProfessionsTab } from "@/components/crm/ProfessionsTab";
 import { FieldSettingsTab } from "@/components/crm/FieldSettingsTab";
 import { SecurityTab } from "@/components/crm/SecurityTab";
+import { TeamStructureTab } from "@/components/crm/TeamStructureTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { User, Bell, Shield, Plug, FileText, Briefcase, Map } from "lucide-react";
+import { User, Bell, Shield, Plug, FileText, Briefcase, Map, Network } from "lucide-react";
 
 export default function Settings() {
   return (
@@ -25,9 +26,10 @@ export default function Settings() {
 
         <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-4xl mx-auto">
-            <Tabs defaultValue="security" className="space-y-6">
+            <Tabs defaultValue="team" className="space-y-6">
               <TabsList className="bg-card border border-border p-1 w-full flex justify-start overflow-x-auto">
                 <TabsTrigger value="profile" className="gap-2"><User className="h-4 w-4" /> Profile</TabsTrigger>
+                <TabsTrigger value="team" className="gap-2"><Network className="h-4 w-4" /> Team Structure</TabsTrigger>
                 <TabsTrigger value="security" className="gap-2"><Shield className="h-4 w-4" /> Security</TabsTrigger>
                 <TabsTrigger value="field" className="gap-2"><Map className="h-4 w-4" /> Field & Route</TabsTrigger>
                 <TabsTrigger value="professions" className="gap-2"><Briefcase className="h-4 w-4" /> Professions</TabsTrigger>
@@ -53,6 +55,10 @@ export default function Settings() {
                     </div>
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="team">
+                <TeamStructureTab />
               </TabsContent>
 
               <TabsContent value="security">
