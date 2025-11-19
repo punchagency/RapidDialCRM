@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MapPin, Navigation, Calendar, Phone, CheckCircle2, User, FileText, Camera, Loader2 } from "lucide-react";
+import { MapPin, Navigation, Calendar, Phone, CheckCircle2, User, FileText, Camera, Loader2, ChevronRight, ChevronLeft } from "lucide-react";
 import { MOCK_CONTACTS } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -29,7 +29,7 @@ L.Marker.prototype.options.icon = DefaultIcon;
 function MapUpdater({ center }: { center: [number, number] }) {
   const map = useMap();
   useEffect(() => {
-    map.flyTo(center, 13);
+    map.flyTo(center, 12);
   }, [center, map]);
   return null;
 }
@@ -37,9 +37,10 @@ function MapUpdater({ center }: { center: [number, number] }) {
 export default function FieldSales() {
   const [selectedStop, setSelectedStop] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
+  const [selectedDate, setSelectedDate] = useState<"today" | "tomorrow">("today");
   const { toast } = useToast();
 
-  // Build the route from MOCK_CONTACTS which now has real Seattle coordinates
+  // Build routes based on date
   const todaysRoute = [
     { ...MOCK_CONTACTS[0], time: "09:00 AM", type: "Visit Scheduled", distance: "1.2 mi" }, // Swedish First Hill
     { ...MOCK_CONTACTS[1], time: "10:30 AM", type: "Drop-in", distance: "0.8 mi" },        // Harborview
@@ -48,10 +49,23 @@ export default function FieldSales() {
     { ...MOCK_CONTACTS[3], time: "04:15 PM", type: "Visit Scheduled", distance: "1.5 mi" },   // Seattle Children's
   ];
 
-  const activeStop = todaysRoute.find(s => s.id === selectedStop) || todaysRoute[0];
+  const tomorrowsRoute = [
+    { ...MOCK_CONTACTS[5], time: "08:30 AM", type: "Visit Scheduled", distance: "22.1 mi" }, // Providence Everett
+    { ...MOCK_CONTACTS[6], time: "10:00 AM", type: "Meeting Scheduled", distance: "1.5 mi" }, // Everett Clinic
+    { ...MOCK_CONTACTS[10], time: "11:30 AM", type: "Meeting Scheduled", distance: "4.2 mi" }, // Western WA Med
+    { ...MOCK_CONTACTS[7], time: "01:30 PM", type: "Visit Scheduled", distance: "8.1 mi" }, // Swedish Edmonds
+    { ...MOCK_CONTACTS[13], time: "03:00 PM", type: "Visit Scheduled", distance: "2.5 mi" }, // Puget Sound Kidney
+    { ...MOCK_CONTACTS[8], time: "04:30 PM", type: "Follow-up", distance: "1.8 mi" }, // VM Lynnwood
+  ];
+
+  const currentRoute = selectedDate === "today" ? todaysRoute : tomorrowsRoute;
+  const activeStop = currentRoute.find(s => s.id === selectedStop) || currentRoute[0];
   
-  // Fallback coords if data missing (Seattle center)
-  const activeCoords: [number, number] = [activeStop.location_lat || 47.6062, activeStop.location_lng || -122.3321];
+  // Fallback coords if data missing
+  const activeCoords: [number, number] = [
+      activeStop.location_lat || (selectedDate === "today" ? 47.6062 : 47.9789), 
+      activeStop.location_lng || (selectedDate === "today" ? -122.3321 : -122.2020)
+  ];
 
   const handleCheckIn = () => {
     toast({
@@ -66,12 +80,34 @@ export default function FieldSales() {
       
       <main className="flex-1 flex flex-col overflow-hidden relative bg-muted/30">
         <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-card z-10">
-          <div>
-             <h1 className="text-xl font-heading font-semibold text-foreground">Field View</h1>
-             <p className="text-xs text-muted-foreground flex items-center gap-1">
-               <Calendar className="h-3 w-3" /> Today, Nov 19
-             </p>
+          <div className="flex items-center gap-4">
+             <div>
+                <h1 className="text-xl font-heading font-semibold text-foreground">Field View</h1>
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Calendar className="h-3 w-3" /> {selectedDate === "today" ? "Today, Nov 19" : "Tomorrow, Nov 20"}
+                </p>
+             </div>
+             
+             <div className="flex items-center bg-muted/50 rounded-lg p-1 border">
+                <Button 
+                    variant={selectedDate === "today" ? "secondary" : "ghost"} 
+                    size="sm" 
+                    className="h-7 text-xs"
+                    onClick={() => setSelectedDate("today")}
+                >
+                    Today
+                </Button>
+                <Button 
+                    variant={selectedDate === "tomorrow" ? "secondary" : "ghost"} 
+                    size="sm" 
+                    className="h-7 text-xs"
+                    onClick={() => setSelectedDate("tomorrow")}
+                >
+                    Tomorrow
+                </Button>
+             </div>
           </div>
+
           <div className="flex items-center gap-2">
              <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "list" | "map")} className="hidden md:block">
                 <TabsList>
@@ -93,14 +129,14 @@ export default function FieldSales() {
                 viewMode === "map" ? "translate-x-full md:translate-x-0 opacity-0 md:opacity-100" : "translate-x-0 opacity-100"
             )}>
                 <div className="p-4 space-y-4">
-                    {todaysRoute.map((stop, index) => (
+                    {currentRoute.map((stop, index) => (
                         <div 
                            key={stop.id}
                            onClick={() => setSelectedStop(stop.id)}
                            className={cn(
                              "relative pl-6 pb-6 border-l-2 cursor-pointer transition-all group",
                              activeStop.id === stop.id ? "border-primary" : "border-muted-foreground/20",
-                             index === todaysRoute.length - 1 && "pb-0"
+                             index === currentRoute.length - 1 && "pb-0"
                            )}
                         >
                            <div className={cn(
@@ -143,7 +179,7 @@ export default function FieldSales() {
                 <div className="absolute inset-0 z-0">
                     <MapContainer 
                         center={activeCoords} 
-                        zoom={13} 
+                        zoom={12} 
                         style={{ height: "100%", width: "100%" }}
                         zoomControl={false}
                     >
@@ -153,7 +189,7 @@ export default function FieldSales() {
                         />
                         <MapUpdater center={activeCoords} />
                         
-                        {todaysRoute.map((stop, index) => {
+                        {currentRoute.map((stop, index) => {
                              if (!stop.location_lat || !stop.location_lng) return null;
                              return (
                                 <Marker 
