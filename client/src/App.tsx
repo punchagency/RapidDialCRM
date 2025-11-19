@@ -12,6 +12,7 @@ import CallReview from "@/pages/CallReview";
 import FieldSales from "@/pages/FieldSales";
 import FieldReps from "@/pages/FieldReps";
 import OrgChart from "@/pages/OrgChart";
+import LeadLoader from "@/pages/LeadLoader";
 import Login from "@/pages/Login";
 
 function Router() {
@@ -28,6 +29,7 @@ function Router() {
       <Route path="/map" component={FieldSales} />
       <Route path="/field-reps" component={FieldReps} />
       <Route path="/org-chart" component={OrgChart} />
+      <Route path="/lead-loader" component={LeadLoader} />
       <Route path="/analytics" component={Dashboard} />
       
       <Route component={NotFound} />

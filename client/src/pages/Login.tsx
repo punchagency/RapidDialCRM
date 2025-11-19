@@ -18,7 +18,7 @@ export default function Login() {
   const [showGoogleAccounts, setShowGoogleAccounts] = useState(false);
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [role, setRole] = useState<"rep" | "field" | "manager">("rep");
+  const [role, setRole] = useState<"rep" | "field" | "manager" | "loader">("rep");
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,10 +28,14 @@ export default function Login() {
     setTimeout(() => {
       localStorage.setItem("user_role", role);
       setIsLoading(false);
-      setLocation("/");
+      setLocation(role === "loader" ? "/lead-loader" : "/");
       toast({
         title: "Welcome back!",
-        description: `Signed in successfully as ${role === "manager" ? "Manager" : role === "field" ? "Field Rep" : "Sales Rep"}.`,
+        description: `Signed in successfully as ${
+          role === "manager" ? "Manager" : 
+          role === "field" ? "Field Rep" : 
+          role === "loader" ? "Lead Loader" : "Sales Rep"
+        }.`,
       });
     }, 1000);
   };
@@ -52,7 +56,7 @@ export default function Login() {
     setTimeout(() => {
       localStorage.setItem("user_role", role);
       setIsLoading(false);
-      setLocation("/");
+      setLocation(role === "loader" ? "/lead-loader" : "/");
       toast({
         title: "Welcome back!",
         description: `Signed in via Google (${selectedEmail})`,
@@ -83,10 +87,11 @@ export default function Login() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="rep" value={role} onValueChange={(v) => setRole(v as any)} className="mb-6">
-              <TabsList className="grid w-full grid-cols-3 bg-muted/50">
-                <TabsTrigger value="rep">Inside</TabsTrigger>
-                <TabsTrigger value="field">Field</TabsTrigger>
-                <TabsTrigger value="manager">Manager</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-4 bg-muted/50">
+                <TabsTrigger value="rep" className="text-xs">Inside</TabsTrigger>
+                <TabsTrigger value="field" className="text-xs">Field</TabsTrigger>
+                <TabsTrigger value="manager" className="text-xs">Mgr</TabsTrigger>
+                <TabsTrigger value="loader" className="text-xs">Loader</TabsTrigger>
               </TabsList>
             </Tabs>
 

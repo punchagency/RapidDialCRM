@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Phone, LayoutDashboard, Users, BarChart3, Settings, LogOut, Map, Plug, Headphones, Star, Briefcase, ShieldCheck, Network, UserCog } from "lucide-react";
+import { Phone, LayoutDashboard, Users, BarChart3, Settings, LogOut, Map, Plug, Headphones, Star, Briefcase, ShieldCheck, Network, UserCog, Database } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import avatar from "@assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
 import managerAvatar from "@assets/generated_images/Professional_user_avatar_2_9f00e114.png";
@@ -8,9 +8,9 @@ import managerAvatar from "@assets/generated_images/Professional_user_avatar_2_9
 export function Sidebar() {
   const [location, setLocation] = useLocation();
   // Initialize state from localStorage to persist across page loads
-  const [userRole, setUserRole] = useState<"rep" | "manager" | "field">(() => {
+  const [userRole, setUserRole] = useState<"rep" | "manager" | "field" | "loader">(() => {
     const saved = localStorage.getItem("user_role");
-    return (saved as "rep" | "manager" | "field") || "rep";
+    return (saved as "rep" | "manager" | "field" | "loader") || "rep";
   });
 
   // Update localStorage whenever role changes
@@ -41,8 +41,13 @@ export function Sidebar() {
     { icon: Users, label: "My Territory", href: "/contacts" },
   ];
 
+  const loaderItems = [
+    { icon: Database, label: "Lead Management", href: "/lead-loader" },
+  ];
+
   const getRoleItems = () => {
     if (userRole === "field") return fieldItems;
+    if (userRole === "loader") return loaderItems;
     return navItems; // Default for Rep and Manager (Manager adds extra below)
   };
 
@@ -127,7 +132,7 @@ export function Sidebar() {
             />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate text-foreground">
-                  {userRole === "manager" ? "Sarah Miller" : userRole === "field" ? "Mike Field" : "Alex Johnson"}
+                  {userRole === "manager" ? "Sarah Miller" : userRole === "field" ? "Mike Field" : userRole === "loader" ? "Data Team" : "Alex Johnson"}
               </p>
               <p className="text-xs text-muted-foreground truncate capitalize">{userRole} Role</p>
             </div>
@@ -139,7 +144,7 @@ export function Sidebar() {
         </Link>
         
         {/* Role Switching Buttons */}
-        <div className="grid grid-cols-3 gap-1 mt-2 mb-2">
+        <div className="grid grid-cols-2 gap-1 mt-2 mb-2">
            <button 
              onClick={() => setUserRole("rep")}
              className={cn(
@@ -166,6 +171,15 @@ export function Sidebar() {
              )}
            >
               Manager
+           </button>
+           <button 
+             onClick={() => setUserRole("loader")}
+             className={cn(
+                 "text-[10px] py-1 rounded border transition-all", 
+                 userRole === "loader" ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
+             )}
+           >
+              Loader
            </button>
         </div>
 
