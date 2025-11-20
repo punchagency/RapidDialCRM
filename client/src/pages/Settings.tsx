@@ -12,146 +12,152 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { User, Bell, Shield, Plug, FileText, Briefcase, Map, Network, CheckCircle } from "lucide-react";
+import { User, Bell, Shield, Plug, FileText, Briefcase, Map, Network, CheckCircle, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function Settings() {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar />
       
-      <main className="flex-1 flex flex-col overflow-hidden relative bg-muted/30">
-        <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-white z-10">
+      <main className="flex-1 flex flex-col overflow-hidden bg-muted/10">
+        <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-white shrink-0">
           <h1 className="text-xl font-heading font-semibold text-foreground">Settings</h1>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-6xl mx-auto">
-            <Tabs defaultValue="statuses" className="space-y-6">
-              <div className="border-b border-border mb-6">
-                <TabsList className="bg-transparent h-12 p-0 w-full flex justify-start overflow-x-auto gap-6">
-                  <TabsTrigger 
-                    value="profile" 
-                    className="gap-2 h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:text-pink-600 data-[state=active]:shadow-none px-1"
-                  >
-                    <User className="h-4 w-4" /> Profile
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="statuses" 
-                    className="gap-2 h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:text-pink-600 data-[state=active]:shadow-none px-1"
-                  >
-                    <CheckCircle className="h-4 w-4" /> Call Statuses
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="team" 
-                    className="gap-2 h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:text-pink-600 data-[state=active]:shadow-none px-1"
-                  >
-                    <Network className="h-4 w-4" /> Team Structure
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="security" 
-                    className="gap-2 h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:text-pink-600 data-[state=active]:shadow-none px-1"
-                  >
-                    <Shield className="h-4 w-4" /> Security
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="field" 
-                    className="gap-2 h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:text-pink-600 data-[state=active]:shadow-none px-1"
-                  >
-                    <Map className="h-4 w-4" /> Field & Route
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="professions" 
-                    className="gap-2 h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:text-pink-600 data-[state=active]:shadow-none px-1"
-                  >
-                    <Briefcase className="h-4 w-4" /> Professions
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="templates" 
-                    className="gap-2 h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:text-pink-600 data-[state=active]:shadow-none px-1"
-                  >
-                    <FileText className="h-4 w-4" /> Templates
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="integrations" 
-                    className="gap-2 h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:text-pink-600 data-[state=active]:shadow-none px-1"
-                  >
-                    <Plug className="h-4 w-4" /> Integrations
-                  </TabsTrigger>
-                  <TabsTrigger 
-                    value="notifications" 
-                    className="gap-2 h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:text-pink-600 data-[state=active]:shadow-none px-1"
-                  >
-                    <Bell className="h-4 w-4" /> Notifications
-                  </TabsTrigger>
+        <div className="flex-1 overflow-hidden">
+          <Tabs defaultValue="statuses" orientation="vertical" className="flex h-full">
+            <aside className="w-64 border-r border-border bg-white/50 overflow-y-auto shrink-0">
+              <div className="p-4">
+                <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 px-2">Configuration</h2>
+                <TabsList className="flex flex-col h-auto w-full bg-transparent p-0 gap-1">
+                  {[
+                    { value: "profile", icon: User, label: "Profile" },
+                    { value: "statuses", icon: CheckCircle, label: "Call Statuses" },
+                    { value: "team", icon: Network, label: "Team Structure" },
+                    { value: "security", icon: Shield, label: "Security" },
+                    { value: "notifications", icon: Bell, label: "Notifications" },
+                  ].map((item) => (
+                    <TabsTrigger 
+                      key={item.value}
+                      value={item.value} 
+                      className={cn(
+                        "w-full justify-start gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all",
+                        "data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none",
+                        "data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/50 data-[state=inactive]:hover:text-foreground",
+                        "border-none"
+                      )}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {item.label}
+                      <ChevronRight className="h-3 w-3 ml-auto opacity-0 data-[state=active]:opacity-50" />
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+
+                <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-4 px-2">System</h2>
+                <TabsList className="flex flex-col h-auto w-full bg-transparent p-0 gap-1">
+                  {[
+                    { value: "field", icon: Map, label: "Field & Route" },
+                    { value: "professions", icon: Briefcase, label: "Professions" },
+                    { value: "templates", icon: FileText, label: "Templates" },
+                    { value: "integrations", icon: Plug, label: "Integrations" },
+                  ].map((item) => (
+                    <TabsTrigger 
+                      key={item.value}
+                      value={item.value} 
+                      className={cn(
+                        "w-full justify-start gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all",
+                        "data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none",
+                        "data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/50 data-[state=inactive]:hover:text-foreground",
+                        "border-none"
+                      )}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {item.label}
+                      <ChevronRight className="h-3 w-3 ml-auto opacity-0 data-[state=active]:opacity-50" />
+                    </TabsTrigger>
+                  ))}
                 </TabsList>
               </div>
+            </aside>
 
-              <TabsContent value="profile" className="mt-0">
-                <Card className="border-none shadow-sm">
-                  <CardHeader>
-                    <CardTitle>Profile Settings</CardTitle>
-                    <CardDescription>Manage your public profile and preferences.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid gap-2">
-                      <Label>Display Name</Label>
-                      <Input defaultValue="Alex Johnson" />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label>Email</Label>
-                      <Input defaultValue="alex@quantumpunch.com" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+            <div className="flex-1 overflow-y-auto bg-slate-50/50">
+              <div className="max-w-5xl mx-auto p-8">
+                <TabsContent value="profile" className="mt-0 space-y-6">
+                   <div>
+                    <h2 className="text-lg font-semibold mb-1">Profile Settings</h2>
+                    <p className="text-sm text-muted-foreground mb-6">Manage your public profile and preferences.</p>
+                    <Card className="border shadow-sm">
+                      <CardContent className="space-y-4 p-6">
+                        <div className="grid gap-2 max-w-md">
+                          <Label>Display Name</Label>
+                          <Input defaultValue="Alex Johnson" />
+                        </div>
+                        <div className="grid gap-2 max-w-md">
+                          <Label>Email</Label>
+                          <Input defaultValue="alex@quantumpunch.com" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
 
-              <TabsContent value="statuses" className="mt-0">
-                <StatusesTab />
-              </TabsContent>
+                <TabsContent value="statuses" className="mt-0">
+                  <StatusesTab />
+                </TabsContent>
 
-              <TabsContent value="team" className="mt-0">
-                <TeamStructureTab />
-              </TabsContent>
+                <TabsContent value="team" className="mt-0">
+                  <TeamStructureTab />
+                </TabsContent>
 
-              <TabsContent value="security" className="mt-0">
-                <SecurityTab />
-              </TabsContent>
+                <TabsContent value="security" className="mt-0">
+                  <SecurityTab />
+                </TabsContent>
 
-              <TabsContent value="field" className="mt-0">
-                <FieldSettingsTab />
-              </TabsContent>
+                <TabsContent value="field" className="mt-0">
+                  <FieldSettingsTab />
+                </TabsContent>
 
-              <TabsContent value="professions" className="mt-0">
-                <ProfessionsTab />
-              </TabsContent>
+                <TabsContent value="professions" className="mt-0">
+                  <ProfessionsTab />
+                </TabsContent>
 
-              <TabsContent value="templates" className="mt-0">
-                <TemplatesTab />
-              </TabsContent>
+                <TabsContent value="templates" className="mt-0">
+                  <TemplatesTab />
+                </TabsContent>
 
-              <TabsContent value="integrations" className="mt-0">
-                <IntegrationsTab />
-              </TabsContent>
-              
-              <TabsContent value="notifications" className="mt-0">
-                <Card className="border-none shadow-sm">
-                   <CardHeader>
-                    <CardTitle>Notification Preferences</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Label>Email Summary</Label>
-                      <Switch defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <Label>Missed Call Alerts</Label>
-                      <Switch defaultChecked />
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
+                <TabsContent value="integrations" className="mt-0">
+                  <IntegrationsTab />
+                </TabsContent>
+                
+                <TabsContent value="notifications" className="mt-0 space-y-6">
+                  <div>
+                    <h2 className="text-lg font-semibold mb-1">Notification Preferences</h2>
+                    <p className="text-sm text-muted-foreground mb-6">Choose how and when you want to be notified.</p>
+                    <Card className="border shadow-sm">
+                      <CardContent className="space-y-0 divide-y p-0">
+                        <div className="flex items-center justify-between p-6">
+                          <div className="space-y-0.5">
+                             <Label className="text-base">Email Summary</Label>
+                             <p className="text-sm text-muted-foreground">Receive a daily summary of team performance.</p>
+                          </div>
+                          <Switch defaultChecked />
+                        </div>
+                        <div className="flex items-center justify-between p-6">
+                          <div className="space-y-0.5">
+                             <Label className="text-base">Missed Call Alerts</Label>
+                             <p className="text-sm text-muted-foreground">Get notified immediately when a call is missed.</p>
+                          </div>
+                          <Switch defaultChecked />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
+              </div>
+            </div>
+          </Tabs>
         </div>
       </main>
     </div>
