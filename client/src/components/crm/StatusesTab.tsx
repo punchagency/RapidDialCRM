@@ -20,10 +20,6 @@ export function StatusesTab() {
 
   // Load statuses on mount
   useEffect(() => {
-    const current = getStatuses();
-    // We need to convert the "icon component" back to "icon name" for editing state
-    // But getStatuses returns the component. 
-    // Let's actually use a different strategy: load from localStorage directly OR use default config
     const saved = localStorage.getItem("custom_statuses");
     if (saved) {
        try {
@@ -80,10 +76,8 @@ export function StatusesTab() {
     const newStatuses = [...statuses];
     newStatuses[index] = { ...newStatuses[index], [field]: value };
     
-    // If label changes, also update value to be URL-friendly if it's a custom one (optional, keeping simple)
-    // Actually, for value, let's keep it stable if possible, or match label if it's new.
     if (field === "label") {
-       newStatuses[index].value = value; // Sync value with label for simplicity in this prototype
+       newStatuses[index].value = value; 
     }
 
     setStatuses(newStatuses);
@@ -92,7 +86,7 @@ export function StatusesTab() {
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="border-none shadow-sm bg-white">
         <CardHeader>
           <div className="flex items-center justify-between">
              <div>
@@ -100,10 +94,15 @@ export function StatusesTab() {
                <CardDescription>Customize the list of outcomes agents can select after a call.</CardDescription>
              </div>
              <div className="flex gap-2">
-               <Button variant="outline" size="sm" onClick={handleReset}>
+               <Button variant="outline" size="sm" onClick={handleReset} className="border-gray-300 text-gray-700">
                  <RotateCcw className="h-4 w-4 mr-2" /> Reset Defaults
                </Button>
-               <Button size="sm" onClick={handleSave} disabled={!isDirty}>
+               <Button 
+                  size="sm" 
+                  onClick={handleSave} 
+                  disabled={!isDirty}
+                  className="bg-pink-500 hover:bg-pink-600 text-white border-none shadow-sm"
+               >
                  <Save className="h-4 w-4 mr-2" /> Save Changes
                </Button>
              </div>
@@ -115,27 +114,28 @@ export function StatusesTab() {
                  {statuses.map((status, index) => {
                     const Icon = ICON_MAP[status.iconName] || ICON_MAP.Star;
                     return (
-                       <div key={index} className="flex items-start gap-3 p-4 border rounded-lg bg-card hover:border-primary/30 transition-colors group">
-                          <div className="mt-3 text-muted-foreground cursor-grab active:cursor-grabbing">
-                             <GripVertical className="h-4 w-4" />
+                       <div key={index} className="flex items-start gap-4 p-6 border rounded-xl bg-white hover:border-gray-300 transition-colors group shadow-sm">
+                          <div className="mt-8 text-gray-300 cursor-grab active:cursor-grabbing hover:text-gray-500 transition-colors">
+                             <GripVertical className="h-5 w-5" />
                           </div>
                           
-                          <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6">
                              {/* Label */}
                              <div className="space-y-2">
-                                <Label>Label</Label>
+                                <Label className="text-xs font-semibold text-gray-500">Label</Label>
                                 <Input 
                                    value={status.label} 
                                    onChange={(e) => updateStatus(index, "label", e.target.value)}
                                    placeholder="e.g. Meeting Booked"
+                                   className="h-10"
                                 />
                              </div>
 
                              {/* Color */}
                              <div className="space-y-2">
-                                <Label>Color Theme</Label>
+                                <Label className="text-xs font-semibold text-gray-500">Color Theme</Label>
                                 <Select value={status.color} onValueChange={(v) => updateStatus(index, "color", v)}>
-                                   <SelectTrigger>
+                                   <SelectTrigger className="h-10">
                                       <SelectValue />
                                    </SelectTrigger>
                                    <SelectContent>
@@ -153,11 +153,11 @@ export function StatusesTab() {
 
                              {/* Icon */}
                              <div className="space-y-2">
-                                <Label>Icon</Label>
+                                <Label className="text-xs font-semibold text-gray-500">Icon</Label>
                                 <Select value={status.iconName} onValueChange={(v) => updateStatus(index, "iconName", v)}>
-                                   <SelectTrigger>
+                                   <SelectTrigger className="h-10">
                                       <div className="flex items-center gap-2">
-                                         <Icon className="h-4 w-4 text-muted-foreground" />
+                                         <Icon className="h-4 w-4 text-gray-500" />
                                          <span>{status.iconName}</span>
                                       </div>
                                    </SelectTrigger>
@@ -181,14 +181,19 @@ export function StatusesTab() {
                           </div>
 
                           {/* Preview & Remove */}
-                          <div className="flex flex-col items-center gap-2 mt-8">
+                          <div className="flex flex-col items-center justify-center gap-4 mt-6 ml-4 w-24">
                              <div className={cn(
-                                "p-2 rounded-md border text-xs font-semibold whitespace-nowrap",
+                                "px-3 py-1.5 rounded-md border text-xs font-semibold whitespace-nowrap shadow-sm min-w-[80px] text-center",
                                 status.color
                              )}>
                                 {status.label || "Preview"}
                              </div>
-                             <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive h-8 w-8" onClick={() => removeStatus(index)}>
+                             <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="text-gray-400 hover:text-red-500 hover:bg-red-50 h-8 w-8 transition-colors" 
+                                onClick={() => removeStatus(index)}
+                             >
                                 <Trash2 className="h-4 w-4" />
                              </Button>
                           </div>
@@ -196,7 +201,7 @@ export function StatusesTab() {
                     );
                  })}
 
-                 <Button variant="outline" className="w-full border-dashed" onClick={addStatus}>
+                 <Button variant="outline" className="w-full border-dashed h-12 text-gray-500 hover:text-gray-900 hover:border-gray-400 hover:bg-gray-50" onClick={addStatus}>
                     <Plus className="h-4 w-4 mr-2" /> Add New Status
                  </Button>
               </div>
