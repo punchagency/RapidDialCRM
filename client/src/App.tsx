@@ -14,6 +14,7 @@ import FieldReps from "@/pages/FieldReps";
 import OrgChart from "@/pages/OrgChart";
 import LeadLoader from "@/pages/LeadLoader";
 import Login from "@/pages/Login";
+import HipaaCompliance from "@/pages/HipaaCompliance";
 import { UserRoleProvider } from "@/lib/UserRoleContext";
 
 function Router() {
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/org-chart" component={OrgChart} />
       <Route path="/lead-loader" component={LeadLoader} />
       <Route path="/analytics" component={Dashboard} />
+      <Route path="/hipaa" component={HipaaCompliance} />
       
       <Route component={NotFound} />
     </Switch>
