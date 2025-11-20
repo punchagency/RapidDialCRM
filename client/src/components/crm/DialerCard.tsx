@@ -18,6 +18,7 @@ import { getStatuses } from "@/lib/statusUtils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface DialerCardProps {
   contact: Contact;
@@ -81,6 +82,10 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
   const [isAddContactOpen, setIsAddContactOpen] = useState(false);
   const [newContactType, setNewContactType] = useState<"admin" | "provider">("admin");
   const [newContact, setNewContact] = useState({ name: "", role: "", email: "", phone: "" });
+
+  // Collapsible states
+  const [isStakeholdersOpen, setIsStakeholdersOpen] = useState(true);
+  const [isTeamOpen, setIsTeamOpen] = useState(true);
 
   const handleAddContact = () => {
     const newId = `new-${Date.now()}`;
@@ -237,155 +242,167 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
 
         {/* KEY CONTACTS SECTION */}
         <Card className="border-none shadow-sm">
-            <CardContent className="pt-6">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-heading font-semibold flex items-center gap-2 text-muted-foreground text-sm uppercase tracking-wider">
-                        <Users className="h-4 w-4" />
-                        Key Stakeholders
-                    </h3>
-                    
-                    <Dialog open={isAddContactOpen} onOpenChange={setIsAddContactOpen}>
-                        <DialogTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-6 text-xs gap-1">
-                                <Plus className="h-3 w-3" /> Add
+            <Collapsible open={isStakeholdersOpen} onOpenChange={setIsStakeholdersOpen}>
+                <CardContent className="pt-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <CollapsibleTrigger asChild>
+                            <Button variant="ghost" size="sm" className="p-0 hover:bg-transparent h-auto font-heading font-semibold flex items-center gap-2 text-muted-foreground text-sm uppercase tracking-wider flex-1 justify-start">
+                                <Users className="h-4 w-4" />
+                                Key Stakeholders
+                                <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", isStakeholdersOpen ? "" : "-rotate-90")} />
                             </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Add New Stakeholder</DialogTitle>
-                            </DialogHeader>
-                            {/* ... Form ... */}
-                            <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                    <Label>Stakeholder Type</Label>
-                                    <div className="flex gap-2">
-                                        <Button 
-                                            variant={newContactType === "admin" ? "default" : "outline"} 
-                                            onClick={() => setNewContactType("admin")}
-                                            className="flex-1"
-                                        >
-                                            Client Admin
-                                        </Button>
-                                        <Button 
-                                            variant={newContactType === "provider" ? "default" : "outline"} 
-                                            onClick={() => setNewContactType("provider")}
-                                            className="flex-1"
-                                        >
-                                            Provider
-                                        </Button>
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Name</Label>
-                                    <Input value={newContact.name} onChange={e => setNewContact({...newContact, name: e.target.value})} placeholder="Full Name" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Role / Title</Label>
-                                    <Input value={newContact.role} onChange={e => setNewContact({...newContact, role: e.target.value})} placeholder="e.g. Office Manager" />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
+                        </CollapsibleTrigger>
+                        
+                        <Dialog open={isAddContactOpen} onOpenChange={setIsAddContactOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="ghost" size="sm" className="h-6 text-xs gap-1" onClick={(e) => e.stopPropagation()}>
+                                    <Plus className="h-3 w-3" /> Add
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Add New Stakeholder</DialogTitle>
+                                </DialogHeader>
+                                {/* ... Form ... */}
+                                <div className="space-y-4 py-4">
                                     <div className="space-y-2">
-                                        <Label>Email</Label>
-                                        <Input value={newContact.email} onChange={e => setNewContact({...newContact, email: e.target.value})} placeholder="email@example.com" />
+                                        <Label>Stakeholder Type</Label>
+                                        <div className="flex gap-2">
+                                            <Button 
+                                                variant={newContactType === "admin" ? "default" : "outline"} 
+                                                onClick={() => setNewContactType("admin")}
+                                                className="flex-1"
+                                            >
+                                                Client Admin
+                                            </Button>
+                                            <Button 
+                                                variant={newContactType === "provider" ? "default" : "outline"} 
+                                                onClick={() => setNewContactType("provider")}
+                                                className="flex-1"
+                                            >
+                                                Provider
+                                            </Button>
+                                        </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Phone</Label>
-                                        <Input value={newContact.phone} onChange={e => setNewContact({...newContact, phone: e.target.value})} placeholder="(555) 000-0000" />
+                                        <Label>Name</Label>
+                                        <Input value={newContact.name} onChange={e => setNewContact({...newContact, name: e.target.value})} placeholder="Full Name" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Role / Title</Label>
+                                        <Input value={newContact.role} onChange={e => setNewContact({...newContact, role: e.target.value})} placeholder="e.g. Office Manager" />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label>Email</Label>
+                                            <Input value={newContact.email} onChange={e => setNewContact({...newContact, email: e.target.value})} placeholder="email@example.com" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Phone</Label>
+                                            <Input value={newContact.phone} onChange={e => setNewContact({...newContact, phone: e.target.value})} placeholder="(555) 000-0000" />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsAddContactOpen(false)}>Cancel</Button>
-                                <Button onClick={handleAddContact} disabled={!newContact.name}>Add Contact</Button>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-
-                <div className="space-y-6">
-                    {/* Client Admins */}
-                    <div>
-                        <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase flex items-center gap-1">
-                            <UserCog className="h-3 w-3" /> Client Admins
-                        </p>
-                        {clientAdmins.length > 0 ? (
-                            <div className="space-y-2">
-                                {clientAdmins.map((admin) => (
-                                    <ContactRow 
-                                        key={admin.id} 
-                                        contact={admin} 
-                                        onRemove={() => handleRemoveContact(admin.id, "admin")}
-                                    />
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-xs text-muted-foreground italic">No admins listed.</p>
-                        )}
+                                <DialogFooter>
+                                    <Button variant="outline" onClick={() => setIsAddContactOpen(false)}>Cancel</Button>
+                                    <Button onClick={handleAddContact} disabled={!newContact.name}>Add Contact</Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
                     </div>
 
-                    <Separator />
-                    
-                    {/* Provider Contacts */}
-                    <div>
-                        <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase flex items-center gap-1">
-                            <DoctorIcon className="h-3 w-3" /> Providers
-                        </p>
-                        {providerContacts.length > 0 ? (
-                            <div className="space-y-2">
-                                {providerContacts.map((provider) => (
-                                    <ContactRow 
-                                        key={provider.id} 
-                                        contact={provider} 
-                                        onRemove={() => handleRemoveContact(provider.id, "provider")}
-                                    />
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-xs text-muted-foreground italic">No providers listed.</p>
-                        )}
-                    </div>
-                </div>
-            </CardContent>
+                    <CollapsibleContent className="space-y-6">
+                        {/* Client Admins */}
+                        <div>
+                            <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase flex items-center gap-1">
+                                <UserCog className="h-3 w-3" /> Client Admins
+                            </p>
+                            {clientAdmins.length > 0 ? (
+                                <div className="space-y-2">
+                                    {clientAdmins.map((admin) => (
+                                        <ContactRow 
+                                            key={admin.id} 
+                                            contact={admin} 
+                                            onRemove={() => handleRemoveContact(admin.id, "admin")}
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-muted-foreground italic">No admins listed.</p>
+                            )}
+                        </div>
+
+                        <Separator />
+                        
+                        {/* Provider Contacts */}
+                        <div>
+                            <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase flex items-center gap-1">
+                                <DoctorIcon className="h-3 w-3" /> Providers
+                            </p>
+                            {providerContacts.length > 0 ? (
+                                <div className="space-y-2">
+                                    {providerContacts.map((provider) => (
+                                        <ContactRow 
+                                            key={provider.id} 
+                                            contact={provider} 
+                                            onRemove={() => handleRemoveContact(provider.id, "provider")}
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-muted-foreground italic">No providers listed.</p>
+                            )}
+                        </div>
+                    </CollapsibleContent>
+                </CardContent>
+            </Collapsible>
         </Card>
         
         {/* Account Team Section (SEPARATED LISTS) */}
         <Card className="border-none shadow-sm">
-          <CardContent className="pt-6">
-             <h3 className="font-heading font-semibold flex items-center gap-2 mb-4 text-muted-foreground text-sm uppercase tracking-wider">
-               <Network className="h-4 w-4" />
-               Internal Team Structure
-             </h3>
-             
-             <div className="space-y-6">
-                {/* Manager */}
-                <div>
-                     <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase flex items-center gap-1">
-                        <Briefcase className="h-3 w-3" /> Account Manager
-                     </p>
-                     <TeamMemberRow member={manager} />
-                </div>
+          <Collapsible open={isTeamOpen} onOpenChange={setIsTeamOpen}>
+            <CardContent className="pt-6">
+               <div className="flex items-center mb-4">
+                   <CollapsibleTrigger asChild>
+                        <Button variant="ghost" size="sm" className="p-0 hover:bg-transparent h-auto font-heading font-semibold flex items-center gap-2 text-muted-foreground text-sm uppercase tracking-wider w-full justify-start">
+                            <Network className="h-4 w-4" />
+                            Internal Team Structure
+                            <ChevronDown className={cn("h-4 w-4 transition-transform duration-200", isTeamOpen ? "" : "-rotate-90")} />
+                        </Button>
+                   </CollapsibleTrigger>
+               </div>
+               
+               <CollapsibleContent className="space-y-6">
+                  {/* Manager */}
+                  <div>
+                       <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase flex items-center gap-1">
+                          <Briefcase className="h-3 w-3" /> Account Manager
+                       </p>
+                       <TeamMemberRow member={manager} />
+                  </div>
 
-                <Separator />
+                  <Separator />
 
-                {/* Inside Reps */}
-                <div>
-                     <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase flex items-center gap-1">
-                        <Headset className="h-3 w-3" /> Inside Sales
-                     </p>
-                     <TeamMemberRow member={insideRep} />
-                </div>
+                  {/* Inside Reps */}
+                  <div>
+                       <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase flex items-center gap-1">
+                          <Headset className="h-3 w-3" /> Inside Sales
+                       </p>
+                       <TeamMemberRow member={insideRep} />
+                  </div>
 
-                <Separator />
+                  <Separator />
 
-                {/* Field Reps */}
-                <div>
-                     <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase flex items-center gap-1">
-                        <Map className="h-3 w-3" /> Field Sales
-                     </p>
-                     <TeamMemberRow member={fieldRep} />
-                </div>
-             </div>
-          </CardContent>
+                  {/* Field Reps */}
+                  <div>
+                       <p className="text-[10px] font-semibold text-muted-foreground mb-2 uppercase flex items-center gap-1">
+                          <Map className="h-3 w-3" /> Field Sales
+                       </p>
+                       <TeamMemberRow member={fieldRep} />
+                  </div>
+               </CollapsibleContent>
+            </CardContent>
+          </Collapsible>
         </Card>
 
         <Card className="border-none shadow-sm flex-1">
@@ -509,61 +526,51 @@ function InfoItem({ icon: Icon, label, value }: { icon: any, label: string, valu
   );
 }
 
-function TeamMemberRow({ member }: { member: any }) {
-   return (
-      <div className="flex items-center gap-3 p-2 hover:bg-muted/50 rounded-lg transition-colors">
-         <Avatar className="h-8 w-8 border border-border/50">
-            {member.image ? (
-               <AvatarImage src={member.image} />
-            ) : null}
-            <AvatarFallback className={cn("text-[10px] font-medium", member.color)}>
-               {member.initial}
-            </AvatarFallback>
-         </Avatar>
-         <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-foreground truncate">{member.name}</p>
-            <p className="text-[10px] text-muted-foreground truncate">{member.role}</p>
-         </div>
-      </div>
-   );
-}
-
-function ContactRow({ contact, onRemove }: { contact: any, onRemove: () => void }) {
-   return (
-      <div className="group/row flex items-center justify-between p-2.5 hover:bg-muted/50 rounded-lg transition-colors border border-transparent hover:border-border/40 relative">
-         <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2">
-               <p className="text-sm font-medium text-foreground truncate">{contact.name}</p>
-               {contact.isPrimary && (
-                  <span className="px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[9px] font-bold uppercase tracking-wider">Primary</span>
-               )}
+function ContactRow({ contact, onRemove }: { contact: SubContact, onRemove: () => void }) {
+    return (
+        <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors group relative">
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary shrink-0">
+                {contact.name.split(" ").map(n => n[0]).join("")}
             </div>
-            <p className="text-xs text-muted-foreground truncate">{contact.role}</p>
-            <div className="flex items-center gap-3 mt-1">
-               <span className="text-[10px] text-muted-foreground flex items-center gap-1 hover:text-primary cursor-pointer">
-                  <Mail className="h-3 w-3" /> {contact.email}
-               </span>
-               <span className="text-[10px] text-muted-foreground flex items-center gap-1 hover:text-primary cursor-pointer">
-                  <Phone className="h-3 w-3" /> {contact.phone}
-               </span>
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                    <p className="text-sm font-semibold text-foreground truncate">{contact.name}</p>
+                    <Badge variant="secondary" className="text-[10px] h-4 px-1">{contact.role}</Badge>
+                </div>
+                <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> {contact.email}</span>
+                    <span className="flex items-center gap-1"><Phone className="h-3 w-3" /> {contact.phone}</span>
+                </div>
             </div>
-         </div>
-         <div className="flex gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary">
-               <Phone className="h-3.5 w-3.5" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-primary">
-               <Mail className="h-3.5 w-3.5" />
-            </Button>
             <Button 
                 variant="ghost" 
                 size="icon" 
-                className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                className="h-6 w-6 opacity-0 group-hover:opacity-100 absolute right-2 top-2 transition-opacity hover:bg-destructive/10 hover:text-destructive"
                 onClick={onRemove}
             >
-               <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 className="h-3 w-3" />
             </Button>
-         </div>
-      </div>
-   );
+        </div>
+    )
+}
+
+function TeamMemberRow({ member }: { member: any }) {
+    return (
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/20">
+            {member.image ? (
+                <Avatar className="h-8 w-8">
+                    <AvatarImage src={member.image} />
+                    <AvatarFallback>{member.initial}</AvatarFallback>
+                </Avatar>
+            ) : (
+                <div className={cn("h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold", member.color)}>
+                    {member.initial}
+                </div>
+            )}
+            <div>
+                <p className="text-sm font-semibold text-foreground">{member.name}</p>
+                <p className="text-xs text-muted-foreground">{member.role}</p>
+            </div>
+        </div>
+    )
 }
