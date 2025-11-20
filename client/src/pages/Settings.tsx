@@ -11,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { User, Bell, Shield, Plug, FileText, Briefcase, Map, Network, CheckCircle } from "lucide-react";
 
@@ -21,27 +20,74 @@ export default function Settings() {
       <Sidebar />
       
       <main className="flex-1 flex flex-col overflow-hidden relative bg-muted/30">
-        <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-card z-10">
+        <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-white z-10">
           <h1 className="text-xl font-heading font-semibold text-foreground">Settings</h1>
         </header>
 
         <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             <Tabs defaultValue="statuses" className="space-y-6">
-              <TabsList className="bg-card border border-border p-1 w-full flex justify-start overflow-x-auto">
-                <TabsTrigger value="profile" className="gap-2"><User className="h-4 w-4" /> Profile</TabsTrigger>
-                <TabsTrigger value="statuses" className="gap-2"><CheckCircle className="h-4 w-4" /> Call Statuses</TabsTrigger>
-                <TabsTrigger value="team" className="gap-2"><Network className="h-4 w-4" /> Team Structure</TabsTrigger>
-                <TabsTrigger value="security" className="gap-2"><Shield className="h-4 w-4" /> Security</TabsTrigger>
-                <TabsTrigger value="field" className="gap-2"><Map className="h-4 w-4" /> Field & Route</TabsTrigger>
-                <TabsTrigger value="professions" className="gap-2"><Briefcase className="h-4 w-4" /> Professions</TabsTrigger>
-                <TabsTrigger value="templates" className="gap-2"><FileText className="h-4 w-4" /> Templates</TabsTrigger>
-                <TabsTrigger value="integrations" className="gap-2"><Plug className="h-4 w-4" /> Integrations</TabsTrigger>
-                <TabsTrigger value="notifications" className="gap-2"><Bell className="h-4 w-4" /> Notifications</TabsTrigger>
-              </TabsList>
+              <div className="border-b border-border mb-6">
+                <TabsList className="bg-transparent h-12 p-0 w-full flex justify-start overflow-x-auto gap-6">
+                  <TabsTrigger 
+                    value="profile" 
+                    className="gap-2 h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:text-pink-600 data-[state=active]:shadow-none px-1"
+                  >
+                    <User className="h-4 w-4" /> Profile
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="statuses" 
+                    className="gap-2 h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:text-pink-600 data-[state=active]:shadow-none px-1"
+                  >
+                    <CheckCircle className="h-4 w-4" /> Call Statuses
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="team" 
+                    className="gap-2 h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:text-pink-600 data-[state=active]:shadow-none px-1"
+                  >
+                    <Network className="h-4 w-4" /> Team Structure
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="security" 
+                    className="gap-2 h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:text-pink-600 data-[state=active]:shadow-none px-1"
+                  >
+                    <Shield className="h-4 w-4" /> Security
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="field" 
+                    className="gap-2 h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:text-pink-600 data-[state=active]:shadow-none px-1"
+                  >
+                    <Map className="h-4 w-4" /> Field & Route
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="professions" 
+                    className="gap-2 h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:text-pink-600 data-[state=active]:shadow-none px-1"
+                  >
+                    <Briefcase className="h-4 w-4" /> Professions
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="templates" 
+                    className="gap-2 h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:text-pink-600 data-[state=active]:shadow-none px-1"
+                  >
+                    <FileText className="h-4 w-4" /> Templates
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="integrations" 
+                    className="gap-2 h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:text-pink-600 data-[state=active]:shadow-none px-1"
+                  >
+                    <Plug className="h-4 w-4" /> Integrations
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="notifications" 
+                    className="gap-2 h-12 rounded-none border-b-2 border-transparent data-[state=active]:border-pink-500 data-[state=active]:text-pink-600 data-[state=active]:shadow-none px-1"
+                  >
+                    <Bell className="h-4 w-4" /> Notifications
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
-              <TabsContent value="profile">
-                <Card>
+              <TabsContent value="profile" className="mt-0">
+                <Card className="border-none shadow-sm">
                   <CardHeader>
                     <CardTitle>Profile Settings</CardTitle>
                     <CardDescription>Manage your public profile and preferences.</CardDescription>
@@ -59,36 +105,36 @@ export default function Settings() {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="statuses">
+              <TabsContent value="statuses" className="mt-0">
                 <StatusesTab />
               </TabsContent>
 
-              <TabsContent value="team">
+              <TabsContent value="team" className="mt-0">
                 <TeamStructureTab />
               </TabsContent>
 
-              <TabsContent value="security">
+              <TabsContent value="security" className="mt-0">
                 <SecurityTab />
               </TabsContent>
 
-              <TabsContent value="field">
+              <TabsContent value="field" className="mt-0">
                 <FieldSettingsTab />
               </TabsContent>
 
-              <TabsContent value="professions">
+              <TabsContent value="professions" className="mt-0">
                 <ProfessionsTab />
               </TabsContent>
 
-              <TabsContent value="templates">
+              <TabsContent value="templates" className="mt-0">
                 <TemplatesTab />
               </TabsContent>
 
-              <TabsContent value="integrations">
+              <TabsContent value="integrations" className="mt-0">
                 <IntegrationsTab />
               </TabsContent>
               
-              <TabsContent value="notifications">
-                <Card>
+              <TabsContent value="notifications" className="mt-0">
+                <Card className="border-none shadow-sm">
                    <CardHeader>
                     <CardTitle>Notification Preferences</CardTitle>
                   </CardHeader>
