@@ -155,9 +155,9 @@ export function Sidebar() {
 
       {/* HIPAA Compliance Indicator */}
       <div className="px-6 py-2">
-         <div className="flex items-center gap-2 text-[10px] text-secondary-foreground bg-secondary/20 px-2 py-1 rounded border border-secondary/30 w-fit">
-            <ShieldCheck className="h-3 w-3 text-secondary" />
-            <span className="font-medium text-secondary-foreground/80">HIPAA Secure</span>
+         <div className="flex items-center gap-2 text-[10px] text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-md border border-emerald-200 w-fit shadow-sm">
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+            <span className="font-bold tracking-wide">HIPAA Secure</span>
          </div>
       </div>
 
