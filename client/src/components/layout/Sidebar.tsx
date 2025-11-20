@@ -4,21 +4,13 @@ import { Phone, LayoutDashboard, Users, BarChart3, Settings, LogOut, Map, Plug, 
 import { Link, useLocation } from "wouter";
 import avatar from "@assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
 import managerAvatar from "@assets/generated_images/Professional_user_avatar_2_9f00e114.png";
+import { useUserRole } from "@/lib/UserRoleContext";
 
 export function Sidebar() {
   const [location, setLocation] = useLocation();
-  // Initialize state from localStorage to persist across page loads
-  const [userRole, setUserRole] = useState<"rep" | "manager" | "field" | "loader">(() => {
-    const saved = localStorage.getItem("user_role");
-    return (saved as "rep" | "manager" | "field" | "loader") || "rep";
-  });
+  const { userRole, setUserRole } = useUserRole();
 
   const [, forceUpdate] = useState(0);
-
-  // Update localStorage whenever role changes
-  useEffect(() => {
-    localStorage.setItem("user_role", userRole);
-  }, [userRole]);
 
   // Listen to history changes to force re-render for query params
   useEffect(() => {

@@ -14,6 +14,7 @@ import FieldReps from "@/pages/FieldReps";
 import OrgChart from "@/pages/OrgChart";
 import LeadLoader from "@/pages/LeadLoader";
 import Login from "@/pages/Login";
+import { UserRoleProvider } from "@/lib/UserRoleContext";
 
 function Router() {
   return (
@@ -40,10 +41,12 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Router />
-      </TooltipProvider>
+      <UserRoleProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </UserRoleProvider>
     </QueryClientProvider>
   );
 }
