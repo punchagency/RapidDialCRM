@@ -1,11 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { useUserRole } from "@/lib/UserRoleContext";
-import { getRoleLabel, getRoleColor, permissionMatrix } from "@/lib/permissions";
+import { getRoleLabel, getRoleColor, permissionMatrix, UserRole } from "@/lib/permissions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Check, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Check, X, Edit2, Save, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 const permissionGroups = [
   {
@@ -84,9 +86,44 @@ const permissionGroups = [
 ];
 
 export default function PermissionsSummary() {
-  const { userRole, canAccess } = useUserRole();
+  const { userRole } = useUserRole();
+  const [editMode, setEditMode] = useState(false);
+  const [editingRoles, setEditingRoles] = useState<Record<UserRole, Record<string, boolean>>>(() => {
+    const initial: Record<UserRole, Record<string, boolean>> = {
+      admin: { ...permissionMatrix.admin },
+      manager: { ...permissionMatrix.manager },
+      sales_rep: { ...permissionMatrix.sales_rep },
+      viewer: { ...permissionMatrix.viewer },
+    };
+    return initial;
+  });
+  const { toast } = useToast();
   const roleData = permissionMatrix[userRole];
   const isAdmin = userRole === "admin";
+
+  const togglePermission = (role: UserRole, permission: string) => {
+    setEditingRoles((prev) => ({
+      ...prev,
+      [role]: {
+        ...prev[role],
+        [permission]: !prev[role][permission],
+      },
+    }));
+  };
+
+  const handleSave = () => {
+    toast({ title: "Permissions Updated", description: "Role permissions have been saved successfully." });
+    setEditMode(false);
+  };
+
+  const handleCancel = () => {
+    const reset: Record<UserRole, Record<string, boolean>> = {};
+    (["admin", "manager", "sales_rep", "viewer"] as const).forEach((role) => {
+      reset[role] = { ...permissionMatrix[role] };
+    });
+    setEditingRoles(reset);
+    setEditMode(false);
+  };
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -98,10 +135,20 @@ export default function PermissionsSummary() {
             <h1 className="text-xl font-heading font-semibold text-foreground">Permissions Summary</h1>
             <p className="text-xs text-muted-foreground mt-1">View your access level and capabilities</p>
           </div>
+          {isAdmin && (
+            <Button
+              onClick={() => setEditMode(!editMode)}
+              className={cn(editMode ? "bg-destructive hover:bg-destructive/90" : "gap-2")}
+              variant={editMode ? "destructive" : "default"}
+            >
+              <Edit2 className="h-4 w-4" />
+              {editMode ? "Cancel Editing" : "Edit Role Permissions"}
+            </Button>
+          )}
         </header>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto p-8">
+          <div className="max-w-6xl mx-auto p-8">
             {/* Role Card */}
             <Card className="mb-8 border-2 bg-gradient-to-br from-primary/5 to-primary/2">
               <CardHeader>
@@ -124,92 +171,152 @@ export default function PermissionsSummary() {
               </CardContent>
             </Card>
 
-            {/* Permissions Grid */}
-            <div className="space-y-6">
-              {permissionGroups.map((group) => (
-                <div key={group.name}>
-                  <h2 className="text-lg font-semibold mb-3 text-foreground">{group.name}</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {group.permissions.map((perm) => {
-                      const hasAccess = roleData[perm as keyof typeof roleData] ?? false;
-                      const description = group.descriptions[perm as keyof typeof group.descriptions];
-                      return (
-                        <Card key={perm} className={cn(
-                          "transition-all border",
-                          hasAccess 
-                            ? "bg-green-50/50 border-green-200 hover:border-green-300" 
-                            : "bg-red-50/30 border-red-200/50"
-                        )}>
-                          <CardContent className="p-4 flex items-center gap-3">
-                            <div className={cn(
-                              "p-1.5 rounded-md",
-                              hasAccess ? "bg-green-100" : "bg-gray-100"
-                            )}>
-                              {hasAccess ? (
-                                <Check className="h-4 w-4 text-green-700" />
-                              ) : (
-                                <X className="h-4 w-4 text-gray-400" />
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <p className={cn(
-                                "text-sm font-medium",
-                                hasAccess ? "text-green-900" : "text-gray-600"
-                              )}>
-                                {description}
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Comparison Table - Admin Only */}
-            {isAdmin && (
-            <div className="mt-12 pt-8 border-t">
-              <h2 className="text-lg font-semibold mb-4 text-foreground">Role Comparison</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border">
-                      <th className="text-left py-2 px-3 font-semibold">Permission</th>
-                      <th className="text-center py-2 px-3 font-semibold">Admin</th>
-                      <th className="text-center py-2 px-3 font-semibold">Manager</th>
-                      <th className="text-center py-2 px-3 font-semibold">Sales Rep</th>
-                      <th className="text-center py-2 px-3 font-semibold">Viewer</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {permissionGroups.flatMap((group) =>
-                      group.permissions.map((perm) => (
-                        <tr key={perm} className="border-b border-border/50 hover:bg-muted/30">
-                          <td className="py-3 px-3 text-xs text-muted-foreground">
+            {/* Your Permissions */}
+            <div>
+              <h2 className="text-lg font-semibold mb-3 text-foreground">Your Permissions</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {permissionGroups.map((group) =>
+                  group.permissions.map((perm) => {
+                    const hasAccess = roleData[perm as keyof typeof roleData];
+                    return (
+                      <Card key={perm} className={cn(
+                        "transition-all border",
+                        hasAccess 
+                          ? "bg-green-50/50 border-green-200 hover:border-green-300" 
+                          : "bg-red-50/30 border-red-200/50"
+                      )}>
+                        <CardContent className="p-4 flex items-center gap-3">
+                          <div className={cn(
+                            "p-1.5 rounded-md",
+                            hasAccess ? "bg-green-100" : "bg-gray-100"
+                          )}>
+                            {hasAccess ? (
+                              <Check className="h-4 w-4 text-green-700" />
+                            ) : (
+                              <X className="h-4 w-4 text-gray-400" />
+                            )}
+                          </div>
+                          <p className={cn(
+                            "text-sm font-medium",
+                            hasAccess ? "text-green-900" : "text-gray-600"
+                          )}>
                             {group.descriptions[perm as keyof typeof group.descriptions] || perm}
-                          </td>
-                          {(["admin", "manager", "sales_rep", "viewer"] as const).map((role) => {
-                            const roleMatrix = permissionMatrix[role as keyof typeof permissionMatrix];
-                            const hasPermission = roleMatrix[perm as keyof typeof roleMatrix];
-                            return (
-                              <td key={role} className="text-center py-3 px-3">
-                                {hasPermission ? (
-                                  <Check className="h-4 w-4 text-green-600 mx-auto" />
-                                ) : (
-                                  <X className="h-4 w-4 text-gray-300 mx-auto" />
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
+                          </p>
+                        </CardContent>
+                      </Card>
+                    );
+                  })
+                )}
               </div>
             </div>
+
+            {/* Admin Edit Permissions */}
+            {isAdmin && editMode && (
+              <div className="mt-12 pt-8 border-t">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-semibold text-foreground">Edit Role Permissions</h2>
+                  <div className="flex gap-2">
+                    <Button onClick={handleCancel} variant="outline" className="gap-2">
+                      <RotateCcw className="h-4 w-4" /> Reset
+                    </Button>
+                    <Button onClick={handleSave} className="bg-green-600 hover:bg-green-700 gap-2">
+                      <Save className="h-4 w-4" /> Save Changes
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-3 px-4 font-semibold">Permission</th>
+                        {(["admin", "manager", "sales_rep", "viewer"] as const).map((role) => (
+                          <th key={role} className="text-center py-3 px-4 font-semibold">
+                            <div className="text-xs">{getRoleLabel(role)}</div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {permissionGroups.flatMap((group) =>
+                        group.permissions.map((perm) => (
+                          <tr key={perm} className="border-b border-border/50 hover:bg-muted/30">
+                            <td className="py-3 px-4 text-xs font-medium text-foreground">
+                              {group.descriptions[perm as keyof typeof group.descriptions] || perm}
+                            </td>
+                            {(["admin", "manager", "sales_rep", "viewer"] as const).map((role: UserRole) => {
+                              const hasPermission = editingRoles[role][perm];
+                              return (
+                                <td key={role} className="text-center py-3 px-4">
+                                  <button
+                                    onClick={() => togglePermission(role, perm)}
+                                    className={cn(
+                                      "p-2 rounded-md transition-colors",
+                                      hasPermission
+                                        ? "bg-green-100 hover:bg-green-200"
+                                        : "bg-gray-100 hover:bg-gray-200"
+                                    )}
+                                    data-testid={`toggle-permission-${role}-${perm}`}
+                                  >
+                                    {hasPermission ? (
+                                      <Check className="h-4 w-4 text-green-700 mx-auto" />
+                                    ) : (
+                                      <X className="h-4 w-4 text-gray-400 mx-auto" />
+                                    )}
+                                  </button>
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Read-Only Comparison Table - Admin Only */}
+            {isAdmin && !editMode && (
+              <div className="mt-12 pt-8 border-t">
+                <h2 className="text-lg font-semibold mb-4 text-foreground">Role Permissions Overview</h2>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left py-2 px-3 font-semibold">Permission</th>
+                        {(["admin", "manager", "sales_rep", "viewer"] as const).map((role) => (
+                          <th key={role} className="text-center py-2 px-3 font-semibold">{getRoleLabel(role)}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {permissionGroups.flatMap((group) =>
+                        group.permissions.map((perm) => (
+                          <tr key={perm} className="border-b border-border/50 hover:bg-muted/30">
+                            <td className="py-3 px-3 text-xs text-muted-foreground">
+                              {group.descriptions[perm as keyof typeof group.descriptions] || perm}
+                            </td>
+                            {(["admin", "manager", "sales_rep", "viewer"] as const).map((role) => {
+                              const roleMatrix = permissionMatrix[role as keyof typeof permissionMatrix];
+                              const hasPermission = roleMatrix[perm as keyof typeof roleMatrix];
+                              return (
+                                <td key={role} className="text-center py-3 px-3">
+                                  {hasPermission ? (
+                                    <Check className="h-4 w-4 text-green-600 mx-auto" />
+                                  ) : (
+                                    <X className="h-4 w-4 text-gray-300 mx-auto" />
+                                  )}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             )}
           </div>
         </div>
