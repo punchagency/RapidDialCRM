@@ -185,22 +185,19 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <input
-            ref={fileInputRef}
+            id="csv-file-input"
             type="file"
             accept=".csv"
             onChange={handleFileUpload}
             className="hidden"
             data-testid="csv-file-input"
+            disabled={isLoading}
           />
           
           <div className="flex gap-2">
-            <Button
-              onClick={(e) => {
-                e.preventDefault();
-                fileInputRef.current?.click();
-              }}
-              disabled={isLoading}
-              className="gap-2"
+            <label
+              htmlFor="csv-file-input"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 cursor-pointer font-medium text-sm transition-colors"
               data-testid="upload-csv-button"
             >
               {isLoading ? (
@@ -214,7 +211,7 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
                   Upload Leads
                 </>
               )}
-            </Button>
+            </label>
             
             <a
               href="#"
