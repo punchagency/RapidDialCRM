@@ -94,6 +94,7 @@ export default function PermissionsSummary() {
       manager: { ...permissionMatrix.manager },
       sales_rep: { ...permissionMatrix.sales_rep },
       viewer: { ...permissionMatrix.viewer },
+      loader: { ...permissionMatrix.loader },
     };
     return initial;
   });
@@ -122,6 +123,7 @@ export default function PermissionsSummary() {
       manager: { ...permissionMatrix.manager },
       sales_rep: { ...permissionMatrix.sales_rep },
       viewer: { ...permissionMatrix.viewer },
+      loader: { ...permissionMatrix.loader },
     };
     setEditingRoles(reset);
     setEditMode(false);
@@ -235,6 +237,7 @@ export default function PermissionsSummary() {
                         <th className="text-center py-3 px-4 font-semibold min-w-24">Administrator</th>
                         <th className="text-center py-3 px-4 font-semibold min-w-24">Manager</th>
                         <th className="text-center py-3 px-4 font-semibold min-w-24">Sales Rep</th>
+                        <th className="text-center py-3 px-4 font-semibold min-w-24">Data Loader</th>
                         <th className="text-center py-3 px-4 font-semibold min-w-24">Viewer</th>
                       </tr>
                     </thead>
@@ -255,7 +258,7 @@ export default function PermissionsSummary() {
                                 <td className="py-3 px-4 text-xs text-foreground pl-8">
                                   {permDesc}
                                 </td>
-                                {(["admin", "manager", "sales_rep", "viewer"] as const).map((role: UserRole) => {
+                                {(["admin", "manager", "sales_rep", "loader", "viewer"] as const).map((role: UserRole) => {
                                   const hasPermission = editingRoles[role][perm];
                                   return (
                                     <td key={role} className="text-center py-3 px-4">
@@ -310,7 +313,7 @@ export default function PermissionsSummary() {
                             <td className="py-3 px-3 text-xs text-muted-foreground">
                               {group.descriptions[perm as keyof typeof group.descriptions] || perm}
                             </td>
-                            {(["admin", "manager", "sales_rep", "viewer"] as const).map((role) => {
+                            {(["admin", "manager", "sales_rep", "loader", "viewer"] as const).map((role) => {
                               const roleMatrix = permissionMatrix[role as keyof typeof permissionMatrix];
                               const hasPermission = roleMatrix[perm as keyof typeof roleMatrix];
                               return (

@@ -192,13 +192,13 @@ export function Sidebar() {
         {/* Role Switching Buttons */}
         <div className="grid grid-cols-2 gap-1 mt-2 mb-2">
            <button 
-             onClick={() => setUserRole("sales_rep")}
+             onClick={() => setUserRole("admin")}
              className={cn(
                  "text-[10px] py-1 rounded border transition-all", 
-                 userRole === "sales_rep" ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
+                 userRole === "admin" ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
              )}
            >
-              Sales Rep
+              Admin
            </button>
            <button 
              onClick={() => setUserRole("manager")}
@@ -210,13 +210,22 @@ export function Sidebar() {
               Manager
            </button>
            <button 
-             onClick={() => setUserRole("admin")}
+             onClick={() => setUserRole("sales_rep")}
              className={cn(
                  "text-[10px] py-1 rounded border transition-all", 
-                 userRole === "admin" ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
+                 userRole === "sales_rep" ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
              )}
            >
-              Admin
+              Sales Rep
+           </button>
+           <button 
+             onClick={() => setUserRole("loader")}
+             className={cn(
+                 "text-[10px] py-1 rounded border transition-all", 
+                 userRole === "loader" ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
+             )}
+           >
+              Loader
            </button>
            <button 
              onClick={() => setUserRole("viewer")}
