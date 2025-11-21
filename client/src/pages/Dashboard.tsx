@@ -358,7 +358,7 @@ export default function Dashboard() {
              <CardContent className="p-6 text-center">
                 <Database className="h-8 w-8 mx-auto text-purple-500 mb-2" />
                 <h3 className="font-bold text-lg">Total Records</h3>
-                <p className="text-sm text-gray-500 mb-4">14,250 Leads</p>
+                <p className="text-sm text-gray-500 mb-4">{MOCK_CONTACTS.length.toLocaleString()} Leads</p>
                 <Button variant="ghost" className="w-full">Manage Database</Button>
              </CardContent>
           </Card>
