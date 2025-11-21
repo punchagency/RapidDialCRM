@@ -85,7 +85,7 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
 
   // Collapsible states
   const [isStakeholdersOpen, setIsStakeholdersOpen] = useState(true);
-  const [isTeamOpen, setIsTeamOpen] = useState(true);
+  const [isTeamOpen, setIsTeamOpen] = useState(false);
 
   const handleAddContact = () => {
     const newId = `new-${Date.now()}`;
