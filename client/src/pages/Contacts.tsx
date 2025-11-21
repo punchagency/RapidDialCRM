@@ -39,7 +39,7 @@ export default function Contacts() {
       
       <main className="flex-1 flex flex-col overflow-hidden relative bg-muted/30">
         <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-card z-10">
-          <h1 className="text-xl font-heading font-semibold text-foreground">Contacts</h1>
+          <h1 className="text-xl font-heading font-semibold text-foreground">Contacts ({MOCK_CONTACTS.length})</h1>
           <div className="flex items-center gap-4">
             <div className="relative w-64">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
