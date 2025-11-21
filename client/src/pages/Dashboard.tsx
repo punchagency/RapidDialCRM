@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { GamificationWidget } from "@/components/crm/GamificationWidget";
 import { MOCK_CONTACTS } from "@/lib/mockData";
@@ -12,13 +12,23 @@ import mapBg from "@assets/generated_images/Subtle_abstract_map_background_for_C
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/lib/UserRoleContext";
 import { FileUploadModal } from "@/components/crm/FileUploadModal";
+import { GeocodingStatus } from "@/components/crm/GeocodingStatus";
 import { useToast } from "@/hooks/use-toast";
+import { startBackgroundGeocoding } from "@/lib/backgroundGeocoder";
 
 export default function Dashboard() {
   const { userRole } = useUserRole();
   const statuses = getStatuses();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const { toast } = useToast();
+
+  // Start background geocoding on mount if needed
+  useEffect(() => {
+    const hasUngeocoded = MOCK_CONTACTS.some(c => (!c.location_lat || c.location_lat === 0) && c.address);
+    if (hasUngeocoded) {
+      startBackgroundGeocoding();
+    }
+  }, []);
 
   const handleFileUpload = async (file: File) => {
     // Parse CSV file
@@ -337,6 +347,7 @@ export default function Dashboard() {
 
   const LoaderDashboard = () => (
     <div className="max-w-[1600px] mx-auto h-full flex flex-col">
+       <GeocodingStatus />
        <div className="grid grid-cols-3 gap-6 mb-8">
           <Card className="bg-white shadow-sm border-none">
              <CardContent className="p-6 text-center">
