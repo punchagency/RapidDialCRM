@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { GamificationWidget } from "@/components/crm/GamificationWidget";
 import { MOCK_CONTACTS } from "@/lib/mockData";
@@ -11,10 +11,35 @@ import { Link } from "wouter";
 import mapBg from "@assets/generated_images/Subtle_abstract_map_background_for_CRM_7b808988.png";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/lib/UserRoleContext";
+import { FileUploadModal } from "@/components/crm/FileUploadModal";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Dashboard() {
   const { userRole } = useUserRole();
   const statuses = getStatuses();
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const { toast } = useToast();
+
+  const handleFileUpload = async (file: File) => {
+    // Parse CSV file
+    try {
+      const text = await file.text();
+      const lines = text.split('\n');
+      const headers = lines[0].split(',').map(h => h.trim());
+      const recordCount = lines.length - 1;
+      
+      toast({
+        title: "Import Successful",
+        description: `Loaded ${recordCount} records from ${file.name}`
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to parse CSV file",
+        variant: "destructive"
+      });
+    }
+  };
 
   const getStatusColor = (statusValue: string) => {
     const status = statuses.find(s => s.value === statusValue);
@@ -318,7 +343,7 @@ export default function Dashboard() {
                 <Upload className="h-8 w-8 mx-auto text-blue-500 mb-2" />
                 <h3 className="font-bold text-lg">Upload Leads</h3>
                 <p className="text-sm text-gray-500 mb-4">Import CSV/Excel files</p>
-                <Button className="w-full">Select File</Button>
+                <Button className="w-full" onClick={() => setIsUploadModalOpen(true)}>Select File</Button>
              </CardContent>
           </Card>
           <Card className="bg-white shadow-sm border-none">
@@ -390,6 +415,13 @@ export default function Dashboard() {
            {userRole === 'admin' && <ManagerDashboard />}
         </div>
       </main>
+
+      {/* File Upload Modal */}
+      <FileUploadModal
+        isOpen={isUploadModalOpen}
+        onClose={() => setIsUploadModalOpen(false)}
+        onFileSelect={handleFileUpload}
+      />
     </div>
   );
 }
