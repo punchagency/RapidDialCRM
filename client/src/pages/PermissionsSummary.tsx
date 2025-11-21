@@ -117,10 +117,12 @@ export default function PermissionsSummary() {
   };
 
   const handleCancel = () => {
-    const reset: Record<UserRole, Record<string, boolean>> = {};
-    (["admin", "manager", "sales_rep", "viewer"] as const).forEach((role) => {
-      reset[role] = { ...permissionMatrix[role] };
-    });
+    const reset: Record<UserRole, Record<string, boolean>> = {
+      admin: { ...permissionMatrix.admin },
+      manager: { ...permissionMatrix.manager },
+      sales_rep: { ...permissionMatrix.sales_rep },
+      viewer: { ...permissionMatrix.viewer },
+    };
     setEditingRoles(reset);
     setEditMode(false);
   };
@@ -225,53 +227,71 @@ export default function PermissionsSummary() {
                   </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border">
-                        <th className="text-left py-3 px-4 font-semibold">Permission</th>
-                        {(["admin", "manager", "sales_rep", "viewer"] as const).map((role) => (
-                          <th key={role} className="text-center py-3 px-4 font-semibold">
-                            <div className="text-xs">{getRoleLabel(role)}</div>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {permissionGroups.flatMap((group) =>
-                        group.permissions.map((perm) => (
-                          <tr key={perm} className="border-b border-border/50 hover:bg-muted/30">
-                            <td className="py-3 px-4 text-xs font-medium text-foreground">
-                              {group.descriptions[perm as keyof typeof group.descriptions] || perm}
-                            </td>
-                            {(["admin", "manager", "sales_rep", "viewer"] as const).map((role: UserRole) => {
-                              const hasPermission = editingRoles[role][perm];
-                              return (
-                                <td key={role} className="text-center py-3 px-4">
-                                  <button
-                                    onClick={() => togglePermission(role, perm)}
-                                    className={cn(
-                                      "p-2 rounded-md transition-colors",
-                                      hasPermission
-                                        ? "bg-green-100 hover:bg-green-200"
-                                        : "bg-gray-100 hover:bg-gray-200"
-                                    )}
-                                    data-testid={`toggle-permission-${role}-${perm}`}
-                                  >
-                                    {hasPermission ? (
-                                      <Check className="h-4 w-4 text-green-700 mx-auto" />
-                                    ) : (
-                                      <X className="h-4 w-4 text-gray-400 mx-auto" />
-                                    )}
-                                  </button>
+                <div className="space-y-6">
+                  {permissionGroups.map((group) => (
+                    <div key={group.name} className="border border-border rounded-lg overflow-hidden bg-white">
+                      {/* Group Header */}
+                      <div className="bg-primary/5 px-4 py-3 border-b border-border">
+                        <h3 className="text-sm font-bold text-foreground">{group.name}</h3>
+                      </div>
+
+                      {/* Group Permissions Table */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <tbody>
+                            {group.permissions.map((perm, idx) => (
+                              <tr 
+                                key={perm} 
+                                className={cn(
+                                  idx !== group.permissions.length - 1 ? "border-b border-border/30" : "",
+                                  "hover:bg-muted/20 transition-colors"
+                                )}
+                              >
+                                <td className="py-3 px-4 text-xs font-medium text-foreground w-48">
+                                  {group.descriptions[perm as keyof typeof group.descriptions] || perm}
                                 </td>
-                              );
-                            })}
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+                                {(["admin", "manager", "sales_rep", "viewer"] as const).map((role: UserRole) => {
+                                  const hasPermission = editingRoles[role][perm];
+                                  return (
+                                    <td key={role} className="text-center py-3 px-4">
+                                      <button
+                                        onClick={() => togglePermission(role, perm)}
+                                        className={cn(
+                                          "p-2 rounded-md transition-colors",
+                                          hasPermission
+                                            ? "bg-green-100 hover:bg-green-200"
+                                            : "bg-gray-100 hover:bg-gray-200"
+                                        )}
+                                        data-testid={`toggle-permission-${role}-${perm}`}
+                                      >
+                                        {hasPermission ? (
+                                          <Check className="h-4 w-4 text-green-700 mx-auto" />
+                                        ) : (
+                                          <X className="h-4 w-4 text-gray-400 mx-auto" />
+                                        )}
+                                      </button>
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                          {group === permissionGroups[0] && (
+                            <thead className="bg-muted/30 sticky top-0">
+                              <tr className="border-b border-border">
+                                <th className="text-left py-2 px-4 font-semibold text-xs">Permission</th>
+                                {(["admin", "manager", "sales_rep", "viewer"] as const).map((role) => (
+                                  <th key={role} className="text-center py-2 px-4 font-semibold text-xs">
+                                    {getRoleLabel(role)}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                          )}
+                        </table>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}
