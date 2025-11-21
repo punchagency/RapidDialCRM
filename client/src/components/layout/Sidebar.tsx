@@ -149,12 +149,18 @@ export function Sidebar() {
         )}
       </div>
 
-      {/* HIPAA Compliance Indicator */}
-      <div className="px-6 py-2">
+      {/* HIPAA Compliance & Permissions */}
+      <div className="px-6 py-2 space-y-2">
         <Link href="/hipaa">
            <div className="flex items-center gap-2 text-[10px] text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-md border border-emerald-200 w-fit shadow-sm cursor-pointer hover:bg-emerald-100 transition-colors">
               <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
               <span className="font-bold tracking-wide">HIPAA Secure</span>
+           </div>
+        </Link>
+        <Link href="/permissions">
+           <div className="flex items-center gap-2 text-[10px] text-blue-800 bg-blue-50 px-3 py-1.5 rounded-md border border-blue-200 w-fit shadow-sm cursor-pointer hover:bg-blue-100 transition-colors">
+              <ShieldCheck className="h-3.5 w-3.5 text-blue-600" />
+              <span className="font-bold tracking-wide">My Permissions</span>
            </div>
         </Link>
       </div>

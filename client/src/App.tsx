@@ -16,6 +16,7 @@ import LeadLoader from "@/pages/LeadLoader";
 import Login from "@/pages/Login";
 import HipaaCompliance from "@/pages/HipaaCompliance";
 import ScriptsManagement from "@/pages/ScriptsManagement";
+import PermissionsSummary from "@/pages/PermissionsSummary";
 import { UserRoleProvider } from "@/lib/UserRoleContext";
 
 function Router() {
@@ -36,6 +37,7 @@ function Router() {
       <Route path="/analytics" component={Dashboard} />
       <Route path="/hipaa" component={HipaaCompliance} />
       <Route path="/scripts" component={ScriptsManagement} />
+      <Route path="/permissions" component={PermissionsSummary} />
       
       <Route component={NotFound} />
     </Switch>

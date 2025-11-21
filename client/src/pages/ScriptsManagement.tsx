@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useLocation } from "wouter";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,10 +10,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileText, Plus, Edit2, Trash2, Copy, Archive, Bookmark, Settings, Save, X, Eye, Code, GitBranch, Briefcase } from "lucide-react";
+import { FileText, Plus, Edit2, Trash2, Copy, Archive, Bookmark, Settings, Save, X, Eye, Code, GitBranch, Briefcase, Lock } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useUserRole } from "@/lib/UserRoleContext";
 
 interface Script {
   id: string;
@@ -42,6 +44,28 @@ interface Profession {
 }
 
 export default function ScriptsManagement() {
+  const { canAccess } = useUserRole();
+  const [, setLocation] = useLocation();
+
+  // Only admins can access this page
+  if (!canAccess("scripts_edit")) {
+    return (
+      <div className="flex h-screen bg-background overflow-hidden">
+        <Sidebar />
+        <main className="flex-1 flex items-center justify-center bg-muted/10">
+          <div className="text-center max-w-md">
+            <Lock className="h-12 w-12 text-destructive mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-foreground mb-2">Access Denied</h1>
+            <p className="text-muted-foreground mb-6">Scripts Management is only available to Administrators. Your current role does not have permission to access this page.</p>
+            <Button onClick={() => setLocation("/")} className="gap-2">
+              Return to Dashboard
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   const [scripts, setScripts] = useState<Script[]>([
     {
       id: "1",

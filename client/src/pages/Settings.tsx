@@ -12,10 +12,33 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { User, Bell, Shield, Plug, FileText, Briefcase, Map, Network, CheckCircle, ChevronRight } from "lucide-react";
+import { User, Bell, Shield, Plug, FileText, Briefcase, Map, Network, CheckCircle, ChevronRight, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useUserRole } from "@/lib/UserRoleContext";
 
 export default function Settings() {
+  const { canAccess } = useUserRole();
+  
+  const configTabs = [
+    { value: "profile", icon: User, label: "Profile" },
+    { value: "statuses", icon: CheckCircle, label: "Call Statuses" },
+    { value: "team", icon: Network, label: "Team Structure" },
+    { value: "security", icon: Shield, label: "Security" },
+    { value: "notifications", icon: Bell, label: "Notifications" },
+  ];
+
+  const systemTabs = [
+    { value: "field", icon: Map, label: "Field & Route", permission: "settings_access" as const },
+    { value: "professions", icon: Briefcase, label: "Professions", permission: "settings_access" as const },
+    { value: "templates", icon: FileText, label: "Templates", permission: "settings_access" as const },
+    { value: "integrations", icon: Plug, label: "Integrations", permission: "settings_integrations" as const },
+  ].filter(tab => !tab.permission || canAccess(tab.permission));
+
+  const visibleConfigTabs = configTabs.filter(tab => {
+    if (tab.value === "team") return canAccess("team_management");
+    return true;
+  });
+
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar />
@@ -31,13 +54,7 @@ export default function Settings() {
               <div className="p-4">
                 <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 px-2">Configuration</h2>
                 <TabsList className="flex flex-col h-auto w-full bg-transparent p-0 gap-1">
-                  {[
-                    { value: "profile", icon: User, label: "Profile" },
-                    { value: "statuses", icon: CheckCircle, label: "Call Statuses" },
-                    { value: "team", icon: Network, label: "Team Structure" },
-                    { value: "security", icon: Shield, label: "Security" },
-                    { value: "notifications", icon: Bell, label: "Notifications" },
-                  ].map((item) => (
+                  {visibleConfigTabs.map((item) => (
                     <TabsTrigger 
                       key={item.value}
                       value={item.value} 
@@ -55,14 +72,11 @@ export default function Settings() {
                   ))}
                 </TabsList>
 
-                <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-4 px-2">System</h2>
-                <TabsList className="flex flex-col h-auto w-full bg-transparent p-0 gap-1">
-                  {[
-                    { value: "field", icon: Map, label: "Field & Route" },
-                    { value: "professions", icon: Briefcase, label: "Professions" },
-                    { value: "templates", icon: FileText, label: "Templates" },
-                    { value: "integrations", icon: Plug, label: "Integrations" },
-                  ].map((item) => (
+                {systemTabs.length > 0 && (
+                  <>
+                    <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-4 px-2">System</h2>
+                    <TabsList className="flex flex-col h-auto w-full bg-transparent p-0 gap-1">
+                      {systemTabs.map((item) => (
                     <TabsTrigger 
                       key={item.value}
                       value={item.value} 
