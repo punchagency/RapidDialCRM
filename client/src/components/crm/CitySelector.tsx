@@ -1,8 +1,13 @@
 import React from "react";
-import { Button } from "@/components/ui/button";
-import { MapPin } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { CITIES } from "@/lib/cityData";
+import { MapPin, ChevronDown } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { getAllCities, getCityLabel } from "@/lib/cityData";
 
 interface CitySelectorProps {
   selectedCity: string;
@@ -10,23 +15,30 @@ interface CitySelectorProps {
 }
 
 export function CitySelector({ selectedCity, onCityChange }: CitySelectorProps) {
-  const cities = Object.values(CITIES);
+  const cities = getAllCities();
 
   return (
-    <div className="flex items-center bg-muted/50 rounded-lg p-1 border gap-1">
-      {cities.map((city) => (
-        <Button
-          key={city.id}
-          variant={selectedCity === city.id ? "secondary" : "ghost"}
-          size="sm"
-          className="h-7 text-xs gap-1"
-          onClick={() => onCityChange(city.id)}
-          data-testid={`city-selector-${city.id}`}
-        >
-          <MapPin className="h-3 w-3" />
-          {city.name}
-        </Button>
-      ))}
-    </div>
+    <Select value={selectedCity} onValueChange={onCityChange}>
+      <SelectTrigger className="w-48 h-9 text-sm" data-testid="city-selector-trigger">
+        <div className="flex items-center gap-2">
+          <MapPin className="h-4 w-4" />
+          <SelectValue placeholder="Select City" />
+        </div>
+      </SelectTrigger>
+      <SelectContent>
+        {cities.map((city) => (
+          <SelectItem 
+            key={city.id} 
+            value={city.id}
+            data-testid={`city-option-${city.id}`}
+          >
+            <div className="flex items-center gap-2">
+              <MapPin className="h-3 w-3" />
+              {city.label}
+            </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
