@@ -227,53 +227,64 @@ export default function PermissionsSummary() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {permissionGroups.map((group) => (
-                    <Card key={group.name} className="border shadow-sm">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-bold">{group.name}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="p-0">
-                        <div className="divide-y divide-border/30">
+                <div className="overflow-x-auto border border-border rounded-lg">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50 sticky top-0">
+                      <tr className="border-b border-border">
+                        <th className="text-left py-3 px-4 font-semibold">Permission</th>
+                        <th className="text-center py-3 px-4 font-semibold min-w-24">Administrator</th>
+                        <th className="text-center py-3 px-4 font-semibold min-w-24">Manager</th>
+                        <th className="text-center py-3 px-4 font-semibold min-w-24">Sales Rep</th>
+                        <th className="text-center py-3 px-4 font-semibold min-w-24">Viewer</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {permissionGroups.map((group) => (
+                        <React.Fragment key={group.name}>
+                          {/* Category Header Row */}
+                          <tr className="bg-primary/5 border-b border-border hover:bg-primary/10">
+                            <td colSpan={5} className="py-2.5 px-4 font-bold text-sm text-foreground">
+                              {group.name}
+                            </td>
+                          </tr>
+                          {/* Permission Rows */}
                           {group.permissions.map((perm) => {
                             const permDesc = group.descriptions[perm as keyof typeof group.descriptions] || perm;
                             return (
-                              <div key={perm} className="flex items-center justify-between p-3 hover:bg-muted/20 transition-colors">
-                                <span className="text-xs font-medium text-foreground pr-4 flex-1">
+                              <tr key={perm} className="border-b border-border/30 hover:bg-muted/20">
+                                <td className="py-3 px-4 text-xs text-foreground pl-8">
                                   {permDesc}
-                                </span>
-                                <div className="flex gap-2">
-                                  {(["admin", "manager", "sales_rep", "viewer"] as const).map((role: UserRole) => {
-                                    const hasPermission = editingRoles[role][perm];
-                                    return (
+                                </td>
+                                {(["admin", "manager", "sales_rep", "viewer"] as const).map((role: UserRole) => {
+                                  const hasPermission = editingRoles[role][perm];
+                                  return (
+                                    <td key={role} className="text-center py-3 px-4">
                                       <button
-                                        key={role}
                                         onClick={() => togglePermission(role, perm)}
                                         className={cn(
-                                          "p-1.5 rounded transition-colors",
+                                          "p-2 rounded transition-colors",
                                           hasPermission
                                             ? "bg-green-100 hover:bg-green-200"
                                             : "bg-gray-100 hover:bg-gray-200"
                                         )}
-                                        title={`${getRoleLabel(role)}`}
                                         data-testid={`toggle-permission-${role}-${perm}`}
                                       >
                                         {hasPermission ? (
-                                          <Check className="h-3.5 w-3.5 text-green-700" />
+                                          <Check className="h-4 w-4 text-green-700 mx-auto" />
                                         ) : (
-                                          <X className="h-3.5 w-3.5 text-gray-400" />
+                                          <X className="h-4 w-4 text-gray-400 mx-auto" />
                                         )}
                                       </button>
-                                    );
-                                  })}
-                                </div>
-                              </div>
+                                    </td>
+                                  );
+                                })}
+                              </tr>
                             );
                           })}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </React.Fragment>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             )}
