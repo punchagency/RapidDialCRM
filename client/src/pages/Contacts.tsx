@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { MOCK_CONTACTS } from "@/lib/mockData";
 import { getStatuses } from "@/lib/statusUtils";
@@ -6,17 +6,32 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Phone, MoreHorizontal, Mail, MapPin } from "lucide-react";
+import { Search, Filter, Phone, MoreHorizontal, Mail, MapPin, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
 
 export default function Contacts() {
+  const [searchQuery, setSearchQuery] = useState("");
   const statuses = getStatuses();
 
   const getStatusColor = (statusValue: string) => {
     const status = statuses.find(s => s.value === statusValue);
     return status ? status.color : "bg-secondary text-secondary-foreground";
   };
+
+  const filteredContacts = useMemo(() => {
+    if (!searchQuery.trim()) return MOCK_CONTACTS;
+    
+    const query = searchQuery.toLowerCase();
+    return MOCK_CONTACTS.filter(contact => 
+      contact.name.toLowerCase().includes(query) ||
+      contact.company.toLowerCase().includes(query) ||
+      contact.phone.toLowerCase().includes(query) ||
+      contact.email.toLowerCase().includes(query) ||
+      contact.address.toLowerCase().includes(query) ||
+      contact.city?.toLowerCase().includes(query)
+    );
+  }, [searchQuery]);
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -28,7 +43,22 @@ export default function Contacts() {
           <div className="flex items-center gap-4">
             <div className="relative w-64">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search contacts..." className="pl-9 bg-muted/50 border-transparent focus:bg-card transition-all" />
+              <Input 
+                placeholder="Search contacts..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 bg-muted/50 border-transparent focus:bg-card transition-all" 
+                data-testid="contact-search-input"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground transition-colors"
+                  data-testid="clear-search-button"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
             <Button variant="outline" size="icon">
               <Filter className="h-4 w-4" />
@@ -39,7 +69,16 @@ export default function Contacts() {
 
         <div className="flex-1 overflow-y-auto p-6">
           <div className="max-w-6xl mx-auto space-y-4">
-            {MOCK_CONTACTS.map((contact) => (
+            {filteredContacts.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No contacts found matching "{searchQuery}"</p>
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-muted-foreground mb-2">
+                  {filteredContacts.length} contact{filteredContacts.length !== 1 ? 's' : ''} found
+                </p>
+                {filteredContacts.map((contact) => (
               <Link key={contact.id} href={`/dialer?contactId=${contact.id}`}>
                 <Card className="group hover:shadow-md transition-all border-border/60 cursor-pointer mb-4">
                     <CardContent className="p-4 flex items-center gap-4">
@@ -94,7 +133,9 @@ export default function Contacts() {
                     </CardContent>
                 </Card>
               </Link>
-            ))}
+                ))}
+              </>
+            )}
           </div>
         </div>
       </main>
