@@ -147,8 +147,8 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
         address: c.address,
         email: c.email,
         name: c.name,
-        title: c.title,
-        city: c.city,
+        title: c.title || 'Healthcare',
+        city: c.lastNotes.split(' • ')[1] || '',
         zip: c.zip
       }));
       
