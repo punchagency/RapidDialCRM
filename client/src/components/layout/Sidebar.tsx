@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 
 export function Sidebar() {
   const [location, setLocation] = useLocation();
-  const { userRole, setUserRole } = useUserRole();
+  const { userRole, setUserRole, canAccess } = useUserRole();
 
   const [, forceUpdate] = useState(0);
 
@@ -50,39 +50,21 @@ export function Sidebar() {
 
   const getVisibleNavItems = () => {
     const baseItems = [
-      { icon: LayoutDashboard, label: "Dashboard", href: "/", permission: "dashboard_view" },
-      { icon: Phone, label: "Power Dialer", href: "/dialer", permission: "dialer_access" },
-      { icon: Users, label: "Contacts", href: "/contacts", permission: "contacts_view" },
-      { icon: Map, label: "Territory", href: "/map", permission: "territories_view" },
-      { icon: BarChart3, label: "Analytics", href: "/analytics", permission: "analytics_view" },
-      { icon: FileText, label: "Scripts", href: "/scripts", permission: "scripts_view" },
+      { icon: LayoutDashboard, label: "Dashboard", href: "/", permission: "dashboard_view" as const },
+      { icon: Phone, label: "Power Dialer", href: "/dialer", permission: "dialer_access" as const },
+      { icon: Users, label: "Contacts", href: "/contacts", permission: "contacts_view" as const },
+      { icon: Map, label: "Territory", href: "/map", permission: "territories_view" as const },
+      { icon: BarChart3, label: "Analytics", href: "/analytics", permission: "analytics_view" as const },
+      { icon: FileText, label: "Scripts", href: "/scripts", permission: "scripts_view" as const },
     ];
-    return baseItems.filter(item => userRole.canAccess(item.permission as any));
+    return baseItems.filter(item => canAccess(item.permission));
   };
-
-  const navItems = [
-    { icon: LayoutDashboard, label: "Dashboard", href: "/" },
-    { icon: Phone, label: "Power Dialer", href: "/dialer" },
-    { icon: Users, label: "Contacts", href: "/contacts" },
-    { icon: Map, label: "Territory", href: "/map" },
-    { icon: BarChart3, label: "Analytics", href: "/analytics" },
-    { icon: FileText, label: "Scripts", href: "/scripts" },
-  ];
 
   const managerItems = [
     { icon: Headphones, label: "Call Review", href: "/call-review" },
     { icon: UserCog, label: "Field Reps", href: "/field-reps?tab=field" },
-    { icon: Headset, label: "Inside Reps", href: "/field-reps?tab=inside" }, // Separated link
+    { icon: Headset, label: "Inside Reps", href: "/field-reps?tab=inside" },
     { icon: Network, label: "Org Chart", href: "/org-chart" },
-  ];
-
-  const fieldItems = [
-    { icon: Map, label: "My Route", href: "/map" },
-    { icon: Users, label: "My Territory", href: "/contacts" },
-  ];
-
-  const loaderItems = [
-    { icon: Database, label: "Lead Management", href: "/lead-loader" },
   ];
 
   const getRoleItems = () => {
@@ -190,9 +172,9 @@ export function Sidebar() {
             />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate text-foreground">
-                  {userRole === "manager" ? "Sarah Miller" : userRole === "field" ? "Mike Field" : userRole === "loader" ? "Data Team" : "Alex Johnson"}
+                  {userRole === "manager" ? "Sarah Miller" : userRole === "admin" ? "Admin User" : "Alex Johnson"}
               </p>
-              <p className="text-xs text-muted-foreground truncate capitalize">{userRole} Role</p>
+              <p className="text-xs text-muted-foreground truncate capitalize">{userRole.replace(/_/g, ' ')} Role</p>
             </div>
             <Settings className={cn(
               "h-4 w-4 transition-colors", 
@@ -204,22 +186,13 @@ export function Sidebar() {
         {/* Role Switching Buttons */}
         <div className="grid grid-cols-2 gap-1 mt-2 mb-2">
            <button 
-             onClick={() => setUserRole("rep")}
+             onClick={() => setUserRole("sales_rep")}
              className={cn(
                  "text-[10px] py-1 rounded border transition-all", 
-                 userRole === "rep" ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
+                 userRole === "sales_rep" ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
              )}
            >
-              Inside
-           </button>
-           <button 
-             onClick={() => setUserRole("field")}
-             className={cn(
-                 "text-[10px] py-1 rounded border transition-all", 
-                 userRole === "field" ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
-             )}
-           >
-              Field
+              Sales Rep
            </button>
            <button 
              onClick={() => setUserRole("manager")}
@@ -231,13 +204,22 @@ export function Sidebar() {
               Manager
            </button>
            <button 
-             onClick={() => setUserRole("loader")}
+             onClick={() => setUserRole("admin")}
              className={cn(
                  "text-[10px] py-1 rounded border transition-all", 
-                 userRole === "loader" ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
+                 userRole === "admin" ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
              )}
            >
-              Loader
+              Admin
+           </button>
+           <button 
+             onClick={() => setUserRole("viewer")}
+             className={cn(
+                 "text-[10px] py-1 rounded border transition-all", 
+                 userRole === "viewer" ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
+             )}
+           >
+              Viewer
            </button>
         </div>
 

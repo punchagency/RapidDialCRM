@@ -104,7 +104,6 @@ export const permissionMatrix: Record<UserRole, PermissionMatrix> = {
     settings_scripts_cms: false,
     settings_billing: false,
     analytics_view: true,
-    analytics_view_own: true,
     territories_view: true,
     territories_view_all: false,
     territories_edit: false,
