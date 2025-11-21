@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Phone, MapPin, Building2, Clock, DollarSign, Stethoscope, History, Check, ArrowRight, Loader2, Trophy, Mail, MessageSquare, Users, Briefcase, Shield, UserCog, Stethoscope as DoctorIcon, Plus, X, Trash2, ChevronDown, ChevronRight, Network, Headset, Map } from "lucide-react";
+import { Phone, MapPin, Building2, Clock, DollarSign, Stethoscope, History, Check, ArrowRight, Loader2, Trophy, Mail, MessageSquare, Users, Briefcase, Shield, UserCog, Stethoscope as DoctorIcon, Plus, X, Trash2, ChevronDown, ChevronRight, Network, Headset, Map, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { EmailComposer } from "@/components/crm/EmailComposer";
@@ -446,7 +446,10 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
           <CardContent className="p-0 flex flex-col h-full">
              <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
                 <div className="px-6 pt-4 border-b border-border">
-                  <TabsList className="grid w-full grid-cols-2 mb-2">
+                  <TabsList className="grid w-full grid-cols-3 mb-2">
+                    <TabsTrigger value="scripts" className="gap-2">
+                      <FileText className="h-4 w-4" /> Scripts
+                    </TabsTrigger>
                     <TabsTrigger value="notes" className="gap-2">
                       <MessageSquare className="h-4 w-4" /> Call Notes
                     </TabsTrigger>
@@ -455,6 +458,26 @@ export function DialerCard({ contact, onComplete }: DialerCardProps) {
                     </TabsTrigger>
                   </TabsList>
                 </div>
+
+                <TabsContent value="scripts" className="flex-1 flex flex-col m-0">
+                   <div className="p-6 flex-1 overflow-y-auto">
+                      <h3 className="font-heading font-semibold mb-4 text-sm">Call Scripts</h3>
+                      <div className="space-y-4">
+                        <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                          <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase">Opening</p>
+                          <p className="text-sm leading-relaxed">"Hi {contact.name}, this is Alex from QuantumPunch. Do you have a quick minute to chat about how we're helping practices like {contact.company} streamline their scheduling?"</p>
+                        </div>
+                        <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                          <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase">Pain Point</p>
+                          <p className="text-sm leading-relaxed">"Many of your peers tell us they're spending 2-3 hours daily on administrative scheduling. Are you facing similar challenges?"</p>
+                        </div>
+                        <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                          <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase">Close</p>
+                          <p className="text-sm leading-relaxed">"Would it make sense to grab 15 minutes next week to see how we could help? I'm thinking Tuesday or Wednesday work best?"</p>
+                        </div>
+                      </div>
+                   </div>
+                </TabsContent>
 
                 <TabsContent value="notes" className="flex-1 flex flex-col m-0">
                    <div className="p-6 flex-1 flex flex-col">
