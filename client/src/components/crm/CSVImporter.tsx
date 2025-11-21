@@ -195,7 +195,10 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
           
           <div className="flex gap-2">
             <Button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={(e) => {
+                e.preventDefault();
+                fileInputRef.current?.click();
+              }}
               disabled={isLoading}
               className="gap-2"
               data-testid="upload-csv-button"
@@ -208,7 +211,7 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
               ) : (
                 <>
                   <Upload className="h-4 w-4" />
-                  Select CSV File
+                  Upload Leads
                 </>
               )}
             </Button>
