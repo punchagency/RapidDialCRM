@@ -2,11 +2,12 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Upload, CheckCircle, AlertCircle, Loader2, Download } from "lucide-react";
+import { Upload, CheckCircle, AlertCircle, Loader2, Download, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Contact } from "@/lib/mockData";
 import { FileUploadModal } from "./FileUploadModal";
+import { geocodeAddress } from "@/lib/geocoding";
 
 interface CSVRow {
   [key: string]: string;
@@ -33,6 +34,7 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
   const [parseErrors, setParseErrors] = useState<string[]>([]);
   const [successCount, setSuccessCount] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [geocodedCount, setGeocodedCount] = useState(0);
   const { toast } = useToast();
 
   const parseCSV = (text: string): CSVRow[] => {
@@ -58,12 +60,14 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
     return rows;
   };
 
-  const convertToContacts = (rows: CSVRow[]): { contacts: Contact[], errors: string[] } => {
+  const convertToContacts = async (rows: CSVRow[]): Promise<{ contacts: Contact[], errors: string[] }> => {
     const contacts: Contact[] = [];
     const errors: string[] = [];
     let contactId = 1000;
+    let geocodedSuccessfully = 0;
 
-    rows.forEach((row, index) => {
+    for (let index = 0; index < rows.length; index++) {
+      const row = rows[index];
       try {
         const businessName = row['Business Name'] || row['business_name'] || '';
         const phone = row['Phone Number'] || row['phone'] || '';
@@ -76,7 +80,22 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
 
         if (!businessName || !phone || !address) {
           errors.push(`Row ${index + 2}: Missing required fields (Business Name, Phone, Address)`);
-          return;
+          continue;
+        }
+
+        // Attempt to geocode the address
+        let lat = 0;
+        let lng = 0;
+        try {
+          const coords = await geocodeAddress(address);
+          if (coords) {
+            lat = coords.lat;
+            lng = coords.lng;
+            geocodedSuccessfully++;
+          }
+        } catch (geocodeError) {
+          console.warn(`Failed to geocode address for ${businessName}:`, geocodeError);
+          // Continue without coordinates - not a fatal error
         }
 
         const contact: Contact = {
@@ -88,11 +107,12 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
           email: email || `contact@${businessName.toLowerCase().replace(/\s+/g, '')}.com`,
           address: address,
           zip: zip,
+          city: city,
           timezone: "EST",
           lastNotes: `Imported from CSV • ${city}`,
           status: "New",
-          location_lat: 0,
-          location_lng: 0,
+          location_lat: lat,
+          location_lng: lng,
           emailHistory: [],
           clientAdmins: [],
           providerContacts: fullName ? [{
@@ -109,8 +129,9 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
       } catch (err) {
         errors.push(`Row ${index + 2}: ${err instanceof Error ? err.message : 'Unknown error'}`);
       }
-    });
+    }
 
+    setGeocodedCount(geocodedSuccessfully);
     return { contacts, errors };
   };
 
@@ -120,6 +141,7 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
     setIsLoading(true);
     setParseErrors([]);
     setImportedData([]);
+    setGeocodedCount(0);
 
     try {
       const text = await file.text();
@@ -135,7 +157,7 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
         return;
       }
 
-      const { contacts, errors } = convertToContacts(rows);
+      const { contacts, errors } = await convertToContacts(rows);
       
       setSuccessCount(contacts.length);
       setParseErrors(errors);
@@ -148,7 +170,7 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
         email: c.email,
         name: c.name,
         title: c.title || 'Healthcare',
-        city: c.lastNotes.split(' • ')[1] || '',
+        city: c.city || '',
         zip: c.zip
       }));
       
@@ -160,7 +182,7 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
 
       toast({
         title: "Import Successful",
-        description: `Loaded ${contacts.length} practices. ${errors.length} rows had issues.`
+        description: `Loaded ${contacts.length} practices${geocodedCount > 0 ? ` • ${geocodedCount} geocoded` : ''}. ${errors.length} rows had issues.`
       });
     } catch (error) {
       toast({
@@ -225,9 +247,17 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
           {successCount > 0 && (
             <Card className="border-green-200 bg-green-50">
               <CardContent className="pt-6">
-                <div className="flex items-center gap-2 text-green-900">
-                  <CheckCircle className="h-5 w-5" />
-                  <span className="font-semibold">{successCount} practices imported successfully</span>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-green-900">
+                    <CheckCircle className="h-5 w-5" />
+                    <span className="font-semibold">{successCount} practices imported successfully</span>
+                  </div>
+                  {geocodedCount > 0 && (
+                    <div className="flex items-center gap-2 text-green-800 ml-7">
+                      <MapPin className="h-4 w-4" />
+                      <span className="text-sm">{geocodedCount} addresses geocoded with coordinates</span>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
