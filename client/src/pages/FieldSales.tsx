@@ -51,32 +51,48 @@ export default function FieldSales() {
     }
   }, []);
 
-  // Build routes based on city and date - FILTERED TO ONLY "Visit Scheduled"
-  const getMiamiRoutes = () => ({
-    today: [
-      { ...MOCK_CONTACTS[0], time: "09:00 AM", type: "Visit Scheduled", distance: "1.2 mi", location_lat: 25.7680, location_lng: -80.2038 },
-      { ...MOCK_CONTACTS[3], time: "04:15 PM", type: "Visit Scheduled", distance: "1.5 mi", location_lat: 25.7907, location_lng: -80.2299 },
-    ],
-    tomorrow: [
-      { ...MOCK_CONTACTS[5], time: "08:30 AM", type: "Visit Scheduled", distance: "22.1 mi", location_lat: 25.8213, location_lng: -80.2712 },
-      { ...MOCK_CONTACTS[7], time: "01:30 PM", type: "Visit Scheduled", distance: "8.1 mi", location_lat: 25.6895, location_lng: -80.2357 },
-      { ...MOCK_CONTACTS[13], time: "03:00 PM", type: "Visit Scheduled", distance: "2.5 mi", location_lat: 25.7549, location_lng: -80.1930 },
-    ]
-  });
+  // Get city name mapping
+  const getCityName = (cityId: string): string => {
+    const cityMap: Record<string, string> = {
+      miami: "Miami",
+      washington_dc: "Washington, DC",
+      los_angeles: "Los Angeles",
+      new_york: "New York",
+      chicago: "Chicago",
+      dallas: "Dallas",
+    };
+    return cityMap[cityId] || "Miami";
+  };
 
-  const getWashingtonDCRoutes = () => ({
-    today: [
-      { ...MOCK_CONTACTS[1], time: "09:00 AM", type: "Visit Scheduled", distance: "1.2 mi", location_lat: 38.9095, location_lng: -77.0369 },
-      { ...MOCK_CONTACTS[4], time: "04:15 PM", type: "Visit Scheduled", distance: "1.5 mi", location_lat: 38.8816, location_lng: -77.1043 },
-    ],
-    tomorrow: [
-      { ...MOCK_CONTACTS[6], time: "08:30 AM", type: "Visit Scheduled", distance: "22.1 mi", location_lat: 38.9526, location_lng: -77.4376 },
-      { ...MOCK_CONTACTS[8], time: "01:30 PM", type: "Visit Scheduled", distance: "8.1 mi", location_lat: 38.8949, location_lng: -77.0369 },
-      { ...MOCK_CONTACTS[12], time: "03:00 PM", type: "Visit Scheduled", distance: "2.5 mi", location_lat: 38.7642, location_lng: -77.4367 },
-    ]
-  });
+  // Filter contacts by city
+  const cityName = getCityName(selectedCity);
+  const cityContacts = MOCK_CONTACTS.filter(c => c.city === cityName || c.city?.includes(cityName));
+  
+  // Filter to only "Visit Scheduled" status and assign times/distances
+  const getRoutesForCity = () => {
+    const scheduled = cityContacts
+      .filter(c => c.status === "Visit Scheduled")
+      .slice(0, 5); // Limit to 5 per city
+    
+    // Split between today and tomorrow
+    const today = scheduled.slice(0, 2).map((c, idx) => ({
+      ...c,
+      time: idx === 0 ? "09:00 AM" : "04:15 PM",
+      type: "Visit Scheduled" as const,
+      distance: idx === 0 ? "1.2 mi" : "1.5 mi"
+    }));
+    
+    const tomorrow = scheduled.slice(2).map((c, idx) => ({
+      ...c,
+      time: idx === 0 ? "08:30 AM" : idx === 1 ? "01:30 PM" : "03:00 PM",
+      type: "Visit Scheduled" as const,
+      distance: idx === 0 ? "22.1 mi" : idx === 1 ? "8.1 mi" : "2.5 mi"
+    }));
+    
+    return { today, tomorrow };
+  };
 
-  const routes = selectedCity === "miami" ? getMiamiRoutes() : getWashingtonDCRoutes();
+  const routes = getRoutesForCity();
   const currentRoute = selectedDate === "today" ? routes.today : routes.tomorrow;
   const activeStop = currentRoute.find(s => s.id === selectedStop) || currentRoute[0];
   

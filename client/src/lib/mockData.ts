@@ -45,6 +45,7 @@ export interface Contact {
   email: string;
   address: string;
   zip: string;
+  city?: string;
   timezone: string;
   lastNotes: string;
   dealSize?: string;
@@ -158,6 +159,7 @@ export const MOCK_CONTACTS: Contact[] = [
     email: "sjenkins@baptisthealth.net",
     address: "8900 North Kendall Drive, Miami, FL",
     zip: "33176",
+    city: "Miami",
     timezone: "EST",
     lastNotes: "Spoke to gatekeeper last week. Interested in new surgical tools. Call back Tuesday morning.",
     dealSize: "$50k",
