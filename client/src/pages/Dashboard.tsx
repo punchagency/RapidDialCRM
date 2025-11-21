@@ -257,7 +257,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1">
          <Card className="border-none shadow-sm p-6 bg-white">
             <CardHeader className="p-0 mb-6">
-               <CardTitle>Team Performance</CardTitle>
+               <CardTitle>Leaderboard</CardTitle>
                <CardDescription>Real-time activity monitoring</CardDescription>
             </CardHeader>
             <div className="space-y-4">
