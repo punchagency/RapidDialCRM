@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Phone, LayoutDashboard, Users, BarChart3, Settings, LogOut, Map, Plug, Headphones, Star, Briefcase, ShieldCheck, Network, UserCog, Database, Headset, FileText } from "lucide-react";
+import { Phone, LayoutDashboard, Users, BarChart3, Settings, LogOut, Map, Plug, Headphones, Star, Briefcase, ShieldCheck, Network, UserCog, Database, Headset, FileText, Lock } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import avatar from "@assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
 import managerAvatar from "@assets/generated_images/Professional_user_avatar_2_9f00e114.png";
 import { useUserRole } from "@/lib/UserRoleContext";
+import { getRoleLabel, getRoleColor } from "@/lib/permissions";
+import { Badge } from "@/components/ui/badge";
 
 export function Sidebar() {
   const [location, setLocation] = useLocation();
@@ -42,7 +44,20 @@ export function Sidebar() {
   }, []);
 
   const handleLogout = () => {
+    localStorage.removeItem("user_role");
     setLocation("/auth");
+  };
+
+  const getVisibleNavItems = () => {
+    const baseItems = [
+      { icon: LayoutDashboard, label: "Dashboard", href: "/", permission: "dashboard_view" },
+      { icon: Phone, label: "Power Dialer", href: "/dialer", permission: "dialer_access" },
+      { icon: Users, label: "Contacts", href: "/contacts", permission: "contacts_view" },
+      { icon: Map, label: "Territory", href: "/map", permission: "territories_view" },
+      { icon: BarChart3, label: "Analytics", href: "/analytics", permission: "analytics_view" },
+      { icon: FileText, label: "Scripts", href: "/scripts", permission: "scripts_view" },
+    ];
+    return baseItems.filter(item => userRole.canAccess(item.permission as any));
   };
 
   const navItems = [
@@ -71,9 +86,7 @@ export function Sidebar() {
   ];
 
   const getRoleItems = () => {
-    if (userRole === "field") return fieldItems;
-    if (userRole === "loader") return loaderItems;
-    return navItems; // Default for Rep and Manager (Manager adds extra below)
+    return getVisibleNavItems();
   };
 
   // Helper to check if a link is active, including query params

@@ -1,10 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-
-type UserRole = "rep" | "manager" | "field" | "loader";
+import React, { createContext, useContext, useState, ReactNode } from "react";
+import { UserRole, canAccess, PermissionMatrix } from "./permissions";
 
 interface UserRoleContextType {
   userRole: UserRole;
   setUserRole: (role: UserRole) => void;
+  canAccess: (permission: keyof PermissionMatrix) => boolean;
 }
 
 const UserRoleContext = createContext<UserRoleContextType | undefined>(undefined);
@@ -12,19 +12,21 @@ const UserRoleContext = createContext<UserRoleContextType | undefined>(undefined
 export function UserRoleProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRoleState] = useState<UserRole>(() => {
     const saved = localStorage.getItem("user_role");
-    return (saved as UserRole) || "rep";
+    const validRoles: UserRole[] = ["admin", "manager", "sales_rep", "viewer"];
+    return (validRoles.includes(saved as UserRole) ? (saved as UserRole) : "sales_rep");
   });
 
   const setUserRole = (role: UserRole) => {
     setUserRoleState(role);
     localStorage.setItem("user_role", role);
-    // Dispatch a custom event so non-React parts (if any) or other tabs could potentially know, 
-    // but primarily for consistency if we were using event listeners.
-    window.dispatchEvent(new Event("storage"));
+  };
+
+  const handleCanAccess = (permission: keyof PermissionMatrix) => {
+    return canAccess(userRole, permission);
   };
 
   return (
-    <UserRoleContext.Provider value={{ userRole, setUserRole }}>
+    <UserRoleContext.Provider value={{ userRole, setUserRole, canAccess: handleCanAccess }}>
       {children}
     </UserRoleContext.Provider>
   );
@@ -36,4 +38,15 @@ export function useUserRole() {
     throw new Error("useUserRole must be used within a UserRoleProvider");
   }
   return context;
+}
+
+// For backwards compatibility with existing roles
+export function mapLegacyRole(legacyRole: string): UserRole {
+  const mapping: Record<string, UserRole> = {
+    rep: "sales_rep",
+    manager: "manager",
+    field: "sales_rep",
+    loader: "sales_rep",
+  };
+  return mapping[legacyRole] || "sales_rep";
 }
