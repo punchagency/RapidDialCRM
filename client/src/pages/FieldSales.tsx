@@ -9,6 +9,8 @@ import { MOCK_CONTACTS } from "@/lib/mockData";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { CitySelector } from "@/components/crm/CitySelector";
+import { getCityData } from "@/lib/cityData";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -38,6 +40,7 @@ export default function FieldSales() {
   const [selectedStop, setSelectedStop] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [selectedDate, setSelectedDate] = useState<"today" | "tomorrow">("today");
+  const [selectedCity, setSelectedCity] = useState<string>("miami");
   const { toast } = useToast();
   const [gcalConnected, setGcalConnected] = useState(false);
 
@@ -48,25 +51,40 @@ export default function FieldSales() {
     }
   }, []);
 
-  // Build routes based on date - FILTERED TO ONLY "Visit Scheduled"
-  const todaysRoute = [
-    { ...MOCK_CONTACTS[0], time: "09:00 AM", type: "Visit Scheduled", distance: "1.2 mi" }, // Swedish First Hill
-    { ...MOCK_CONTACTS[3], time: "04:15 PM", type: "Visit Scheduled", distance: "1.5 mi" },   // Seattle Children's
-  ];
+  // Build routes based on city and date - FILTERED TO ONLY "Visit Scheduled"
+  const getMiamiRoutes = () => ({
+    today: [
+      { ...MOCK_CONTACTS[0], time: "09:00 AM", type: "Visit Scheduled", distance: "1.2 mi", location_lat: 25.7680, location_lng: -80.2038 },
+      { ...MOCK_CONTACTS[3], time: "04:15 PM", type: "Visit Scheduled", distance: "1.5 mi", location_lat: 25.7907, location_lng: -80.2299 },
+    ],
+    tomorrow: [
+      { ...MOCK_CONTACTS[5], time: "08:30 AM", type: "Visit Scheduled", distance: "22.1 mi", location_lat: 25.8213, location_lng: -80.2712 },
+      { ...MOCK_CONTACTS[7], time: "01:30 PM", type: "Visit Scheduled", distance: "8.1 mi", location_lat: 25.6895, location_lng: -80.2357 },
+      { ...MOCK_CONTACTS[13], time: "03:00 PM", type: "Visit Scheduled", distance: "2.5 mi", location_lat: 25.7549, location_lng: -80.1930 },
+    ]
+  });
 
-  const tomorrowsRoute = [
-    { ...MOCK_CONTACTS[5], time: "08:30 AM", type: "Visit Scheduled", distance: "22.1 mi" }, // Providence Everett
-    { ...MOCK_CONTACTS[7], time: "01:30 PM", type: "Visit Scheduled", distance: "8.1 mi" }, // Swedish Edmonds
-    { ...MOCK_CONTACTS[13], time: "03:00 PM", type: "Visit Scheduled", distance: "2.5 mi" }, // Puget Sound Kidney
-  ];
+  const getWashingtonDCRoutes = () => ({
+    today: [
+      { ...MOCK_CONTACTS[1], time: "09:00 AM", type: "Visit Scheduled", distance: "1.2 mi", location_lat: 38.9095, location_lng: -77.0369 },
+      { ...MOCK_CONTACTS[4], time: "04:15 PM", type: "Visit Scheduled", distance: "1.5 mi", location_lat: 38.8816, location_lng: -77.1043 },
+    ],
+    tomorrow: [
+      { ...MOCK_CONTACTS[6], time: "08:30 AM", type: "Visit Scheduled", distance: "22.1 mi", location_lat: 38.9526, location_lng: -77.4376 },
+      { ...MOCK_CONTACTS[8], time: "01:30 PM", type: "Visit Scheduled", distance: "8.1 mi", location_lat: 38.8949, location_lng: -77.0369 },
+      { ...MOCK_CONTACTS[12], time: "03:00 PM", type: "Visit Scheduled", distance: "2.5 mi", location_lat: 38.7642, location_lng: -77.4367 },
+    ]
+  });
 
-  const currentRoute = selectedDate === "today" ? todaysRoute : tomorrowsRoute;
+  const routes = selectedCity === "miami" ? getMiamiRoutes() : getWashingtonDCRoutes();
+  const currentRoute = selectedDate === "today" ? routes.today : routes.tomorrow;
   const activeStop = currentRoute.find(s => s.id === selectedStop) || currentRoute[0];
   
+  const cityData = getCityData(selectedCity);
   // Fallback coords if data missing
   const activeCoords: [number, number] = [
-      activeStop?.location_lat || (selectedDate === "today" ? 47.6062 : 47.9789), 
-      activeStop?.location_lng || (selectedDate === "today" ? -122.3321 : -122.2020)
+      activeStop?.location_lat || cityData.center[0], 
+      activeStop?.location_lng || cityData.center[1]
   ];
 
   const handleCheckIn = () => {
@@ -107,6 +125,8 @@ export default function FieldSales() {
                   <Calendar className="h-3 w-3" /> {selectedDate === "today" ? "Today, Nov 19" : "Tomorrow, Nov 20"}
                 </p>
              </div>
+             
+             <CitySelector selectedCity={selectedCity} onCityChange={setSelectedCity} />
              
              <div className="flex items-center bg-muted/50 rounded-lg p-1 border">
                 <Button 
