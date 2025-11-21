@@ -154,12 +154,22 @@ export function resetGeocodingProgress() {
 
 export function getGeocodingStats() {
   const progress = getGeocodingProgress();
-  const remaining = progress.totalContacts - progress.geocodedContacts;
+  
+  // Count already geocoded contacts in mockData
+  const alreadyGeocoded = MOCK_CONTACTS.filter(c => c.location_lat && c.location_lat !== 0).length;
+  const totalUngeocoded = MOCK_CONTACTS.filter(c => c.address && (!c.location_lat || c.location_lat === 0)).length;
+  
+  // Total geocoded = already geocoded + newly geocoded
+  const totalGeocoded = alreadyGeocoded + progress.geocodedContacts;
+  const remaining = totalUngeocoded - progress.geocodedContacts;
   const elapsedSeconds = progress.startTime ? Math.floor((Date.now() - progress.startTime) / 1000) : 0;
   const ratePerSecond = elapsedSeconds > 0 ? (progress.geocodedContacts / elapsedSeconds).toFixed(2) : '0';
 
   return {
     ...progress,
+    alreadyGeocoded,
+    totalGeocoded,
+    totalUngeocoded,
     remaining,
     elapsedSeconds,
     ratePerSecond: parseFloat(ratePerSecond as string),

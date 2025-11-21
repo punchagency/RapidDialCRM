@@ -62,7 +62,10 @@ export function GeocodingStatus() {
         <div className="space-y-2">
           <div className="flex justify-between items-center text-sm">
             <span className="text-blue-900 font-medium">
-              {stats.geocodedContacts} of {stats.totalContacts} addresses geocoded
+              {stats.totalGeocoded} of {stats.totalContacts} addresses geocoded
+              {stats.alreadyGeocoded > 0 && (
+                <span className="text-xs text-blue-700 ml-2">({stats.alreadyGeocoded} existing)</span>
+              )}
             </span>
             <span className="text-xs text-blue-700">
               {percentComplete.toFixed(1)}%
