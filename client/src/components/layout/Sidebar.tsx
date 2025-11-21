@@ -227,15 +227,6 @@ export function Sidebar() {
            >
               Loader
            </button>
-           <button 
-             onClick={() => setUserRole("viewer")}
-             className={cn(
-                 "text-[10px] py-1 rounded border transition-all", 
-                 userRole === "viewer" ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
-             )}
-           >
-              Viewer
-           </button>
         </div>
 
         <button 

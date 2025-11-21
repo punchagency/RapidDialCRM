@@ -1,4 +1,4 @@
-export type UserRole = "admin" | "manager" | "sales_rep" | "viewer" | "loader";
+export type UserRole = "admin" | "manager" | "sales_rep" | "loader";
 
 export interface Permission {
   resource: string;
@@ -111,31 +111,6 @@ export const permissionMatrix: Record<UserRole, PermissionMatrix> = {
     team_management: false,
     audit_logs: false,
   },
-  viewer: {
-    dashboard_view: true,
-    dashboard_view_own: false,
-    contacts_view: true,
-    contacts_view_all: true,
-    contacts_edit: false,
-    contacts_delete: false,
-    contacts_export: false,
-    dialer_access: false,
-    scripts_view: true,
-    scripts_edit: false,
-    settings_access: false,
-    settings_users: false,
-    settings_integrations: false,
-    settings_scripts_cms: false,
-    settings_billing: false,
-    analytics_view: true,
-    analytics_view_all: true,
-    territories_view: true,
-    territories_view_all: true,
-    territories_edit: false,
-    territories_assign: false,
-    team_management: false,
-    audit_logs: false,
-  },
   loader: {
     dashboard_view: true,
     dashboard_view_own: false,
@@ -172,7 +147,6 @@ export function getRoleLabel(role: UserRole): string {
     admin: "Administrator",
     manager: "Manager",
     sales_rep: "Sales Representative",
-    viewer: "Viewer",
     loader: "Data Loader",
   };
   return labels[role];
@@ -183,7 +157,6 @@ export function getRoleColor(role: UserRole): string {
     admin: "bg-red-100 text-red-800",
     manager: "bg-blue-100 text-blue-800",
     sales_rep: "bg-green-100 text-green-800",
-    viewer: "bg-gray-100 text-gray-800",
     loader: "bg-purple-100 text-purple-800",
   };
   return colors[role];

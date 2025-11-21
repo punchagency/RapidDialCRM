@@ -372,22 +372,22 @@ export default function Dashboard() {
         <header className="h-20 flex items-center justify-between px-8 bg-slate-50 z-10 shrink-0">
           <h1 className="text-2xl font-heading font-bold text-gray-900">
              {userRole === 'manager' ? 'Manager Overview' : 
-              userRole === 'field' ? 'Territory Dashboard' : 
-              userRole === 'loader' ? 'Data Management' : 'Dashboard'}
+              userRole === 'loader' ? 'Data Management' : 
+              userRole === 'sales_rep' ? 'Sales Dashboard' : 'Dashboard'}
           </h1>
           <div className="flex items-center gap-3">
              <Badge variant="outline" className="capitalize bg-white px-3 py-1">
-                {userRole} View
+                {userRole.replace(/_/g, ' ')}
              </Badge>
           </div>
         </header>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-8 pb-8 relative">
-           {userRole === 'rep' && <InsideRepDashboard />}
-           {userRole === 'field' && <FieldRepDashboard />}
+           {userRole === 'sales_rep' && <InsideRepDashboard />}
            {userRole === 'manager' && <ManagerDashboard />}
            {userRole === 'loader' && <LoaderDashboard />}
+           {userRole === 'admin' && <ManagerDashboard />}
         </div>
       </main>
     </div>

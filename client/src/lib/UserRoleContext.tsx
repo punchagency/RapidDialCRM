@@ -12,7 +12,7 @@ const UserRoleContext = createContext<UserRoleContextType | undefined>(undefined
 export function UserRoleProvider({ children }: { children: ReactNode }) {
   const [userRole, setUserRoleState] = useState<UserRole>(() => {
     const saved = localStorage.getItem("user_role");
-    const validRoles: UserRole[] = ["admin", "manager", "sales_rep", "viewer", "loader"];
+    const validRoles: UserRole[] = ["admin", "manager", "sales_rep", "loader"];
     return (validRoles.includes(saved as UserRole) ? (saved as UserRole) : "sales_rep");
   });
 
