@@ -84,8 +84,9 @@ const permissionGroups = [
 ];
 
 export default function PermissionsSummary() {
-  const { userRole } = useUserRole();
+  const { userRole, canAccess } = useUserRole();
   const roleData = permissionMatrix[userRole];
+  const isAdmin = userRole === "admin";
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -167,7 +168,8 @@ export default function PermissionsSummary() {
               ))}
             </div>
 
-            {/* Comparison Table */}
+            {/* Comparison Table - Admin Only */}
+            {isAdmin && (
             <div className="mt-12 pt-8 border-t">
               <h2 className="text-lg font-semibold mb-4 text-foreground">Role Comparison</h2>
               <div className="overflow-x-auto">
@@ -208,6 +210,7 @@ export default function PermissionsSummary() {
                 </table>
               </div>
             </div>
+            )}
           </div>
         </div>
       </main>
