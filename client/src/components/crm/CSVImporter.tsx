@@ -6,6 +6,7 @@ import { Upload, CheckCircle, AlertCircle, Loader2, Download } from "lucide-reac
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Contact } from "@/lib/mockData";
+import { FileUploadModal } from "./FileUploadModal";
 
 interface CSVRow {
   [key: string]: string;
@@ -31,8 +32,8 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
   const [importedData, setImportedData] = useState<ImportedContact[]>([]);
   const [parseErrors, setParseErrors] = useState<string[]>([]);
   const [successCount, setSuccessCount] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { toast } = useToast();
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const parseCSV = (text: string): CSVRow[] => {
     const lines = text.split('\n');
@@ -113,8 +114,7 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
     return { contacts, errors };
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFileUpload = async (file: File) => {
     if (!file) return;
 
     setIsLoading(true);
@@ -184,20 +184,11 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <input
-            id="csv-file-input"
-            type="file"
-            accept=".csv"
-            onChange={handleFileUpload}
-            className="hidden"
-            data-testid="csv-file-input"
-            disabled={isLoading}
-          />
-          
           <div className="flex gap-2">
-            <label
-              htmlFor="csv-file-input"
-              className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 cursor-pointer font-medium text-sm transition-colors"
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              disabled={isLoading}
+              className="gap-2"
               data-testid="upload-csv-button"
             >
               {isLoading ? (
@@ -211,21 +202,7 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
                   Upload Leads
                 </>
               )}
-            </label>
-            
-            <a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                toast({
-                  title: "Template Info",
-                  description: "CSV should include columns: Business Name, Phone Number, Address, Email, Full Name, City, ZIP Code, Category"
-                });
-              }}
-              className="text-sm text-blue-600 hover:underline self-center"
-            >
-              View Template Format
-            </a>
+            </Button>
           </div>
 
           <p className="text-xs text-muted-foreground">
@@ -233,6 +210,14 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
           </p>
         </CardContent>
       </Card>
+
+      {/* File Upload Modal */}
+      <FileUploadModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onFileSelect={handleFileUpload}
+        isLoading={isLoading}
+      />
 
       {/* Import Results */}
       {(successCount > 0 || parseErrors.length > 0) && (
