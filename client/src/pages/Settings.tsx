@@ -77,22 +77,24 @@ export default function Settings() {
                     <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-4 px-2">System</h2>
                     <TabsList className="flex flex-col h-auto w-full bg-transparent p-0 gap-1">
                       {systemTabs.map((item) => (
-                    <TabsTrigger 
-                      key={item.value}
-                      value={item.value} 
-                      className={cn(
-                        "w-full justify-start gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all",
-                        "data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none",
-                        "data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/50 data-[state=inactive]:hover:text-foreground",
-                        "border-none"
-                      )}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {item.label}
-                      <ChevronRight className="h-3 w-3 ml-auto opacity-0 data-[state=active]:opacity-50" />
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
+                        <TabsTrigger 
+                          key={item.value}
+                          value={item.value} 
+                          className={cn(
+                            "w-full justify-start gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all",
+                            "data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none",
+                            "data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:bg-muted/50 data-[state=inactive]:hover:text-foreground",
+                            "border-none"
+                          )}
+                        >
+                          <item.icon className="h-4 w-4" />
+                          {item.label}
+                          <ChevronRight className="h-3 w-3 ml-auto opacity-0 data-[state=active]:opacity-50" />
+                        </TabsTrigger>
+                      ))}
+                    </TabsList>
+                  </>
+                )}
               </div>
             </aside>
 

@@ -188,15 +188,19 @@ export default function PermissionsSummary() {
                           <td className="py-3 px-3 text-xs text-muted-foreground">
                             {group.descriptions[perm as keyof typeof group.descriptions] || perm}
                           </td>
-                          {(["admin", "manager", "sales_rep", "viewer"] as const).map((role) => (
-                            <td key={role} className="text-center py-3 px-3">
-                              {permissionMatrix[role][perm as keyof typeof permissionMatrix[role]] ? (
-                                <Check className="h-4 w-4 text-green-600 mx-auto" />
-                              ) : (
-                                <X className="h-4 w-4 text-gray-300 mx-auto" />
-                              )}
-                            </td>
-                          ))}
+                          {(["admin", "manager", "sales_rep", "viewer"] as const).map((role) => {
+                            const roleMatrix = permissionMatrix[role as keyof typeof permissionMatrix];
+                            const hasPermission = roleMatrix[perm as keyof typeof roleMatrix];
+                            return (
+                              <td key={role} className="text-center py-3 px-3">
+                                {hasPermission ? (
+                                  <Check className="h-4 w-4 text-green-600 mx-auto" />
+                                ) : (
+                                  <X className="h-4 w-4 text-gray-300 mx-auto" />
+                                )}
+                              </td>
+                            );
+                          })}
                         </tr>
                       ))
                     )}
