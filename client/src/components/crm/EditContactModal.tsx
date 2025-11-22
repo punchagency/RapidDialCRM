@@ -46,36 +46,24 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
 
     setIsSearching(true);
     try {
-      const apiKey = import.meta.env.VITE_HERE_API_KEY;
+      const apiKey = "8-rKSbjYlRT5jhbnQr1Sw";
       
-      if (!apiKey) {
-        console.error("HERE API key not configured");
-        setAddressSuggestions([]);
-        setIsSearching(false);
-        return;
-      }
-
-      // Use HERE Autocomplete API with resultType=place for business names
+      // Use HERE Geocoding API for reliable address searches
       const params = new URLSearchParams({
         q: query,
         limit: "5",
-        resultType: "place",
         apiKey: apiKey,
       });
 
       const response = await fetch(
-        `https://autocomplete.search.hereapi.com/v1/autocomplete?${params}`
+        `https://geocode.search.hereapi.com/v1/geocode?${params}`
       );
 
       if (response.ok) {
         const data = await response.json();
         const results = data.items || [];
-        console.log("HERE search results:", results);
         setAddressSuggestions(results);
       } else {
-        console.error("HERE API error:", response.status, response.statusText);
-        const errorText = await response.text();
-        console.error("Error details:", errorText);
         setAddressSuggestions([]);
       }
     } catch (error) {
