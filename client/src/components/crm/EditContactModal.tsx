@@ -118,19 +118,24 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
             <Label htmlFor="name" className="text-sm font-medium mb-2 block">
               Name
             </Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Contact name"
-              data-testid="edit-name-input"
-            />
+            <div className="relative">
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => {
+                  setFormData(prev => ({ ...prev, name: e.target.value }));
+                  handleAddressSearch(e.target.value);
+                }}
+                placeholder="Contact name (searches OpenStreetMap)"
+                data-testid="edit-name-input"
+              />
+            </div>
           </div>
 
           {/* Address Search */}
           <div>
             <Label htmlFor="address-search" className="text-sm font-medium mb-2 block">
-              Address
+              Address (searches OpenStreetMap for name or address)
             </Label>
             <div className="relative">
               <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
@@ -141,7 +146,7 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
                   setAddressQuery(e.target.value);
                   handleAddressSearch(e.target.value);
                 }}
-                placeholder="Search or enter address..."
+                placeholder="Search by business name or address..."
                 className="pl-9"
                 data-testid="edit-address-input"
               />
