@@ -129,8 +129,8 @@ export function optimizeRoute(prospects: Prospect[], startLat: number, startLng:
 
     if (nearest) {
       optimized.push(nearest);
-      currentLat = parseFloat(nearest.addressLat?.toString() || "0");
-      currentLng = parseFloat(nearest.addressLng?.toString() || "0");
+      currentLat = nearest.addressLat ? parseFloat(nearest.addressLat.toString()) : 0;
+      currentLng = nearest.addressLng ? parseFloat(nearest.addressLng.toString()) : 0;
       remaining.splice(nearestIndex, 1);
     } else {
       break;

@@ -4,11 +4,31 @@ import { storage } from "./storage";
 import { insertProspectSchema, insertFieldRepSchema, insertAppointmentSchema } from "@shared/schema";
 import { generateSmartCallingList, calculatePriorityScore } from "./services/optimization";
 import { geocodeProspects } from "./services/geocoding";
+import { seedDatabase } from "./seedData";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Seed database on startup
+  await seedDatabase().catch(err => console.error("Failed to seed database:", err));
+
   // Health check
   app.get("/health", (_req, res) => {
     res.json({ status: "ok" });
+  });
+
+  // GET /api/prospects - List all prospects
+  app.get("/api/prospects", async (req, res) => {
+    try {
+      const territory = req.query.territory as string;
+      let prospects;
+      if (territory) {
+        prospects = await storage.listProspectsByTerritory(territory);
+      } else {
+        prospects = await storage.listProspectsByTerritory("");
+      }
+      res.json(prospects);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch prospects" });
+    }
   });
 
   // GET /api/calling-list/:fieldRepId - Get smart optimized calling list for field rep
@@ -134,7 +154,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/geocode-prospects", async (req, res) => {
     try {
       const unlocated = await storage.listProspectsWithoutCoordinates();
-      const results = await geocodeProspects(unlocated);
+      const results = await geocodeProspects(unlocated.map(p => ({
+        id: p.id,
+        addressStreet: p.addressStreet || undefined,
+        addressCity: p.addressCity || undefined,
+        addressState: p.addressState || undefined,
+        addressZip: p.addressZip || undefined,
+      })));
 
       // Update prospects with coordinates
       for (const result of results) {
