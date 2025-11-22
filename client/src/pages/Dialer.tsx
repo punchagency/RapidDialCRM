@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { DialerCard } from "@/components/crm/DialerCard";
-import { MOCK_CONTACTS, CallStatus } from "@/lib/mockData";
+import { MOCK_CONTACTS, CallStatus, Contact } from "@/lib/mockData";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Edit } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { AnimatePresence, motion } from "framer-motion";
+import { useUserRole } from "@/lib/UserRoleContext";
+import { EditContactModal } from "@/components/crm/EditContactModal";
 
 export default function Dialer() {
   const [location] = useLocation();
@@ -35,9 +37,20 @@ export default function Dialer() {
   }, [location]);
 
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [selectedContactForEdit, setSelectedContactForEdit] = useState<Contact | null>(null);
   const { toast } = useToast();
+  const { userRole } = useUserRole();
 
   const currentContact = MOCK_CONTACTS[currentIndex];
+  const canEdit = ["admin", "manager", "sales_rep"].includes(userRole);
+
+  const handleSaveContact = (updatedContact: Contact) => {
+    const index = MOCK_CONTACTS.findIndex(c => c.id === updatedContact.id);
+    if (index >= 0) {
+      Object.assign(MOCK_CONTACTS[index], updatedContact);
+    }
+    setSelectedContactForEdit(null);
+  };
 
   const handleComplete = (status: CallStatus, notes: string) => {
     setIsTransitioning(true);
@@ -82,6 +95,21 @@ export default function Dialer() {
             <span className="text-sm font-medium text-muted-foreground">
               Call {currentIndex + 1} of {MOCK_CONTACTS.length}
             </span>
+            {canEdit && (
+              <>
+                <div className="h-4 w-px bg-border" />
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="gap-2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setSelectedContactForEdit(currentContact)}
+                  data-testid="dialer-edit-button"
+                >
+                  <Edit className="h-4 w-4" />
+                  Edit
+                </Button>
+              </>
+            )}
           </div>
           
           <div className="flex items-center gap-2">
@@ -134,6 +162,15 @@ export default function Dialer() {
             )}
           </AnimatePresence>
         </div>
+
+        {selectedContactForEdit && (
+          <EditContactModal 
+            contact={selectedContactForEdit}
+            isOpen={!!selectedContactForEdit}
+            onClose={() => setSelectedContactForEdit(null)}
+            onSave={handleSaveContact}
+          />
+        )}
       </main>
     </div>
   );
