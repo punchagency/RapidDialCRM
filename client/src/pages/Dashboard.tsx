@@ -22,15 +22,14 @@ export default function Dashboard() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const { toast } = useToast();
 
-  // Start background geocoding on mount
-  useEffect(() => {
-    // Reset progress to ensure fresh start
-    resetGeocodingProgress();
-    // Then immediately start geocoding
-    setTimeout(() => {
-      startBackgroundGeocoding();
-    }, 100);
-  }, []);
+  // Background geocoding disabled for faster load times
+  // All mockData is already loaded in memory
+  // useEffect(() => {
+  //   resetGeocodingProgress();
+  //   setTimeout(() => {
+  //     startBackgroundGeocoding();
+  //   }, 100);
+  // }, []);
 
   const handleFileUpload = async (file: File) => {
     // Parse CSV file
