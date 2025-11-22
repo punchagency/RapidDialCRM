@@ -219,31 +219,31 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
                 {isCallActive ? (
                   <>
                     <Button
-                      size="lg"
+                      size="md"
                       variant="destructive"
-                      className="flex-1 text-base h-14"
+                      className="flex-1 text-sm h-10"
                       onClick={() => setIsCallActive(false)}
                     >
-                      <Phone className="h-5 w-5 mr-2" />
+                      <Phone className="h-4 w-4 mr-2" />
                       End Call ({formatTime(timer)})
                     </Button>
                   </>
                 ) : (
                   <Button
-                    size="lg"
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-base h-14"
+                    size="md"
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-sm h-10"
                     onClick={handleCallClick}
                     disabled={isConnecting}
                     data-testid="call-button"
                   >
                     {isConnecting ? (
                       <>
-                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         Connecting...
                       </>
                     ) : (
                       <>
-                        <Phone className="h-5 w-5 mr-2" />
+                        <Phone className="h-4 w-4 mr-2" />
                         Call Now
                       </>
                     )}
@@ -265,8 +265,8 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
                 <Button
                   key={outcome.key}
                   variant="outline"
-                  size="lg"
-                  className={cn("h-auto py-3 px-2 flex flex-col items-center justify-center border text-sm font-medium", outcome.color)}
+                  size="sm"
+                  className={cn("h-auto py-2 px-2 flex flex-col items-center justify-center border text-xs font-medium", outcome.color)}
                   onClick={() => handleComplete(outcome.label)}
                   data-testid={`outcome-${outcome.key}`}
                 >
