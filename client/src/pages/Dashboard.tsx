@@ -24,10 +24,8 @@ export default function Dashboard() {
 
   // Start background geocoding on mount if needed
   useEffect(() => {
-    const hasUngeocoded = MOCK_CONTACTS.some(c => (!c.location_lat || c.location_lat === 0) && c.address);
-    if (hasUngeocoded) {
-      startBackgroundGeocoding();
-    }
+    // Always start geocoding to ensure we check all addresses as requested
+    startBackgroundGeocoding();
   }, []);
 
   const handleFileUpload = async (file: File) => {

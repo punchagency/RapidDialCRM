@@ -66,19 +66,17 @@ export async function startBackgroundGeocoding() {
 
   const geocodedContacts = getGeocodedContacts();
   
-  // Filter contacts that need processing: missing coords OR missing address details
+  // Filter contacts that need processing
+  // User requested to "check every address one by one", so we are enabling a full pass
+  // We only skip if it's already in the 'geocodedContacts' set AND we are not forcing a re-check.
+  // However, to ensure we check everyone, we will largely ignore the 'perfect' checks for now
+  // and let the geocodedContacts set be the only source of truth for "done-ness" in this session.
+  
   const contactsToGeocode = MOCK_CONTACTS.filter(c => {
     if (!c.address) return false;
     
-    const hasCoords = c.location_lat && c.location_lat !== 0;
-    const hasDetails = c.city && c.state && c.zip;
-    const hasFullAddressString = c.address && c.address.includes(',') && c.address.split(',').length >= 3;
-    
-    // If everything is present AND address looks complete (has at least 2 commas), skip
-    if (hasCoords && hasDetails && hasFullAddressString) return false;
-    
-    // If already marked as processed, only re-process if details are missing or address is partial
-    if (geocodedContacts.has(c.id) && hasDetails && hasFullAddressString) return false;
+    // If we have already processed this ID in this current run/session (tracked by localStorage), skip it.
+    if (geocodedContacts.has(c.id)) return false;
     
     return true;
   });
