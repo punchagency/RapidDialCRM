@@ -160,13 +160,13 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
       setIsCallActive(true);
       toast({
         title: "Call Initiated",
-        description: `Calling ${contact.phone} via QuantumPunch Network...`,
+        description: `Calling ${prospect.phoneNumber} via QuantumPunch Network...`,
       });
     }, 1500);
   };
 
-  // Helper to get color for the current contact status
-  const currentStatusColor = statuses.find(s => s.value === contact.status)?.color || "bg-primary/5 text-primary border-primary/20";
+  // Helper to get color for the current prospect territory
+  const currentStatusColor = "bg-primary/5 text-primary border-primary/20";
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full max-h-[calc(100vh-140px)]">
@@ -177,14 +177,14 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
            <CardContent className="p-6">
              <div className="flex justify-between items-start mb-4">
                <div>
-                 <h2 className="text-2xl font-heading font-bold text-foreground">{contact.name}</h2>
+                 <h2 className="text-2xl font-heading font-bold text-foreground">{prospect.businessName}</h2>
                  <p className="text-muted-foreground font-medium flex items-center gap-2 mt-1">
                    <Building2 className="h-4 w-4" />
-                   {contact.company}
+                   {prospect.territory}
                  </p>
                </div>
                <Badge variant="secondary" className={cn("border", currentStatusColor)}>
-                 {contact.status}
+                 {prospect.specialty}
                </Badge>
              </div>
 
@@ -195,7 +195,7 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
                
                <div className="z-10">
                  <div className={cn("text-3xl font-mono font-semibold tracking-tight transition-colors", isBonusUnlocked ? "text-purple-600" : "text-foreground")}>
-                   {contact.phone}
+                   {prospect.phoneNumber}
                  </div>
                  {isBonusUnlocked && (
                     <div className="text-xs text-purple-600 font-bold flex items-center gap-1 animate-bounce mt-1">
@@ -237,10 +237,9 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
              </div>
 
              <div className="space-y-4">
-               <InfoItem icon={MapPin} label="Location" value={`${contact.address}, ${contact.zip}`} />
-               <InfoItem icon={Clock} label="Timezone" value={contact.timezone} />
-               <InfoItem icon={DollarSign} label="Deal Size" value={contact.dealSize || "Unknown"} />
-               {contact.drServed && <InfoItem icon={Stethoscope} label="Specialty" value={contact.drServed} />}
+               <InfoItem icon={MapPin} label="Location" value={`${prospect.addressCity}, ${prospect.addressZip}`} />
+               <InfoItem icon={Building2} label="Address" value={prospect.addressStreet || "N/A"} />
+               <InfoItem icon={Stethoscope} label="Specialty" value={prospect.specialty} />
              </div>
            </CardContent>
         </Card>
@@ -417,17 +416,17 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
               Last Interaction
             </h3>
             <div className="p-4 bg-yellow-50/50 dark:bg-yellow-900/10 border border-yellow-100 dark:border-yellow-900/30 rounded-lg">
-              <p className="text-sm text-foreground/80 leading-relaxed">"{contact.lastNotes}"</p>
+              <p className="text-sm text-foreground/80 leading-relaxed">No notes yet</p>
             </div>
 
-            {contact.emailHistory && contact.emailHistory.length > 0 && (
+            {false && (
               <div className="mt-6">
                  <h3 className="font-heading font-semibold flex items-center gap-2 mb-4 text-muted-foreground text-sm uppercase tracking-wider">
                    <Mail className="h-4 w-4" />
                    Recent Emails
                  </h3>
                  <div className="space-y-2">
-                   {contact.emailHistory.map((email) => (
+                   {[].map((email) => (
                      <div key={email.id} className="p-3 bg-muted/30 rounded-lg flex justify-between items-center">
                         <div>
                           <p className="text-sm font-medium">{email.subject}</p>
@@ -470,7 +469,7 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
                       <div className="space-y-4">
                         <div className="p-4 bg-muted/30 rounded-lg border border-border">
                           <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase">Opening</p>
-                          <p className="text-sm leading-relaxed">"Hi {contact.name}, this is Alex from QuantumPunch. Do you have a quick minute to chat about how we're helping practices like {contact.company} streamline their scheduling?"</p>
+                          <p className="text-sm leading-relaxed">"Hi {prospect.businessName}, this is Alex from QuantumPunch. Do you have a quick minute to chat?"</p>
                         </div>
                         <div className="p-4 bg-muted/30 rounded-lg border border-border">
                           <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase">Pain Point</p>
@@ -500,10 +499,10 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
                 <TabsContent value="email" className="flex-1 flex flex-col m-0">
                   <div className="p-6 flex-1 overflow-y-auto">
                     <EmailComposer 
-                      recipientEmail={contact.email} 
-                      recipientName={contact.name} 
-                      recipientCompany={contact.company}
-                      specialty={contact.drServed}
+                      recipientEmail={prospect.phoneNumber} 
+                      recipientName={prospect.businessName} 
+                      recipientCompany={prospect.territory}
+                      specialty={prospect.specialty}
                       onSend={() => onComplete("Email Sent", "Sent email via composer")}
                     />
                   </div>
@@ -558,7 +557,7 @@ function ContactRow({ contact, onRemove }: { contact: SubContact, onRemove: () =
     return (
         <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/20 hover:bg-muted/40 transition-colors group relative">
             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary shrink-0">
-                {contact.name.split(" ").map(n => n[0]).join("")}
+                {contact.name.split(" ").map(n => n[0]).join("").slice(0, 2)}
             </div>
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
