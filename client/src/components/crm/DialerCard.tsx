@@ -86,9 +86,9 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
   ];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 h-full">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full w-full">
       {/* Left Column: Prospect Info */}
-      <div className="lg:col-span-1 flex flex-col gap-3">
+      <div className="lg:col-span-1 flex flex-col gap-3 min-h-0">
         <Card className="border-none shadow-sm flex-shrink-0">
           <CardContent className="p-4">
             <div className="h-1 bg-pink-500 w-8 rounded mb-4" />
@@ -152,58 +152,58 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
       </div>
 
       {/* Right Column: Call & Outcomes */}
-      <div className="lg:col-span-2 flex flex-col gap-3 overflow-y-auto">
+      <div className="lg:col-span-3 flex flex-col gap-4 overflow-y-auto min-h-0">
         {/* Tabs */}
-        <Card className="border-none shadow-sm flex-shrink-0">
-          <CardContent className="p-0">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="w-full bg-muted/50 border-b border-border/50 rounded-none">
-                <TabsTrigger value="notes" className="flex-1">
+        <Card className="border-none shadow-sm flex-1 overflow-hidden flex flex-col">
+          <CardContent className="p-0 flex-1 flex flex-col overflow-hidden">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col flex-1 overflow-hidden">
+              <TabsList className="w-full bg-muted/50 border-b border-border/50 rounded-none flex-shrink-0">
+                <TabsTrigger value="notes" className="flex-1 text-base">
                   Call Notes
                 </TabsTrigger>
-                <TabsTrigger value="scripts" className="flex-1">
+                <TabsTrigger value="scripts" className="flex-1 text-base">
                   Scripts
                 </TabsTrigger>
-                <TabsTrigger value="email" className="flex-1">
+                <TabsTrigger value="email" className="flex-1 text-base">
                   Send Email
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="notes" className="p-4 m-0">
-                <div className="space-y-3">
+              <TabsContent value="notes" className="p-6 m-0 flex-1 overflow-y-auto">
+                <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium text-foreground mb-2 block">Log Call Details</label>
+                    <label className="text-base font-semibold text-foreground mb-3 block">Log Call Details</label>
                     <Textarea
                       placeholder="Type notes while you talk... (Supports markdown shortcuts)"
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
-                      className="resize-none"
-                      rows={4}
+                      className="resize-none text-base"
+                      rows={8}
                       data-testid="call-notes-textarea"
                     />
                   </div>
                 </div>
               </TabsContent>
 
-              <TabsContent value="scripts" className="p-4 m-0">
-                <div className="space-y-4 text-sm">
-                  <div className="p-3 bg-muted/30 rounded-lg border border-border/50">
-                    <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase">Opening</p>
-                    <p className="leading-relaxed text-foreground">
+              <TabsContent value="scripts" className="p-6 m-0 flex-1 overflow-y-auto">
+                <div className="space-y-6">
+                  <div className="p-4 bg-muted/30 rounded-lg border border-border/50">
+                    <p className="text-sm font-semibold text-muted-foreground mb-3 uppercase">Opening</p>
+                    <p className="leading-relaxed text-foreground text-base">
                       "Hi {prospect.businessName}, this is Alex from QuantumPunch. Do you have a quick minute?"
                     </p>
                   </div>
-                  <div className="p-3 bg-muted/30 rounded-lg border border-border/50">
-                    <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase">Pain Point</p>
-                    <p className="leading-relaxed text-foreground">
+                  <div className="p-4 bg-muted/30 rounded-lg border border-border/50">
+                    <p className="text-sm font-semibold text-muted-foreground mb-3 uppercase">Pain Point</p>
+                    <p className="leading-relaxed text-foreground text-base">
                       "Many {prospect.specialty} practices tell us they're struggling with scheduling. Are you facing similar challenges?"
                     </p>
                   </div>
                 </div>
               </TabsContent>
 
-              <TabsContent value="email" className="p-4 m-0">
-                <div className="text-sm text-muted-foreground">
+              <TabsContent value="email" className="p-6 m-0 flex-1">
+                <div className="text-base text-muted-foreground">
                   <p>Email composer coming soon...</p>
                 </div>
               </TabsContent>
@@ -211,70 +211,72 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
           </CardContent>
         </Card>
 
-        {/* Call Button */}
-        <Card className="border-none shadow-sm flex-shrink-0">
-          <CardContent className="p-4">
-            <div className="flex gap-2">
-              {isCallActive ? (
-                <>
+        {/* Call Button + Outcome Selection */}
+        <div className="flex gap-4 flex-col flex-1 overflow-hidden">
+          <Card className="border-none shadow-sm flex-shrink-0">
+            <CardContent className="p-4">
+              <div className="flex gap-2">
+                {isCallActive ? (
+                  <>
+                    <Button
+                      size="lg"
+                      variant="destructive"
+                      className="flex-1 text-base h-12"
+                      onClick={() => setIsCallActive(false)}
+                    >
+                      <Phone className="h-5 w-5 mr-2" />
+                      End Call ({formatTime(timer)})
+                    </Button>
+                  </>
+                ) : (
                   <Button
                     size="lg"
-                    variant="destructive"
-                    className="flex-1"
-                    onClick={() => setIsCallActive(false)}
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-base h-12"
+                    onClick={handleCallClick}
+                    disabled={isConnecting}
+                    data-testid="call-button"
                   >
-                    <Phone className="h-4 w-4 mr-2" />
-                    End Call ({formatTime(timer)})
+                    {isConnecting ? (
+                      <>
+                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                        Connecting...
+                      </>
+                    ) : (
+                      <>
+                        <Phone className="h-5 w-5 mr-2" />
+                        Call Now
+                      </>
+                    )}
                   </Button>
-                </>
-              ) : (
-                <Button
-                  size="lg"
-                  className="flex-1 bg-green-600 hover:bg-green-700"
-                  onClick={handleCallClick}
-                  disabled={isConnecting}
-                  data-testid="call-button"
-                >
-                  {isConnecting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Connecting...
-                    </>
-                  ) : (
-                    <>
-                      <Phone className="h-4 w-4 mr-2" />
-                      Call Now
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                )}
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Outcome Selection */}
-        <Card className="border-none shadow-sm flex-1 overflow-hidden flex flex-col">
-          <CardContent className="p-4 flex-1 overflow-y-auto">
-            <div className="mb-3">
-              <p className="text-sm font-semibold text-foreground mb-2">Select Outcome</p>
-              <p className="text-xs text-muted-foreground">Press appropriate shortcut key</p>
-            </div>
-            <div className="grid grid-cols-3 gap-2">
+          {/* Outcome Selection */}
+          <Card className="border-none shadow-sm flex-1 overflow-hidden flex flex-col">
+            <CardContent className="p-6 flex-1 overflow-y-auto">
+              <div className="mb-4">
+                <p className="text-base font-semibold text-foreground mb-2">Select Outcome</p>
+                <p className="text-sm text-muted-foreground">Press appropriate shortcut key</p>
+              </div>
+              <div className="grid grid-cols-3 gap-3">
               {outcomes.map((outcome, idx) => (
                 <Button
                   key={outcome.key}
                   variant="outline"
-                  size="sm"
-                  className={cn("h-auto py-2 px-1 flex flex-col items-center justify-center border", outcome.color)}
+                  size="lg"
+                  className={cn("h-auto py-3 px-2 flex flex-col items-center justify-center border text-sm font-medium", outcome.color)}
                   onClick={() => handleComplete(outcome.label)}
                   data-testid={`outcome-${outcome.key}`}
                 >
-                  <span className="text-xs font-medium text-center">{outcome.label}</span>
+                  <span className="text-center">{outcome.label}</span>
                 </Button>
               ))}
             </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
