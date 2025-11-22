@@ -23,7 +23,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (territory) {
         prospects = await storage.listProspectsByTerritory(territory);
       } else {
-        prospects = await storage.listProspectsByTerritory("");
+        prospects = await storage.listAllProspects();
       }
       res.json(prospects);
     } catch (error) {

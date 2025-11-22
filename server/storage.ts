@@ -8,6 +8,7 @@ const db = drizzle(neon(process.env.DATABASE_URL!));
 export interface IStorage {
   // Prospects
   getProspect(id: string): Promise<Prospect | undefined>;
+  listAllProspects(): Promise<Prospect[]>;
   listProspectsByTerritory(territory: string): Promise<Prospect[]>;
   createProspect(prospect: InsertProspect): Promise<Prospect>;
   updateProspect(id: string, prospect: Partial<InsertProspect>): Promise<Prospect | undefined>;
@@ -34,6 +35,10 @@ export class DatabaseStorage implements IStorage {
   async getProspect(id: string): Promise<Prospect | undefined> {
     const result = await db.select().from(prospects).where(eq(prospects.id, id)).limit(1);
     return result[0];
+  }
+
+  async listAllProspects(): Promise<Prospect[]> {
+    return await db.select().from(prospects);
   }
 
   async listProspectsByTerritory(territory: string): Promise<Prospect[]> {
