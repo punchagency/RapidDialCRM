@@ -14,7 +14,7 @@ import { useUserRole } from "@/lib/UserRoleContext";
 import { FileUploadModal } from "@/components/crm/FileUploadModal";
 import { GeocodingStatus } from "@/components/crm/GeocodingStatus";
 import { useToast } from "@/hooks/use-toast";
-import { startBackgroundGeocoding } from "@/lib/backgroundGeocoder";
+import { startBackgroundGeocoding, resetGeocodingProgress } from "@/lib/backgroundGeocoder";
 
 export default function Dashboard() {
   const { userRole } = useUserRole();
@@ -22,10 +22,14 @@ export default function Dashboard() {
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const { toast } = useToast();
 
-  // Start background geocoding on mount if needed
+  // Start background geocoding on mount
   useEffect(() => {
-    // Always start geocoding to ensure we check all addresses as requested
-    startBackgroundGeocoding();
+    // Reset progress to ensure fresh start
+    resetGeocodingProgress();
+    // Then immediately start geocoding
+    setTimeout(() => {
+      startBackgroundGeocoding();
+    }, 100);
   }, []);
 
   const handleFileUpload = async (file: File) => {
