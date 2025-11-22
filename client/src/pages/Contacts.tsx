@@ -1,18 +1,24 @@
 import React, { useState, useMemo } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { MOCK_CONTACTS } from "@/lib/mockData";
+import { MOCK_CONTACTS, Contact } from "@/lib/mockData";
 import { getStatuses } from "@/lib/statusUtils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Filter, Phone, MoreHorizontal, Mail, MapPin, X } from "lucide-react";
+import { Search, Filter, Phone, MoreHorizontal, Mail, MapPin, X, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
+import { useUserRole } from "@/lib/UserRoleContext";
+import { EditContactModal } from "@/components/crm/EditContactModal";
 
 export default function Contacts() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedContactForEdit, setSelectedContactForEdit] = useState<Contact | null>(null);
+  const { userRole } = useUserRole();
   const statuses = getStatuses();
+
+  const canEdit = ["admin", "manager", "sales_rep"].includes(userRole);
 
   const getStatusColor = (statusValue: string) => {
     const status = statuses.find(s => s.value === statusValue);
@@ -32,6 +38,14 @@ export default function Contacts() {
       contact.city?.toLowerCase().includes(query)
     );
   }, [searchQuery]);
+
+  const handleSaveContact = (updatedContact: Contact) => {
+    const index = MOCK_CONTACTS.findIndex(c => c.id === updatedContact.id);
+    if (index >= 0) {
+      Object.assign(MOCK_CONTACTS[index], updatedContact);
+    }
+    setSelectedContactForEdit(null);
+  };
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -126,6 +140,20 @@ export default function Contacts() {
                         <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
                         <Mail className="h-4 w-4" />
                         </Button>
+                        {canEdit && (
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="h-8 w-8 p-0"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setSelectedContactForEdit(contact);
+                            }}
+                            data-testid={`edit-contact-${contact.id}`}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
                         <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
                         <MoreHorizontal className="h-4 w-4" />
                         </Button>
@@ -138,6 +166,15 @@ export default function Contacts() {
             )}
           </div>
         </div>
+
+        {selectedContactForEdit && (
+          <EditContactModal 
+            contact={selectedContactForEdit}
+            isOpen={!!selectedContactForEdit}
+            onClose={() => setSelectedContactForEdit(null)}
+            onSave={handleSaveContact}
+          />
+        )}
       </main>
     </div>
   );
