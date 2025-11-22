@@ -117,10 +117,10 @@ export async function startBackgroundGeocoding() {
         contact.location_lat = result.lat;
         contact.location_lng = result.lng;
         
-        // Update address fields with standardized city, state, zipcode
+        // Update address fields with standardized city, state, zipcode (all as strings)
         if (result.city) contact.city = result.city;
         if (result.state) contact.state = result.state;
-        if (result.zipcode) contact.zip = result.zipcode;
+        if (result.zipcode) contact.zip = String(result.zipcode);
         
         // Update full address from geocoder if available
         // This fixes cases where we only have a partial address (e.g. "7574 Pembroke Rd")

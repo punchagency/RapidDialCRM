@@ -44,9 +44,9 @@ function parseAddressFromResult(result: NominatimResult): { city?: string; state
   // Try to extract city (prefer city, fallback to town)
   const city = addr.city || addr.town;
   
-  // Extract state and zipcode
+  // Extract state and zipcode (ensure zipcode is string)
   const state = addr.state;
-  const zipcode = addr.postcode;
+  const zipcode = addr.postcode ? String(addr.postcode) : undefined;
 
   // Clean up display_name to remove county information
   // Remove patterns like "Broward County," or "County of X,"
