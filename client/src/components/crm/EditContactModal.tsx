@@ -39,7 +39,7 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
   const [addressQuery, setAddressQuery] = useState("");
 
   const handleAddressSearch = async (query: string) => {
-    if (!query.trim() || query.length < 3) {
+    if (!query.trim() || query.length < 2) {
       setAddressSuggestions([]);
       return;
     }
@@ -55,6 +55,7 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
         return;
       }
 
+      // Use HERE Autocomplete API which is better for business names
       const params = new URLSearchParams({
         q: query,
         limit: "5",
@@ -62,7 +63,7 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
       });
 
       const response = await fetch(
-        `https://geocode.search.hereapi.com/v1/geocode?${params}`
+        `https://autocomplete.search.hereapi.com/v1/autocomplete?${params}`
       );
 
       if (response.ok) {
@@ -91,17 +92,18 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
   }, [contact, isOpen]);
 
   const handleSelectAddress = (suggestion: any) => {
+    // Handle both geocode and autocomplete response formats
     const fullAddress = suggestion.address?.label || suggestion.title || "";
-    const position = suggestion.position || {};
+    const position = suggestion.position || suggestion.address?.position || {};
     
     setFormData(prev => ({
       ...prev,
       address: fullAddress,
       city: suggestion.address?.city || prev.city,
-      state: suggestion.address?.state || prev.state,
+      state: suggestion.address?.state || suggestion.address?.stateCode || prev.state,
       zip: suggestion.address?.postalCode ? String(suggestion.address.postalCode) : prev.zip,
-      location_lat: parseFloat(position.lat) || prev.location_lat,
-      location_lng: parseFloat(position.lng) || prev.location_lng,
+      location_lat: position.lat ? parseFloat(position.lat) : prev.location_lat,
+      location_lng: position.lng ? parseFloat(position.lng) : prev.location_lng,
     }));
 
     setAddressSuggestions([]);
@@ -160,6 +162,11 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
               />
             </div>
 
+            {isSearching && (
+              <div className="mt-2 p-2 text-sm text-muted-foreground">
+                Searching...
+              </div>
+            )}
             {addressSuggestions.length > 0 && (
               <div className="mt-2 max-h-48 overflow-y-auto space-y-1">
                 {addressSuggestions.map((suggestion, idx) => (
@@ -167,6 +174,7 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
                     key={idx}
                     className="p-2 cursor-pointer hover:bg-accent transition-colors"
                     onClick={() => handleSelectAddress(suggestion)}
+                    data-testid={`address-suggestion-${idx}`}
                   >
                     <div className="flex items-start gap-2">
                       <MapPin className="h-3 w-3 mt-1 flex-shrink-0 text-muted-foreground" />
