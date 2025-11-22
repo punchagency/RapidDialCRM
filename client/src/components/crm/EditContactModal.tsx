@@ -46,28 +46,35 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
 
     setIsSearching(true);
     try {
+      const apiKey = import.meta.env.VITE_HERE_API_KEY;
+      
+      if (!apiKey) {
+        console.error("HERE API key not configured");
+        setAddressSuggestions([]);
+        setIsSearching(false);
+        return;
+      }
+
       const params = new URLSearchParams({
         q: query,
-        format: "json",
         limit: "5",
-        addressdetails: "1",
+        apiKey: apiKey,
       });
 
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?${params}`,
-        {
-          headers: {
-            "User-Agent": "QuantumPunch-CRM/1.0",
-          },
-        }
+        `https://geocode.search.hereapi.com/v1/geocode?${params}`
       );
 
       if (response.ok) {
-        const results = await response.json();
+        const data = await response.json();
+        const results = data.items || [];
         setAddressSuggestions(results);
+      } else {
+        setAddressSuggestions([]);
       }
     } catch (error) {
       console.error("Address search error:", error);
+      setAddressSuggestions([]);
     } finally {
       setIsSearching(false);
     }
@@ -84,16 +91,17 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
   }, [contact, isOpen]);
 
   const handleSelectAddress = (suggestion: any) => {
-    const fullAddress = suggestion.display_name;
+    const fullAddress = suggestion.address?.label || suggestion.title || "";
+    const position = suggestion.position || {};
     
     setFormData(prev => ({
       ...prev,
       address: fullAddress,
-      city: suggestion.address?.city || suggestion.address?.town || prev.city,
+      city: suggestion.address?.city || prev.city,
       state: suggestion.address?.state || prev.state,
-      zip: suggestion.address?.postcode ? String(suggestion.address.postcode) : prev.zip,
-      location_lat: parseFloat(suggestion.lat),
-      location_lng: parseFloat(suggestion.lon),
+      zip: suggestion.address?.postalCode ? String(suggestion.address.postalCode) : prev.zip,
+      location_lat: parseFloat(position.lat) || prev.location_lat,
+      location_lng: parseFloat(position.lng) || prev.location_lng,
     }));
 
     setAddressSuggestions([]);
@@ -162,7 +170,10 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
                   >
                     <div className="flex items-start gap-2">
                       <MapPin className="h-3 w-3 mt-1 flex-shrink-0 text-muted-foreground" />
-                      <p className="text-sm text-foreground">{suggestion.display_name}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-foreground font-medium">{suggestion.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">{suggestion.address?.label}</p>
+                      </div>
                     </div>
                   </Card>
                 ))}
