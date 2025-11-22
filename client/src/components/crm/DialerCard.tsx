@@ -86,10 +86,10 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
   ];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full w-full">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full w-full overflow-hidden">
       {/* Left Column: Prospect Info */}
-      <div className="lg:col-span-1 flex flex-col gap-3 min-h-0">
-        <Card className="border-none shadow-sm flex-shrink-0">
+      <div className="lg:col-span-1 flex flex-col gap-4 min-h-0 overflow-y-auto">
+        <Card className="border-none shadow-md flex-shrink-0">
           <CardContent className="p-4">
             <div className="h-1 bg-pink-500 w-8 rounded mb-4" />
             <h2 className="text-lg font-bold text-foreground mb-1" data-testid="prospect-name">
@@ -152,19 +152,19 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
       </div>
 
       {/* Right Column: Call & Outcomes */}
-      <div className="lg:col-span-3 flex flex-col gap-4 overflow-y-auto min-h-0">
+      <div className="lg:col-span-3 flex flex-col gap-4 min-h-0 overflow-hidden">
         {/* Tabs */}
-        <Card className="border-none shadow-sm flex-1 overflow-hidden flex flex-col">
+        <Card className="border-none shadow-md flex-1 overflow-hidden flex flex-col">
           <CardContent className="p-0 flex-1 flex flex-col overflow-hidden">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col flex-1 overflow-hidden">
-              <TabsList className="w-full bg-muted/50 border-b border-border/50 rounded-none flex-shrink-0">
-                <TabsTrigger value="notes" className="flex-1 text-base">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col flex-1 overflow-hidden h-full">
+              <TabsList className="w-full bg-muted/50 border-b border-border/50 rounded-none flex-shrink-0 h-12">
+                <TabsTrigger value="notes" className="flex-1 text-base py-3">
                   Call Notes
                 </TabsTrigger>
-                <TabsTrigger value="scripts" className="flex-1 text-base">
+                <TabsTrigger value="scripts" className="flex-1 text-base py-3">
                   Scripts
                 </TabsTrigger>
-                <TabsTrigger value="email" className="flex-1 text-base">
+                <TabsTrigger value="email" className="flex-1 text-base py-3">
                   Send Email
                 </TabsTrigger>
               </TabsList>
@@ -213,7 +213,7 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
 
         {/* Call Button + Outcome Selection */}
         <div className="flex gap-4 flex-col flex-1 overflow-hidden">
-          <Card className="border-none shadow-sm flex-shrink-0">
+          <Card className="border-none shadow-md flex-shrink-0">
             <CardContent className="p-4">
               <div className="flex gap-2">
                 {isCallActive ? (
@@ -221,7 +221,7 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
                     <Button
                       size="lg"
                       variant="destructive"
-                      className="flex-1 text-base h-12"
+                      className="flex-1 text-base h-14"
                       onClick={() => setIsCallActive(false)}
                     >
                       <Phone className="h-5 w-5 mr-2" />
@@ -231,7 +231,7 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
                 ) : (
                   <Button
                     size="lg"
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-base h-12"
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-base h-14"
                     onClick={handleCallClick}
                     disabled={isConnecting}
                     data-testid="call-button"
@@ -254,13 +254,13 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
           </Card>
 
           {/* Outcome Selection */}
-          <Card className="border-none shadow-sm flex-1 overflow-hidden flex flex-col">
+          <Card className="border-none shadow-md flex-1 overflow-hidden flex flex-col">
             <CardContent className="p-6 flex-1 overflow-y-auto">
               <div className="mb-4">
                 <p className="text-base font-semibold text-foreground mb-2">Select Outcome</p>
                 <p className="text-sm text-muted-foreground">Press appropriate shortcut key</p>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 gap-3 auto-rows-max">
               {outcomes.map((outcome, idx) => (
                 <Button
                   key={outcome.key}

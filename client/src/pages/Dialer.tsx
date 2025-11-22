@@ -150,7 +150,7 @@ export default function Dialer() {
           </div>
         </header>
 
-        <div className="flex-1 overflow-hidden relative">
+        <div className="flex-1 overflow-hidden relative p-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentContact.id}
@@ -158,9 +158,9 @@ export default function Dialer() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: isTransitioning ? -100 : 100 }}
               transition={{ duration: 0.3 }}
-              className="absolute inset-0 flex items-center justify-center p-4"
+              className="absolute inset-0 flex items-stretch p-6"
             >
-              <div className="w-full max-w-md">
+              <div className="w-full h-full">
                 <DialerCard 
                   prospect={currentContact} 
                   onComplete={handleComplete}
