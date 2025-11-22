@@ -134,7 +134,7 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
                   setFormData(prev => ({ ...prev, name: e.target.value }));
                   handleAddressSearch(e.target.value);
                 }}
-                placeholder="Contact name (searches OpenStreetMap)"
+                placeholder="Contact name (searches HERE Maps)"
                 data-testid="edit-name-input"
               />
             </div>
@@ -143,13 +143,13 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
           {/* Address Search */}
           <div>
             <Label htmlFor="address-search" className="text-sm font-medium mb-2 block">
-              Address (searches OpenStreetMap for name or address)
+              Address (searches HERE Maps for name or address)
             </Label>
             <div className="relative">
               <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
               <Input
                 id="address-search"
-                value={addressQuery || formData.address}
+                value={addressQuery}
                 onChange={(e) => {
                   setAddressQuery(e.target.value);
                   handleAddressSearch(e.target.value);
