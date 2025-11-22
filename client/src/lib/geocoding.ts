@@ -38,7 +38,7 @@ async function respectRateLimit() {
   lastRequestTime = Date.now();
 }
 
-function parseAddressFromResult(result: NominatimResult): { city?: string; state?: string; zipcode?: string } {
+function parseAddressFromResult(result: NominatimResult): { city?: string; state?: string; zipcode?: string; cleanedAddress?: string } {
   const addr = result.address || {};
   
   // Try to extract city (prefer city, fallback to town)
@@ -48,7 +48,16 @@ function parseAddressFromResult(result: NominatimResult): { city?: string; state
   const state = addr.state;
   const zipcode = addr.postcode;
 
-  return { city, state, zipcode };
+  // Clean up display_name to remove county information
+  // Remove patterns like "Broward County," or "County of X,"
+  let cleanedAddress = result.display_name;
+  if (cleanedAddress) {
+    cleanedAddress = cleanedAddress.replace(/,?\s+\w+\s+County,?/gi, ',').trim();
+    // Clean up any double commas
+    cleanedAddress = cleanedAddress.replace(/,\s*,/g, ',');
+  }
+
+  return { city, state, zipcode, cleanedAddress };
 }
 
 export async function geocodeAddress(address: string): Promise<GeocodingResult | null> {
@@ -96,7 +105,7 @@ export async function geocodeAddress(address: string): Promise<GeocodingResult |
       city: addressDetails.city,
       state: addressDetails.state,
       zipcode: addressDetails.zipcode,
-      fullAddress: result.display_name,
+      fullAddress: addressDetails.cleanedAddress || result.display_name,
     };
 
     // Cache the result

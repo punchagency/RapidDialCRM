@@ -187,7 +187,10 @@ export function stopBackgroundGeocoding() {
 export function resetGeocodingProgress() {
   localStorage.removeItem(PROGRESS_KEY);
   localStorage.removeItem(GEOCODED_CONTACTS_KEY);
-  console.log('Geocoding progress reset');
+  // Also clear the geocoding cache so addresses are re-fetched
+  const { clearGeocodingCache } = require('./geocoding');
+  clearGeocodingCache();
+  console.log('Geocoding progress reset and cache cleared');
 }
 
 export function getGeocodingStats() {
