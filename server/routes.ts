@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertProspectSchema, insertFieldRepSchema, insertAppointmentSchema } from "@shared/schema";
+import { generateSmartCallingList, calculatePriorityScore } from "./services/optimization";
+import { geocodeProspects } from "./services/geocoding";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check
@@ -9,19 +11,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: "ok" });
   });
 
-  // GET /api/calling-list/:territory - Get prioritized calling list
-  app.get("/api/calling-list/:territory", async (req, res) => {
+  // GET /api/calling-list/:fieldRepId - Get smart optimized calling list for field rep
+  app.get("/api/calling-list/:fieldRepId", async (req, res) => {
     try {
-      const { territory } = req.params;
-      const prospects = await storage.listProspectsByTerritory(territory);
+      const { fieldRepId } = req.params;
+      const fieldRep = await storage.getFieldRep(fieldRepId);
+      
+      if (!fieldRep) {
+        return res.status(404).json({ error: "Field rep not found" });
+      }
 
-      // Sort by priority score (descending)
-      const sorted = prospects.sort((a, b) => (b.priorityScore || 0) - (a.priorityScore || 0));
+      const allProspects = await storage.listProspectsByTerritory(fieldRep.territory);
+      
+      // Generate smart calling list
+      const optimizedList = generateSmartCallingList(allProspects, fieldRep);
 
       res.json({
-        territory,
-        count: sorted.length,
-        prospects: sorted.slice(0, 50), // Return top 50
+        fieldRepId,
+        territory: fieldRep.territory,
+        count: optimizedList.length,
+        prospects: optimizedList.slice(0, 50),
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch calling list" });
@@ -118,6 +127,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ status: "recorded" });
     } catch (error) {
       res.status(500).json({ error: "Failed to record call outcome" });
+    }
+  });
+
+  // POST /api/geocode-prospects - Geocode unlocated prospects
+  app.post("/api/geocode-prospects", async (req, res) => {
+    try {
+      const unlocated = await storage.listProspectsWithoutCoordinates();
+      const results = await geocodeProspects(unlocated);
+
+      // Update prospects with coordinates
+      for (const result of results) {
+        await storage.updateProspect(result.id, {
+          addressLat: result.lat.toString() as any,
+          addressLng: result.lng.toString() as any,
+        });
+      }
+
+      res.json({
+        geocoded: results.length,
+        total: unlocated.length,
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to geocode prospects" });
+    }
+  });
+
+  // POST /api/recalculate-priorities - Recalculate priority scores for all prospects
+  app.post("/api/recalculate-priorities", async (req, res) => {
+    try {
+      const prospects = await storage.listProspectsByTerritory(req.body.territory || "");
+      
+      for (const prospect of prospects) {
+        const score = calculatePriorityScore(prospect);
+        await storage.updateProspect(prospect.id, { priorityScore: score });
+      }
+
+      res.json({
+        updated: prospects.length,
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to recalculate priorities" });
     }
   });
 
