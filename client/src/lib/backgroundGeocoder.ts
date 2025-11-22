@@ -142,16 +142,17 @@ export async function startBackgroundGeocoding() {
       saveProgress(progress);
       saveGeocodedContacts(geocodedContacts);
 
+      // Dispatch custom event for every contact (real-time updates)
+      window.dispatchEvent(
+        new CustomEvent('geocodingProgress', {
+          detail: { geocoded: geocodedCount, failed: failedCount, total: contactsToGeocode.length },
+        })
+      );
+
       // Log progress every 50 contacts
       if ((geocodedCount + failedCount) % 50 === 0) {
         console.log(
           `Geocoding progress: ${geocodedCount} succeeded, ${failedCount} failed of ${contactsToGeocode.length} total`
-        );
-        // Dispatch custom event for UI updates
-        window.dispatchEvent(
-          new CustomEvent('geocodingProgress', {
-            detail: { geocoded: geocodedCount, failed: failedCount, total: contactsToGeocode.length },
-          })
         );
       }
     } catch (error) {

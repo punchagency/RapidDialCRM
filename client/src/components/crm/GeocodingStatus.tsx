@@ -19,16 +19,12 @@ export function GeocodingStatus() {
       setStats(getGeocodingStats());
     };
 
-    // Update every 5 seconds
-    const interval = setInterval(updateStats, 5000);
-
-    // Listen for geocoding events
+    // Listen for real-time geocoding events
     const handleProgress = () => updateStats();
     window.addEventListener('geocodingProgress', handleProgress);
     window.addEventListener('geocodingComplete', handleProgress);
 
     return () => {
-      clearInterval(interval);
       window.removeEventListener('geocodingProgress', handleProgress);
       window.removeEventListener('geocodingComplete', handleProgress);
     };
