@@ -96,8 +96,8 @@ export async function startBackgroundGeocoding() {
         contact.location_lng = result.lng;
         
         // Update address fields with standardized city, state, zipcode
-        if (result.city) contact.city = result.city;
-        if (result.state) contact.state = result.state;
+        if (result.city) (contact as any).city = result.city;
+        if (result.state) (contact as any).state = result.state;
         if (result.zipcode) contact.zip = result.zipcode;
         
         geocodedContacts.add(contact.id);
