@@ -6,10 +6,24 @@ interface NominatimResult {
   lat: string;
   lon: string;
   display_name: string;
+  address?: {
+    postcode?: string;
+    city?: string;
+    town?: string;
+    state?: string;
+  };
+}
+
+export interface GeocodingResult {
+  lat: number;
+  lng: number;
+  city?: string;
+  state?: string;
+  zipcode?: string;
 }
 
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
-const CACHE = new Map<string, { lat: number; lng: number }>();
+const CACHE = new Map<string, GeocodingResult>();
 let lastRequestTime = 0;
 const REQUEST_DELAY = 1100; // 1.1 second delay to respect rate limits
 
@@ -23,7 +37,20 @@ async function respectRateLimit() {
   lastRequestTime = Date.now();
 }
 
-export async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
+function parseAddressFromResult(result: NominatimResult): { city?: string; state?: string; zipcode?: string } {
+  const addr = result.address || {};
+  
+  // Try to extract city (prefer city, fallback to town)
+  const city = addr.city || addr.town;
+  
+  // Extract state and zipcode
+  const state = addr.state;
+  const zipcode = addr.postcode;
+
+  return { city, state, zipcode };
+}
+
+export async function geocodeAddress(address: string): Promise<GeocodingResult | null> {
   if (!address) return null;
 
   // Check cache first
@@ -38,6 +65,7 @@ export async function geocodeAddress(address: string): Promise<{ lat: number; ln
       q: address,
       format: 'json',
       limit: '1',
+      addressdetails: '1',
     });
 
     const response = await fetch(`${NOMINATIM_URL}?${params}`, {
@@ -59,22 +87,27 @@ export async function geocodeAddress(address: string): Promise<{ lat: number; ln
     }
 
     const result = results[0];
-    const coords = {
+    const addressDetails = parseAddressFromResult(result);
+    
+    const geocodeResult: GeocodingResult = {
       lat: parseFloat(result.lat),
       lng: parseFloat(result.lon),
+      city: addressDetails.city,
+      state: addressDetails.state,
+      zipcode: addressDetails.zipcode,
     };
 
     // Cache the result
-    CACHE.set(address, coords);
+    CACHE.set(address, geocodeResult);
 
-    return coords;
+    return geocodeResult;
   } catch (error) {
     console.error(`Geocoding error for "${address}":`, error);
     return null;
   }
 }
 
-export async function geocodeAddresses(addresses: string[]): Promise<Map<string, { lat: number; lng: number }>> {
+export async function geocodeAddresses(addresses: string[]): Promise<Map<string, GeocodingResult>> {
   const results = new Map();
 
   for (const address of addresses) {

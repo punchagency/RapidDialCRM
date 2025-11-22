@@ -1,4 +1,4 @@
-import { geocodeAddress } from './geocoding';
+import { geocodeAddress, GeocodingResult } from './geocoding';
 import { MOCK_CONTACTS } from './mockData';
 
 interface GeocodingProgress {
@@ -88,9 +88,18 @@ export async function startBackgroundGeocoding() {
     if (!progress.isRunning) break;
 
     try {
-      const coords = await geocodeAddress(contact.address);
+      const result = await geocodeAddress(contact.address);
       
-      if (coords) {
+      if (result) {
+        // Update contact with coordinates and address details
+        contact.location_lat = result.lat;
+        contact.location_lng = result.lng;
+        
+        // Update address fields with standardized city, state, zipcode
+        if (result.city) contact.city = result.city;
+        if (result.state) contact.state = result.state;
+        if (result.zipcode) contact.zip = result.zipcode;
+        
         geocodedContacts.add(contact.id);
         geocodedCount++;
       } else {
