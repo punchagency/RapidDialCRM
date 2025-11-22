@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Contact, CallStatus, SubContact } from "@/lib/mockData";
+import { CallStatus, SubContact } from "@/lib/mockData";
+import { Prospect } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -21,8 +22,10 @@ import { Label } from "@/components/ui/label";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface DialerCardProps {
-  contact: Contact;
-  onComplete: (status: CallStatus, notes: string) => void;
+  prospect: Prospect;
+  onComplete: (status: string, notes: string) => void;
+  canEdit?: boolean;
+  onEditClick?: () => void;
 }
 
 // Mock Team Generator based on Contact ID to simulate Org Chart logic
@@ -63,20 +66,22 @@ const getAccountTeam = (contactId: string) => {
   return { manager, insideRep, fieldRep }; 
 };
 
-export function DialerCard({ contact, onComplete }: DialerCardProps) {
+export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: DialerCardProps) {
+  if (!prospect) return null;
+  
   const [notes, setNotes] = useState("");
   const [isCallActive, setIsCallActive] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [timer, setTimer] = useState(0);
   const [activeTab, setActiveTab] = useState("notes");
   const { toast } = useToast();
-  const statuses = getStatuses(); // Get dynamic statuses
+  const statuses = getStatuses();
   
-  const { manager, insideRep, fieldRep } = getAccountTeam(contact.id);
+  const { manager, insideRep, fieldRep } = getAccountTeam(prospect.id || "1");
 
   // Local state for contacts to allow adding/removing
-  const [clientAdmins, setClientAdmins] = useState<SubContact[]>(contact.clientAdmins || []);
-  const [providerContacts, setProviderContacts] = useState<SubContact[]>(contact.providerContacts || []);
+  const [clientAdmins, setClientAdmins] = useState<SubContact[]>([]);
+  const [providerContacts, setProviderContacts] = useState<SubContact[]>([]);
 
   // New contact form state
   const [isAddContactOpen, setIsAddContactOpen] = useState(false);

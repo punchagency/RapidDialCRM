@@ -5,10 +5,12 @@ import { insertProspectSchema, insertFieldRepSchema, insertAppointmentSchema } f
 import { generateSmartCallingList, calculatePriorityScore } from "./services/optimization";
 import { geocodeProspects } from "./services/geocoding";
 import { seedDatabase } from "./seedData";
+import { seedAllMockData } from "./seedAllData";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Seed database on startup
   await seedDatabase().catch(err => console.error("Failed to seed database:", err));
+  await seedAllMockData().catch(err => console.error("Failed to seed mock data:", err));
 
   // Health check
   app.get("/health", (_req, res) => {
