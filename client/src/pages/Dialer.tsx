@@ -39,10 +39,10 @@ export default function Dialer() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [selectedContactForEdit, setSelectedContactForEdit] = useState<Contact | null>(null);
   const { toast } = useToast();
-  const { userRole } = useUserRole();
+  const { userRole, canAccess } = useUserRole();
 
   const currentContact = MOCK_CONTACTS[currentIndex];
-  const canEdit = ["admin", "manager", "sales_rep"].includes(userRole);
+  const canEdit = canAccess("contacts_edit");
 
   const handleSaveContact = (updatedContact: Contact) => {
     const index = MOCK_CONTACTS.findIndex(c => c.id === updatedContact.id);

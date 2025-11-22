@@ -15,10 +15,10 @@ import { EditContactModal } from "@/components/crm/EditContactModal";
 export default function Contacts() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedContactForEdit, setSelectedContactForEdit] = useState<Contact | null>(null);
-  const { userRole } = useUserRole();
+  const { userRole, canAccess } = useUserRole();
   const statuses = getStatuses();
 
-  const canEdit = ["admin", "manager", "sales_rep"].includes(userRole);
+  const canEdit = canAccess("contacts_edit");
 
   const getStatusColor = (statusValue: string) => {
     const status = statuses.find(s => s.value === statusValue);
