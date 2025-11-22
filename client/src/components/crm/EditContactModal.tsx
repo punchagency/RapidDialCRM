@@ -48,15 +48,17 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
     try {
       const apiKey = "8-rKSbjYlRT5jhbnQr1Sw";
       
-      // Use HERE Geocoding API for reliable address searches
+      // Use HERE Discover API which searches for both addresses and places
+      // We provide a central US location as context, but the API will find results anywhere
       const params = new URLSearchParams({
         q: query,
+        at: "39.8283,-98.5795", // Approximate center of US
         limit: "5",
         apiKey: apiKey,
       });
 
       const response = await fetch(
-        `https://geocode.search.hereapi.com/v1/geocode?${params}`
+        `https://discover.search.hereapi.com/v1/discover?${params}`
       );
 
       if (response.ok) {
@@ -64,7 +66,26 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
         const results = data.items || [];
         setAddressSuggestions(results);
       } else {
-        setAddressSuggestions([]);
+        // Fallback to Geocoding API if Discover fails or returns nothing useful
+        // (though Discover usually handles addresses well too)
+        console.warn("Discover API returned empty or error, trying Geocode...");
+        
+        const geocodeParams = new URLSearchParams({
+          q: query,
+          limit: "5",
+          apiKey: apiKey,
+        });
+
+        const geocodeResponse = await fetch(
+          `https://geocode.search.hereapi.com/v1/geocode?${geocodeParams}`
+        );
+
+        if (geocodeResponse.ok) {
+          const geocodeData = await geocodeResponse.json();
+          setAddressSuggestions(geocodeData.items || []);
+        } else {
+          setAddressSuggestions([]);
+        }
       }
     } catch (error) {
       console.error("Address search error:", error);
