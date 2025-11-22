@@ -40,7 +40,16 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
 
   useEffect(() => {
     setFormData(contact);
+    setAddressSuggestions([]);
+    setAddressQuery("");
   }, [contact, isOpen]);
+
+  // Auto-search for address when name changes
+  useEffect(() => {
+    if (!addressQuery && formData.name && formData.name.length > 2) {
+      handleAddressSearch(formData.name);
+    }
+  }, [formData.name]);
 
   const handleAddressSearch = async (query: string) => {
     if (!query.trim() || query.length < 3) {
