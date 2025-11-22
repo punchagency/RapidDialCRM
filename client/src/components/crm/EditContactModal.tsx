@@ -55,10 +55,11 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
         return;
       }
 
-      // Use HERE Autocomplete API which is better for business names
+      // Use HERE Autocomplete API with resultType=place for business names
       const params = new URLSearchParams({
         q: query,
         limit: "5",
+        resultType: "place",
         apiKey: apiKey,
       });
 
@@ -69,8 +70,12 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
       if (response.ok) {
         const data = await response.json();
         const results = data.items || [];
+        console.log("HERE search results:", results);
         setAddressSuggestions(results);
       } else {
+        console.error("HERE API error:", response.status, response.statusText);
+        const errorText = await response.text();
+        console.error("Error details:", errorText);
         setAddressSuggestions([]);
       }
     } catch (error) {
