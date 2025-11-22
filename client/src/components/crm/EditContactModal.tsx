@@ -38,19 +38,6 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
   const [isSearching, setIsSearching] = useState(false);
   const [addressQuery, setAddressQuery] = useState("");
 
-  useEffect(() => {
-    setFormData(contact);
-    setAddressSuggestions([]);
-    setAddressQuery("");
-  }, [contact, isOpen]);
-
-  // Auto-search for address when name changes
-  useEffect(() => {
-    if (!addressQuery && formData.name && formData.name.length > 2) {
-      handleAddressSearch(formData.name);
-    }
-  }, [formData.name]);
-
   const handleAddressSearch = async (query: string) => {
     if (!query.trim() || query.length < 3) {
       setAddressSuggestions([]);
@@ -85,6 +72,16 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
       setIsSearching(false);
     }
   };
+
+  useEffect(() => {
+    setFormData(contact);
+    setAddressSuggestions([]);
+    setAddressQuery("");
+    // Auto-search for address when modal opens with contact name
+    if (contact.name && contact.name.length > 2) {
+      handleAddressSearch(contact.name);
+    }
+  }, [contact, isOpen]);
 
   const handleSelectAddress = (suggestion: any) => {
     const fullAddress = suggestion.display_name;
