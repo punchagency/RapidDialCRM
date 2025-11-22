@@ -46,6 +46,7 @@ export interface Contact {
   address: string;
   zip: string;
   city?: string;
+  state?: string;
   timezone: string;
   lastNotes: string;
   dealSize?: string;

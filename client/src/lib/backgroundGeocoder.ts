@@ -65,9 +65,32 @@ export async function startBackgroundGeocoding() {
   }
 
   const geocodedContacts = getGeocodedContacts();
-  const contactsToGeocode = MOCK_CONTACTS.filter(
-    c => !geocodedContacts.has(c.id) && c.address && (!c.location_lat || c.location_lat === 0)
-  );
+  
+  // Filter contacts that need processing: missing coords OR missing address details
+  const contactsToGeocode = MOCK_CONTACTS.filter(c => {
+    if (!c.address) return false;
+    
+    const hasCoords = c.location_lat && c.location_lat !== 0;
+    const hasDetails = c.city && c.state && c.zip;
+    
+    // If everything is present, skip
+    if (hasCoords && hasDetails) return false;
+    
+    // If already marked as processed, only re-process if details are missing
+    if (geocodedContacts.has(c.id) && hasDetails) return false;
+    
+    return true;
+  });
+  
+  // Prioritize contacts missing city/state/zip
+  contactsToGeocode.sort((a, b) => {
+    const aMissingDetails = !a.city || !a.state || !a.zip;
+    const bMissingDetails = !b.city || !b.state || !b.zip;
+    
+    if (aMissingDetails && !bMissingDetails) return -1; // a comes first
+    if (!aMissingDetails && bMissingDetails) return 1; // b comes first
+    return 0;
+  });
 
   if (contactsToGeocode.length === 0) {
     console.log('All contacts already geocoded');
@@ -96,8 +119,8 @@ export async function startBackgroundGeocoding() {
         contact.location_lng = result.lng;
         
         // Update address fields with standardized city, state, zipcode
-        if (result.city) (contact as any).city = result.city;
-        if (result.state) (contact as any).state = result.state;
+        if (result.city) contact.city = result.city;
+        if (result.state) contact.state = result.state;
         if (result.zipcode) contact.zip = result.zipcode;
         
         geocodedContacts.add(contact.id);
