@@ -110,7 +110,7 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
     }));
 
     setAddressSuggestions([]);
-    setAddressQuery("");
+    setAddressQuery(fullAddress);
   };
 
   const handleSave = () => {
