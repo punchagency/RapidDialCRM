@@ -20,6 +20,7 @@ export interface GeocodingResult {
   city?: string;
   state?: string;
   zipcode?: string;
+  fullAddress?: string;
 }
 
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
@@ -95,6 +96,7 @@ export async function geocodeAddress(address: string): Promise<GeocodingResult |
       city: addressDetails.city,
       state: addressDetails.state,
       zipcode: addressDetails.zipcode,
+      fullAddress: result.display_name,
     };
 
     // Cache the result

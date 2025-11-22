@@ -22,6 +22,18 @@ export default function Dialer() {
     return 0;
   });
 
+  // Sync with URL params whenever location changes
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const contactId = params.get("contactId");
+    if (contactId) {
+      const idx = MOCK_CONTACTS.findIndex(c => c.id === contactId);
+      if (idx >= 0) {
+        setCurrentIndex(idx);
+      }
+    }
+  }, [location]);
+
   const [isTransitioning, setIsTransitioning] = useState(false);
   const { toast } = useToast();
 
