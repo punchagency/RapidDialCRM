@@ -1,4 +1,4 @@
-import { geocodeAddress, GeocodingResult } from './geocoding';
+import { geocodeAddress, GeocodingResult, clearGeocodingCache } from './geocoding';
 import { MOCK_CONTACTS } from './mockData';
 
 interface GeocodingProgress {
@@ -188,7 +188,6 @@ export function resetGeocodingProgress() {
   localStorage.removeItem(PROGRESS_KEY);
   localStorage.removeItem(GEOCODED_CONTACTS_KEY);
   // Also clear the geocoding cache so addresses are re-fetched
-  const { clearGeocodingCache } = require('./geocoding');
   clearGeocodingCache();
   console.log('Geocoding progress reset and cache cleared');
 }
