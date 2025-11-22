@@ -46,7 +46,14 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
 
     setIsSearching(true);
     try {
-      const apiKey = "8-rKSbjYlRT5jhbnQr1Sw";
+      const apiKey = import.meta.env.VITE_HERE_API_KEY;
+      
+      if (!apiKey) {
+        console.error("HERE API key not configured");
+        setAddressSuggestions([]);
+        setIsSearching(false);
+        return;
+      }
       
       // Use HERE Autosuggest API which is the best for search-as-you-type
       // It finds both addresses and places (POIs) efficiently
