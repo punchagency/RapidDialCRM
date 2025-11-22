@@ -72,12 +72,13 @@ export async function startBackgroundGeocoding() {
     
     const hasCoords = c.location_lat && c.location_lat !== 0;
     const hasDetails = c.city && c.state && c.zip;
+    const hasFullAddressString = c.address && c.address.includes(',') && c.address.split(',').length >= 3;
     
-    // If everything is present, skip
-    if (hasCoords && hasDetails) return false;
+    // If everything is present AND address looks complete (has at least 2 commas), skip
+    if (hasCoords && hasDetails && hasFullAddressString) return false;
     
-    // If already marked as processed, only re-process if details are missing
-    if (geocodedContacts.has(c.id) && hasDetails) return false;
+    // If already marked as processed, only re-process if details are missing or address is partial
+    if (geocodedContacts.has(c.id) && hasDetails && hasFullAddressString) return false;
     
     return true;
   });
@@ -122,6 +123,12 @@ export async function startBackgroundGeocoding() {
         if (result.city) contact.city = result.city;
         if (result.state) contact.state = result.state;
         if (result.zipcode) contact.zip = result.zipcode;
+        
+        // Update full address from geocoder if available
+        // This fixes cases where we only have a partial address (e.g. "7574 Pembroke Rd")
+        if (result.fullAddress) {
+          contact.address = result.fullAddress;
+        }
         
         geocodedContacts.add(contact.id);
         geocodedCount++;
