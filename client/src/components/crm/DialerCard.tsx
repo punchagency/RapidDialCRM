@@ -149,16 +149,8 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
               <div className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-xs text-muted-foreground font-medium">Location</p>
-                  <p className="text-foreground">{prospect.addressCity}, {prospect.addressZip}</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-2">
-                <Building2 className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
-                <div>
                   <p className="text-xs text-muted-foreground font-medium">Address</p>
-                  <p className="text-foreground">{prospect.addressStreet || "N/A"}</p>
+                  <p className="text-foreground">{[prospect.addressStreet, prospect.addressCity, prospect.addressState, prospect.addressZip].filter(Boolean).join(", ") || "N/A"}</p>
                 </div>
               </div>
 
