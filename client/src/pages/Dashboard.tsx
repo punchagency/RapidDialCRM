@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { GamificationWidget } from "@/components/crm/GamificationWidget";
-import { MOCK_CONTACTS } from "@/lib/mockData";
 import { getStatuses } from "@/lib/statusUtils";
+import { Prospect } from "@shared/schema";
+import { fetchProspects } from "@/lib/apiClient";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,16 +21,20 @@ export default function Dashboard() {
   const { userRole } = useUserRole();
   const statuses = getStatuses();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [prospects, setProspects] = useState<Prospect[]>([]);
   const { toast } = useToast();
 
-  // Background geocoding disabled for faster load times
-  // All mockData is already loaded in memory
-  // useEffect(() => {
-  //   resetGeocodingProgress();
-  //   setTimeout(() => {
-  //     startBackgroundGeocoding();
-  //   }, 100);
-  // }, []);
+  useEffect(() => {
+    async function loadProspects() {
+      try {
+        const data = await fetchProspects();
+        setProspects(data);
+      } catch (error) {
+        console.error("Failed to load prospects:", error);
+      }
+    }
+    loadProspects();
+  }, []);
 
   const handleFileUpload = async (file: File) => {
     // Parse CSV file
@@ -57,8 +62,8 @@ export default function Dashboard() {
     return status ? status.color : "bg-secondary text-secondary-foreground";
   };
 
-  // Filter prospects to only show "New" ones for "Up Next"
-  const upNextProspects = MOCK_CONTACTS.filter(prospect => prospect.status === "New");
+  // Filter prospects - show all for now (database doesn't have status field yet)
+  const upNextProspects = prospects.slice(0, 20);
 
   // --- Role Specific Content Components ---
 
@@ -87,21 +92,21 @@ export default function Dashboard() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-1">
-                          <p className="font-bold text-gray-900 truncate">{prospect.name}</p>
+                          <p className="font-bold text-gray-900 truncate">{prospect.businessName}</p>
                           <Badge 
                             variant="secondary" 
                             className={cn(
                               "text-[10px] h-5 px-2 rounded-full font-semibold border-none", 
-                              getStatusColor(prospect.status)
+                              "bg-green-100 text-green-900"
                             )}
                           >
-                            {prospect.status}
+                            Active
                           </Badge>
                         </div>
                         <p className="text-xs text-gray-500 font-medium truncate flex items-center gap-1.5">
-                          {prospect.company}
+                          {prospect.specialty}
                           <span className="w-1 h-1 rounded-full bg-gray-300" />
-                          {prospect.address}
+                          {prospect.addressCity}, {prospect.addressState}
                         </p>
                       </div>
                       <Button size="sm" variant="ghost" className="text-gray-400 hover:text-pink-600 hover:bg-pink-50 rounded-full h-9 w-9 p-0 shrink-0">
@@ -370,7 +375,7 @@ export default function Dashboard() {
              <CardContent className="p-6 text-center">
                 <Database className="h-8 w-8 mx-auto text-purple-500 mb-2" />
                 <h3 className="font-bold text-lg">Total Records</h3>
-                <p className="text-sm text-gray-500 mb-4">{MOCK_CONTACTS.length.toLocaleString()} Leads</p>
+                <p className="text-sm text-gray-500 mb-4">{prospects.length.toLocaleString()} Leads</p>
                 <Button variant="ghost" className="w-full">Manage Database</Button>
              </CardContent>
           </Card>
