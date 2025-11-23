@@ -66,24 +66,13 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
   };
 
   const outcomes = [
-    { key: "new", label: "New", color: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100" },
-    { key: "email_sent", label: "Email Sent", color: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100" },
-    { key: "answer", label: "Answer", color: "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100" },
-    { key: "connected", label: "Connected", color: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100" },
-    { key: "responded", label: "Responded", color: "bg-cyan-50 text-cyan-700 border-cyan-200 hover:bg-cyan-100" },
-    { key: "qualified", label: "Qualified", color: "bg-green-50 text-green-700 border-green-200 hover:bg-green-100" },
-    { key: "meeting_set", label: "Meeting Set", color: "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100" },
-    { key: "visit_set", label: "Visit Set", color: "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100" },
-    { key: "call_set", label: "Call Set", color: "bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100" },
-    { key: "demo_done", label: "Demo Done", color: "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100" },
-    { key: "proposal", label: "Proposal", color: "bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100" },
-    { key: "negotiating", label: "Negotiating", color: "bg-red-50 text-red-700 border-red-200 hover:bg-red-100" },
-    { key: "closed_won", label: "Closed Won", color: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100" },
-    { key: "closed_lost", label: "Closed Lost", color: "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100" },
-    { key: "nurture", label: "Nurture", color: "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100" },
-    { key: "follow_up", label: "Follow Up", color: "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100" },
-    { key: "no_response", label: "No Response", color: "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100" },
-    { key: "dnc", label: "DNC", color: "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100" },
+    { key: "booked", label: "Booked", color: "bg-green-100 text-green-700 border-green-200 hover:bg-green-200" },
+    { key: "callback", label: "Call back", color: "bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-200" },
+    { key: "dont_call", label: "Don't Call", color: "bg-gray-700 text-white border-gray-700 hover:bg-gray-800" },
+    { key: "email", label: "Send an email", color: "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200" },
+    { key: "not_interested", label: "Not Interested", color: "bg-red-600 text-white border-red-600 hover:bg-red-700" },
+    { key: "hangup", label: "Hang up", color: "bg-pink-100 text-pink-700 border-pink-200 hover:bg-pink-200" },
+    { key: "getback", label: "Get back to you", color: "bg-purple-300 text-purple-700 border-purple-300 hover:bg-purple-400" },
   ];
 
   return (
