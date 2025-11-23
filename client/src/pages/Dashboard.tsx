@@ -84,9 +84,9 @@ export default function Dashboard() {
           </div>
           <div className="space-y-3 overflow-y-auto pr-2 pb-4">
             {upNextProspects.length > 0 ? (
-              upNextProspects.map((prospect, i) => (
+              upNextProspects.map((prospect) => (
                 <div key={prospect.id} className="mb-3">
-                  <ProspectCard prospect={prospect} variant="dashboard" index={i} />
+                  <ProspectCard prospect={prospect} />
                 </div>
               ))
             ) : (

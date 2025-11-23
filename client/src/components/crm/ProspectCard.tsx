@@ -10,60 +10,20 @@ import { getSpecialtyColors } from "@/lib/specialtyColors";
 
 interface ProspectCardProps {
   prospect: Prospect;
-  variant?: "dashboard" | "contacts";
   showEditButton?: boolean;
   onEdit?: (e: React.MouseEvent) => void;
-  index?: number;
 }
 
 export function ProspectCard({ 
   prospect, 
-  variant = "contacts",
   showEditButton = false,
-  onEdit,
-  index
+  onEdit
 }: ProspectCardProps) {
   const colors = getSpecialtyColors(prospect.specialty);
   const fullAddress = [prospect.addressStreet, prospect.addressCity, prospect.addressState, prospect.addressZip]
     .filter(Boolean)
     .join(", ") || "N/A";
 
-  if (variant === "dashboard") {
-    return (
-      <Link href={`/dialer?prospectId=${prospect.id}`}>
-        <Card className="group hover:shadow-lg transition-all border-none shadow-sm rounded-xl bg-white overflow-hidden cursor-pointer">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="h-8 w-8 rounded-full bg-pink-50 text-pink-600 flex items-center justify-center text-sm font-bold shrink-0">
-              {index !== undefined ? index + 1 : ""}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <p className="font-bold text-gray-900">{prospect.businessName}</p>
-                <Badge 
-                  variant="secondary" 
-                  className={cn(
-                    "text-[10px] h-5 px-2 rounded-full font-semibold border-none", 
-                    colors.bgColor, colors.textColor
-                  )}
-                  data-testid={`specialty-badge-${prospect.id}`}
-                >
-                  {prospect.specialty}
-                </Badge>
-              </div>
-              <p className="text-xs text-gray-500 font-medium truncate">
-                {fullAddress}
-              </p>
-            </div>
-            <Button size="sm" variant="ghost" className="text-gray-400 hover:text-pink-600 hover:bg-pink-50 rounded-full h-9 w-9 p-0 shrink-0">
-              <Phone className="h-4 w-4" />
-            </Button>
-          </CardContent>
-        </Card>
-      </Link>
-    );
-  }
-
-  // Contacts variant (default)
   return (
     <Link href={`/dialer?prospectId=${prospect.id}`}>
       <Card className="group hover:shadow-md transition-all border-border/60 cursor-pointer">

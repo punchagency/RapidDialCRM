@@ -135,7 +135,6 @@ export default function Contacts() {
                   <div key={prospect.id} className="mb-4">
                     <ProspectCard 
                       prospect={prospect} 
-                      variant="contacts"
                       showEditButton={canEdit}
                       onEdit={(e) => {
                         e.preventDefault();
