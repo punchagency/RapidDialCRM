@@ -16,7 +16,7 @@ import { FileUploadModal } from "@/components/crm/FileUploadModal";
 import { GeocodingStatus } from "@/components/crm/GeocodingStatus";
 import { useToast } from "@/hooks/use-toast";
 import { startBackgroundGeocoding, resetGeocodingProgress } from "@/lib/backgroundGeocoder";
-import { getSpecialtyColors } from "@/lib/specialtyColors";
+import { ProspectCard } from "@/components/crm/ProspectCard";
 
 export default function Dashboard() {
   const { userRole } = useUserRole();
@@ -84,42 +84,11 @@ export default function Dashboard() {
           </div>
           <div className="space-y-3 overflow-y-auto pr-2 pb-4">
             {upNextProspects.length > 0 ? (
-              upNextProspects.map((prospect, i) => {
-                const colors = getSpecialtyColors(prospect.specialty);
-                const fullAddress = [prospect.addressStreet, prospect.addressCity, prospect.addressState, prospect.addressZip].filter(Boolean).join(", ") || "N/A";
-                return (
-                  <Link key={prospect.id} href={`/dialer?prospectId=${prospect.id}`}>
-                    <Card className="group hover:shadow-lg transition-all border-none shadow-sm rounded-xl bg-white overflow-hidden cursor-pointer mb-3">
-                      <CardContent className="p-4 flex items-center gap-4">
-                        <div className="h-8 w-8 rounded-full bg-pink-50 text-pink-600 flex items-center justify-center text-sm font-bold shrink-0">
-                          {i + 1}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <p className="font-bold text-gray-900">{prospect.businessName}</p>
-                            <Badge 
-                              variant="secondary" 
-                              className={cn(
-                                "text-[10px] h-5 px-2 rounded-full font-semibold border-none", 
-                                colors.bgColor, colors.textColor
-                              )}
-                              data-testid={`specialty-badge-dashboard-${prospect.id}`}
-                            >
-                              {prospect.specialty}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-gray-500 font-medium truncate">
-                            {fullAddress}
-                          </p>
-                        </div>
-                        <Button size="sm" variant="ghost" className="text-gray-400 hover:text-pink-600 hover:bg-pink-50 rounded-full h-9 w-9 p-0 shrink-0">
-                          <Phone className="h-4 w-4" />
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                );
-              })
+              upNextProspects.map((prospect, i) => (
+                <div key={prospect.id} className="mb-3">
+                  <ProspectCard prospect={prospect} variant="dashboard" index={i} />
+                </div>
+              ))
             ) : (
               <div className="p-8 text-center text-gray-500 bg-white rounded-xl shadow-sm">
                 No new prospects remaining for today. Great job!
