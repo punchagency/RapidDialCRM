@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProspectSchema, insertFieldRepSchema, insertAppointmentSchema } from "@shared/schema";
+import { insertProspectSchema, insertFieldRepSchema, insertAppointmentSchema, insertStakeholderSchema, insertUserSchema } from "@shared/schema";
 import { generateSmartCallingList, calculatePriorityScore } from "./services/optimization";
 import { geocodeProspects } from "./services/geocoding";
 import { seedDatabase } from "./seedData";
@@ -196,6 +196,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to recalculate priorities" });
+    }
+  });
+
+  // GET /api/stakeholders/:prospectId - Get stakeholders for a prospect
+  app.get("/api/stakeholders/:prospectId", async (req, res) => {
+    try {
+      const stakeholders = await storage.listStakeholdersByProspect(req.params.prospectId);
+      res.json(stakeholders);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch stakeholders" });
+    }
+  });
+
+  // POST /api/stakeholders - Create stakeholder
+  app.post("/api/stakeholders", async (req, res) => {
+    try {
+      const data = insertStakeholderSchema.parse(req.body);
+      const stakeholder = await storage.createStakeholder(data);
+      res.status(201).json(stakeholder);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid stakeholder data" });
+    }
+  });
+
+  // GET /api/stakeholders/detail/:id - Get single stakeholder
+  app.get("/api/stakeholders/detail/:id", async (req, res) => {
+    try {
+      const stakeholder = await storage.getStakeholder(req.params.id);
+      if (!stakeholder) {
+        return res.status(404).json({ error: "Stakeholder not found" });
+      }
+      res.json(stakeholder);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch stakeholder" });
+    }
+  });
+
+  // PATCH /api/stakeholders/:id - Update stakeholder
+  app.patch("/api/stakeholders/:id", async (req, res) => {
+    try {
+      const stakeholder = await storage.updateStakeholder(req.params.id, req.body);
+      if (!stakeholder) {
+        return res.status(404).json({ error: "Stakeholder not found" });
+      }
+      res.json(stakeholder);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update stakeholder" });
+    }
+  });
+
+  // DELETE /api/stakeholders/:id - Delete stakeholder
+  app.delete("/api/stakeholders/:id", async (req, res) => {
+    try {
+      await storage.deleteStakeholder(req.params.id);
+      res.json({ status: "deleted" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete stakeholder" });
+    }
+  });
+
+  // GET /api/users - List all users
+  app.get("/api/users", async (req, res) => {
+    try {
+      const users = await storage.listUsers();
+      res.json(users);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  // POST /api/users - Create user
+  app.post("/api/users", async (req, res) => {
+    try {
+      const data = insertUserSchema.parse(req.body);
+      const user = await storage.createUser(data);
+      res.status(201).json(user);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid user data" });
+    }
+  });
+
+  // GET /api/users/:id - Get user
+  app.get("/api/users/:id", async (req, res) => {
+    try {
+      const user = await storage.getUser(req.params.id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch user" });
+    }
+  });
+
+  // GET /api/users/email/:email - Get user by email
+  app.get("/api/users/email/:email", async (req, res) => {
+    try {
+      const user = await storage.getUserByEmail(req.params.email);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch user" });
+    }
+  });
+
+  // PATCH /api/users/:id - Update user
+  app.patch("/api/users/:id", async (req, res) => {
+    try {
+      const user = await storage.updateUser(req.params.id, req.body);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      res.json(user);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+
+  // DELETE /api/users/:id - Delete user
+  app.delete("/api/users/:id", async (req, res) => {
+    try {
+      await storage.deleteUser(req.params.id);
+      res.json({ status: "deleted" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete user" });
     }
   });
 

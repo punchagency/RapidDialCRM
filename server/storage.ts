@@ -1,4 +1,4 @@
-import { type Prospect, type InsertProspect, type FieldRep, type InsertFieldRep, type Appointment, type InsertAppointment, prospects, fieldReps, appointments, callHistory } from "@shared/schema";
+import { type Prospect, type InsertProspect, type FieldRep, type InsertFieldRep, type Appointment, type InsertAppointment, type Stakeholder, type InsertStakeholder, type User, type InsertUser, prospects, fieldReps, appointments, callHistory, stakeholders, users } from "@shared/schema";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { eq, and, desc, asc, isNull } from "drizzle-orm";
@@ -29,6 +29,21 @@ export interface IStorage {
 
   // Call History
   recordCallOutcome(prospectId: string, callerId: string, outcome: string, notes?: string): Promise<void>;
+
+  // Stakeholders
+  getStakeholder(id: string): Promise<Stakeholder | undefined>;
+  listStakeholdersByProspect(prospectId: string): Promise<Stakeholder[]>;
+  createStakeholder(stakeholder: InsertStakeholder): Promise<Stakeholder>;
+  updateStakeholder(id: string, stakeholder: Partial<InsertStakeholder>): Promise<Stakeholder | undefined>;
+  deleteStakeholder(id: string): Promise<void>;
+
+  // Users
+  getUser(id: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  listUsers(): Promise<User[]>;
+  createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined>;
+  deleteUser(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -118,6 +133,57 @@ export class DatabaseStorage implements IStorage {
     await this.updateProspect(prospectId, {
       lastContactDate: new Date(),
     });
+  }
+
+  async getStakeholder(id: string): Promise<Stakeholder | undefined> {
+    const result = await db.select().from(stakeholders).where(eq(stakeholders.id, id)).limit(1);
+    return result[0];
+  }
+
+  async listStakeholdersByProspect(prospectId: string): Promise<Stakeholder[]> {
+    return await db.select().from(stakeholders).where(eq(stakeholders.prospectId, prospectId));
+  }
+
+  async createStakeholder(stakeholder: InsertStakeholder): Promise<Stakeholder> {
+    const [result] = await db.insert(stakeholders).values(stakeholder).returning();
+    return result;
+  }
+
+  async updateStakeholder(id: string, stakeholder: Partial<InsertStakeholder>): Promise<Stakeholder | undefined> {
+    const [result] = await db.update(stakeholders).set({ ...stakeholder, updatedAt: new Date() }).where(eq(stakeholders.id, id)).returning();
+    return result;
+  }
+
+  async deleteStakeholder(id: string): Promise<void> {
+    await db.delete(stakeholders).where(eq(stakeholders.id, id));
+  }
+
+  async getUser(id: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+    return result[0];
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    return result[0];
+  }
+
+  async listUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const [result] = await db.insert(users).values(user).returning();
+    return result;
+  }
+
+  async updateUser(id: string, user: Partial<InsertUser>): Promise<User | undefined> {
+    const [result] = await db.update(users).set({ ...user, updatedAt: new Date() }).where(eq(users.id, id)).returning();
+    return result;
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
   }
 }
 

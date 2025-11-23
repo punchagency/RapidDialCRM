@@ -75,6 +75,37 @@ export const callHistory = pgTable("call_history", {
   callerIdx: index("idx_call_history_caller").on(table.callerId),
 }));
 
+// Stakeholders Table
+export const stakeholders = pgTable("stakeholders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  prospectId: varchar("prospect_id").notNull().references(() => prospects.id),
+  name: text("name").notNull(),
+  title: varchar("title", { length: 100 }),
+  email: varchar("email", { length: 255 }),
+  phoneNumber: varchar("phone_number", { length: 20 }),
+  isPrimary: boolean("is_primary").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  prospectIdx: index("idx_stakeholders_prospect").on(table.prospectId),
+  emailIdx: index("idx_stakeholders_email").on(table.email),
+}));
+
+// Users Table (for RBAC)
+export const users = pgTable("users", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  name: text("name").notNull(),
+  role: varchar("role", { length: 50 }).notNull().default("data_loader"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  emailIdx: index("idx_users_email").on(table.email),
+  roleIdx: index("idx_users_role").on(table.role),
+}));
+
 // Zod Schemas
 export const insertProspectSchema = createInsertSchema(prospects).omit({
   id: true,
@@ -94,6 +125,18 @@ export const insertAppointmentSchema = createInsertSchema(appointments).omit({
   updatedAt: true,
 });
 
+export const insertStakeholderSchema = createInsertSchema(stakeholders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type Prospect = typeof prospects.$inferSelect;
 export type InsertProspect = z.infer<typeof insertProspectSchema>;
@@ -105,3 +148,11 @@ export type Appointment = typeof appointments.$inferSelect;
 export type InsertAppointment = z.infer<typeof insertAppointmentSchema>;
 
 export type CallHistory = typeof callHistory.$inferSelect;
+
+export type Stakeholder = typeof stakeholders.$inferSelect;
+export type InsertStakeholder = z.infer<typeof insertStakeholderSchema>;
+
+export type User = typeof users.$inferSelect;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+
+export type UserRole = 'admin' | 'manager' | 'inside_sales_rep' | 'field_sales_rep' | 'data_loader';
