@@ -19,26 +19,45 @@ interface CallOutcome {
 }
 
 const BACKGROUND_COLORS = [
-  // Positive (Green) - Light to Dark intensity
-  { label: "✓ Positive Light", value: "bg-lime-100", preview: "bg-lime-100" },
-  { label: "✓ Positive Good", value: "bg-green-100", preview: "bg-green-100" },
-  { label: "✓ Positive Strong", value: "bg-emerald-100", preview: "bg-emerald-100" },
-  { label: "✓ Positive Very Good", value: "bg-green-700", preview: "bg-green-700" },
-  { label: "✓ Positive Very Strong", value: "bg-teal-100", preview: "bg-teal-100" },
+  // Positive (Green) - All intensities from light to very dark
+  { label: "✓ Green 50", value: "bg-green-50", preview: "bg-green-50" },
+  { label: "✓ Green 100", value: "bg-green-100", preview: "bg-green-100" },
+  { label: "✓ Green 200", value: "bg-green-200", preview: "bg-green-200" },
+  { label: "✓ Green 300", value: "bg-green-300", preview: "bg-green-300" },
+  { label: "✓ Green 400", value: "bg-green-400", preview: "bg-green-400" },
+  { label: "✓ Green 500", value: "bg-green-500", preview: "bg-green-500" },
+  { label: "✓ Green 600", value: "bg-green-600", preview: "bg-green-600" },
+  { label: "✓ Green 700 (Very Good)", value: "bg-green-700", preview: "bg-green-700" },
+  { label: "✓ Green 800", value: "bg-green-800", preview: "bg-green-800" },
+  { label: "✓ Green 900 (Excellent)", value: "bg-green-900", preview: "bg-green-900" },
   
-  // In-Between (Yellow) - Light to Dark intensity
-  { label: "⚠ Warning Light", value: "bg-yellow-100", preview: "bg-yellow-100" },
-  { label: "⚠ Warning Medium", value: "bg-amber-100", preview: "bg-amber-100" },
-  { label: "⚠ Warning Intense", value: "bg-orange-100", preview: "bg-orange-100" },
+  // In-Between (Yellow) - All intensities from light to dark
+  { label: "⚠ Yellow 50", value: "bg-yellow-50", preview: "bg-yellow-50" },
+  { label: "⚠ Yellow 100", value: "bg-yellow-100", preview: "bg-yellow-100" },
+  { label: "⚠ Yellow 200", value: "bg-yellow-200", preview: "bg-yellow-200" },
+  { label: "⚠ Yellow 300", value: "bg-yellow-300", preview: "bg-yellow-300" },
+  { label: "⚠ Yellow 400", value: "bg-yellow-400", preview: "bg-yellow-400" },
+  { label: "⚠ Yellow 500", value: "bg-yellow-500", preview: "bg-yellow-500" },
+  { label: "⚠ Yellow 600", value: "bg-yellow-600", preview: "bg-yellow-600" },
+  { label: "⚠ Yellow 700", value: "bg-yellow-700", preview: "bg-yellow-700" },
+  { label: "⚠ Yellow 800", value: "bg-yellow-800", preview: "bg-yellow-800" },
+  { label: "⚠ Yellow 900", value: "bg-yellow-900", preview: "bg-yellow-900" },
   
-  // Negative (Red) - Light to Dark intensity
-  { label: "✗ Challenging", value: "bg-red-100", preview: "bg-red-100" },
-  { label: "✗ Very Bad", value: "bg-red-600", preview: "bg-red-600" },
+  // Negative (Red) - All intensities from light to very dark
+  { label: "✗ Red 50", value: "bg-red-50", preview: "bg-red-50" },
+  { label: "✗ Red 100", value: "bg-red-100", preview: "bg-red-100" },
+  { label: "✗ Red 200", value: "bg-red-200", preview: "bg-red-200" },
+  { label: "✗ Red 300", value: "bg-red-300", preview: "bg-red-300" },
+  { label: "✗ Red 400", value: "bg-red-400", preview: "bg-red-400" },
+  { label: "✗ Red 500", value: "bg-red-500", preview: "bg-red-500" },
+  { label: "✗ Red 600", value: "bg-red-600", preview: "bg-red-600" },
+  { label: "✗ Red 700", value: "bg-red-700", preview: "bg-red-700" },
+  { label: "✗ Red 800", value: "bg-red-800", preview: "bg-red-800" },
+  { label: "✗ Red 900 (Very Bad)", value: "bg-red-900", preview: "bg-red-900" },
   
   // Neutral (Gray)
-  { label: "○ Neutral Light", value: "bg-slate-100", preview: "bg-slate-100" },
-  { label: "○ Neutral Gray", value: "bg-gray-100", preview: "bg-gray-100" },
-  { label: "○ Neutral Dark", value: "bg-gray-700", preview: "bg-gray-700" },
+  { label: "○ Gray 100", value: "bg-gray-100", preview: "bg-gray-100" },
+  { label: "○ Gray 700", value: "bg-gray-700", preview: "bg-gray-700" },
 ];
 
 const TEXT_COLORS = [
