@@ -100,10 +100,36 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
               {prospect.territory}
             </p>
 
-            <div className="bg-muted/40 rounded-lg p-3 mb-4">
-              <div className="text-2xl font-mono font-bold text-foreground">
-                {prospect.phoneNumber}
+            <div className="flex gap-2 items-stretch mb-4">
+              <div className="bg-muted/40 rounded-lg p-3 flex-1">
+                <div className="text-2xl font-mono font-bold text-foreground">
+                  {prospect.phoneNumber}
+                </div>
               </div>
+              {isCallActive ? (
+                <Button
+                  size="md"
+                  variant="destructive"
+                  className="px-3 text-xs h-auto"
+                  onClick={() => setIsCallActive(false)}
+                >
+                  <Phone className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button
+                  size="md"
+                  className="px-3 bg-green-600 hover:bg-green-700 text-xs h-auto"
+                  onClick={handleCallClick}
+                  disabled={isConnecting}
+                  data-testid="call-button"
+                >
+                  {isConnecting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Phone className="h-4 w-4" />
+                  )}
+                </Button>
+              )}
             </div>
 
             <div className="space-y-3 text-sm flex-1">
@@ -146,41 +172,6 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
                 <History className="h-3 w-3" /> Last Interaction
               </p>
               <p className="text-xs text-muted-foreground">No notes yet</p>
-            </div>
-
-            {/* Call Button */}
-            <div className="mt-4 pt-4 border-t border-border/50">
-              {isCallActive ? (
-                <Button
-                  size="md"
-                  variant="destructive"
-                  className="w-full text-sm h-10"
-                  onClick={() => setIsCallActive(false)}
-                >
-                  <Phone className="h-4 w-4 mr-2" />
-                  End Call ({formatTime(timer)})
-                </Button>
-              ) : (
-                <Button
-                  size="md"
-                  className="w-full bg-green-600 hover:bg-green-700 text-sm h-10"
-                  onClick={handleCallClick}
-                  disabled={isConnecting}
-                  data-testid="call-button"
-                >
-                  {isConnecting ? (
-                    <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Connecting...
-                    </>
-                  ) : (
-                    <>
-                      <Phone className="h-4 w-4 mr-2" />
-                      Call Now
-                    </>
-                  )}
-                </Button>
-              )}
             </div>
           </CardContent>
         </Card>
