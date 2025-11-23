@@ -26,7 +26,23 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
   const [isConnecting, setIsConnecting] = useState(false);
   const [timer, setTimer] = useState(0);
   const [activeTab, setActiveTab] = useState("notes");
+  const [outcomes, setOutcomes] = useState<any[]>([]);
   const { toast } = useToast();
+
+  React.useEffect(() => {
+    async function loadOutcomes() {
+      try {
+        const response = await fetch("/api/call-outcomes");
+        if (response.ok) {
+          const data = await response.json();
+          setOutcomes(data);
+        }
+      } catch (error) {
+        console.error("Failed to load call outcomes:", error);
+      }
+    }
+    loadOutcomes();
+  }, []);
 
   // Simple timer effect
   React.useEffect(() => {
@@ -65,15 +81,6 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
     setIsCallActive(false);
   };
 
-  const outcomes = [
-    { key: "booked", label: "Booked", color: "bg-green-100 text-green-700 border-green-200 hover:bg-green-200" },
-    { key: "callback", label: "Call back", color: "bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-200" },
-    { key: "dont_call", label: "Don't Call", color: "bg-gray-700 text-white border-gray-700 hover:bg-gray-800" },
-    { key: "email", label: "Send an email", color: "bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200" },
-    { key: "not_interested", label: "Not Interested", color: "bg-red-600 text-white border-red-600 hover:bg-red-700" },
-    { key: "hangup", label: "Hang up", color: "bg-pink-100 text-pink-700 border-pink-200 hover:bg-pink-200" },
-    { key: "getback", label: "Get back to you", color: "bg-purple-300 text-purple-700 border-purple-300 hover:bg-purple-400" },
-  ];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-full w-full overflow-hidden">
@@ -249,14 +256,14 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
               <p className="text-sm text-muted-foreground">Press appropriate shortcut key</p>
             </div>
             <div className="grid grid-cols-3 gap-3 auto-rows-max">
-            {outcomes.map((outcome, idx) => (
+            {outcomes.map((outcome) => (
               <Button
-                key={outcome.key}
+                key={outcome.id}
                 variant="outline"
                 size="sm"
-                className={cn("h-auto py-2 px-2 flex flex-col items-center justify-center border text-xs font-medium", outcome.color)}
+                className={cn("h-auto py-2 px-2 flex flex-col items-center justify-center border text-xs font-medium", outcome.bgColor, outcome.textColor, outcome.borderColor, outcome.hoverColor)}
                 onClick={() => handleComplete(outcome.label)}
-                data-testid={`outcome-${outcome.key}`}
+                data-testid={`outcome-${outcome.label}`}
               >
                 <span className="text-center">{outcome.label}</span>
               </Button>

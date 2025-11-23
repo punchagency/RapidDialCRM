@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProspectSchema, insertFieldRepSchema, insertAppointmentSchema, insertStakeholderSchema, insertUserSchema, insertSpecialtyColorSchema } from "@shared/schema";
+import { insertProspectSchema, insertFieldRepSchema, insertAppointmentSchema, insertStakeholderSchema, insertUserSchema, insertSpecialtyColorSchema, insertCallOutcomeSchema } from "@shared/schema";
 import { generateSmartCallingList, calculatePriorityScore } from "./services/optimization";
 import { geocodeProspects, getFullAddressFromHere } from "./services/geocoding";
 import { seedDatabase } from "./seedData";
@@ -14,6 +14,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Initialize specialty colors
   await storage.initializeSpecialtyColors(["Dental", "Chiropractor", "Optometry", "Physical Therapy", "Orthodontics"]).catch(err => console.error("Failed to initialize specialty colors:", err));
+  
+  // Initialize call outcomes
+  await storage.initializeCallOutcomes().catch(err => console.error("Failed to initialize call outcomes:", err));
 
   // Health check
   app.get("/health", (_req, res) => {
@@ -422,6 +425,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(color);
     } catch (error) {
       res.status(500).json({ error: "Failed to update specialty color" });
+    }
+  });
+
+  // GET /api/call-outcomes - List all call outcomes
+  app.get("/api/call-outcomes", async (req, res) => {
+    try {
+      const outcomes = await storage.listCallOutcomes();
+      res.json(outcomes);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch call outcomes" });
+    }
+  });
+
+  // POST /api/call-outcomes - Create call outcome
+  app.post("/api/call-outcomes", async (req, res) => {
+    try {
+      const data = insertCallOutcomeSchema.parse(req.body);
+      const outcome = await storage.createCallOutcome(data);
+      res.status(201).json(outcome);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid call outcome data" });
+    }
+  });
+
+  // PATCH /api/call-outcomes/:id - Update call outcome
+  app.patch("/api/call-outcomes/:id", async (req, res) => {
+    try {
+      const outcome = await storage.updateCallOutcome(req.params.id, req.body);
+      if (!outcome) {
+        return res.status(404).json({ error: "Call outcome not found" });
+      }
+      res.json(outcome);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update call outcome" });
+    }
+  });
+
+  // DELETE /api/call-outcomes/:id - Delete call outcome
+  app.delete("/api/call-outcomes/:id", async (req, res) => {
+    try {
+      await storage.deleteCallOutcome(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete call outcome" });
     }
   });
 

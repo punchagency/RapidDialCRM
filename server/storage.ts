@@ -1,4 +1,4 @@
-import { type Prospect, type InsertProspect, type FieldRep, type InsertFieldRep, type Appointment, type InsertAppointment, type Stakeholder, type InsertStakeholder, type User, type InsertUser, type SpecialtyColor, type InsertSpecialtyColor, prospects, fieldReps, appointments, callHistory, stakeholders, users, specialtyColors } from "@shared/schema";
+import { type Prospect, type InsertProspect, type FieldRep, type InsertFieldRep, type Appointment, type InsertAppointment, type Stakeholder, type InsertStakeholder, type User, type InsertUser, type SpecialtyColor, type InsertSpecialtyColor, type CallOutcome, type InsertCallOutcome, prospects, fieldReps, appointments, callHistory, stakeholders, users, specialtyColors, callOutcomes } from "@shared/schema";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { eq, and, desc, asc, isNull } from "drizzle-orm";
@@ -50,6 +50,14 @@ export interface IStorage {
   listSpecialtyColors(): Promise<SpecialtyColor[]>;
   updateSpecialtyColor(specialty: string, color: Partial<InsertSpecialtyColor>): Promise<SpecialtyColor | undefined>;
   initializeSpecialtyColors(specialties: string[]): Promise<void>;
+
+  // Call Outcomes
+  getCallOutcome(label: string): Promise<CallOutcome | undefined>;
+  listCallOutcomes(): Promise<CallOutcome[]>;
+  createCallOutcome(outcome: InsertCallOutcome): Promise<CallOutcome>;
+  updateCallOutcome(id: string, outcome: Partial<InsertCallOutcome>): Promise<CallOutcome | undefined>;
+  deleteCallOutcome(id: string): Promise<void>;
+  initializeCallOutcomes(): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -219,6 +227,48 @@ export class DatabaseStorage implements IStorage {
       const existing = await this.getSpecialtyColor(color.specialty);
       if (!existing) {
         await db.insert(specialtyColors).values(color).onConflictDoNothing();
+      }
+    }
+  }
+
+  async getCallOutcome(label: string): Promise<CallOutcome | undefined> {
+    const result = await db.select().from(callOutcomes).where(eq(callOutcomes.label, label)).limit(1);
+    return result[0];
+  }
+
+  async listCallOutcomes(): Promise<CallOutcome[]> {
+    return await db.select().from(callOutcomes).orderBy(asc(callOutcomes.sortOrder));
+  }
+
+  async createCallOutcome(outcome: InsertCallOutcome): Promise<CallOutcome> {
+    const [result] = await db.insert(callOutcomes).values(outcome).returning();
+    return result;
+  }
+
+  async updateCallOutcome(id: string, outcome: Partial<InsertCallOutcome>): Promise<CallOutcome | undefined> {
+    const [result] = await db.update(callOutcomes).set({ ...outcome, updatedAt: new Date() }).where(eq(callOutcomes.id, id)).returning();
+    return result;
+  }
+
+  async deleteCallOutcome(id: string): Promise<void> {
+    await db.delete(callOutcomes).where(eq(callOutcomes.id, id));
+  }
+
+  async initializeCallOutcomes(): Promise<void> {
+    const defaultOutcomes = [
+      { label: "Booked", bgColor: "bg-green-100", textColor: "text-green-700", borderColor: "border-green-200", hoverColor: "hover:bg-green-200", sortOrder: 1 },
+      { label: "Call back", bgColor: "bg-yellow-100", textColor: "text-yellow-700", borderColor: "border-yellow-200", hoverColor: "hover:bg-yellow-200", sortOrder: 2 },
+      { label: "Don't Call", bgColor: "bg-gray-700", textColor: "text-white", borderColor: "border-gray-700", hoverColor: "hover:bg-gray-800", sortOrder: 3 },
+      { label: "Send an email", bgColor: "bg-blue-100", textColor: "text-blue-700", borderColor: "border-blue-200", hoverColor: "hover:bg-blue-200", sortOrder: 4 },
+      { label: "Not Interested", bgColor: "bg-red-600", textColor: "text-white", borderColor: "border-red-600", hoverColor: "hover:bg-red-700", sortOrder: 5 },
+      { label: "Hang up", bgColor: "bg-pink-100", textColor: "text-pink-700", borderColor: "border-pink-200", hoverColor: "hover:bg-pink-200", sortOrder: 6 },
+      { label: "Get back to you", bgColor: "bg-purple-300", textColor: "text-purple-700", borderColor: "border-purple-300", hoverColor: "hover:bg-purple-400", sortOrder: 7 },
+    ];
+
+    for (const outcome of defaultOutcomes) {
+      const existing = await this.getCallOutcome(outcome.label);
+      if (!existing) {
+        await db.insert(callOutcomes).values(outcome).onConflictDoNothing();
       }
     }
   }

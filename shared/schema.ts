@@ -17,6 +17,7 @@ export const prospects = pgTable("prospects", {
   specialty: varchar("specialty", { length: 50 }).notNull(),
   territory: varchar("territory", { length: 20 }).notNull(),
   lastContactDate: timestamp("last_contact_date"),
+  lastCallOutcome: varchar("last_call_outcome", { length: 50 }),
   appointmentStatus: jsonb("appointment_status").default(sql`'{"isBooked": false, "scheduledDate": null, "fieldRepId": null}'::jsonb`),
   priorityScore: integer("priority_score"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -118,6 +119,22 @@ export const specialtyColors = pgTable("specialty_colors", {
   specialtyIdx: index("idx_specialty_colors_specialty").on(table.specialty),
 }));
 
+// Call Outcomes Table
+export const callOutcomes = pgTable("call_outcomes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  label: varchar("label", { length: 50 }).notNull().unique(),
+  bgColor: varchar("bg_color", { length: 30 }).notNull(),
+  textColor: varchar("text_color", { length: 30 }).notNull(),
+  borderColor: varchar("border_color", { length: 30 }),
+  hoverColor: varchar("hover_color", { length: 30 }),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  labelIdx: index("idx_call_outcomes_label").on(table.label),
+  orderIdx: index("idx_call_outcomes_sort_order").on(table.sortOrder),
+}));
+
 // Zod Schemas
 export const insertProspectSchema = createInsertSchema(prospects).omit({
   id: true,
@@ -155,6 +172,12 @@ export const insertSpecialtyColorSchema = createInsertSchema(specialtyColors).om
   updatedAt: true,
 });
 
+export const insertCallOutcomeSchema = createInsertSchema(callOutcomes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type Prospect = typeof prospects.$inferSelect;
 export type InsertProspect = z.infer<typeof insertProspectSchema>;
@@ -175,5 +198,8 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 
 export type SpecialtyColor = typeof specialtyColors.$inferSelect;
 export type InsertSpecialtyColor = z.infer<typeof insertSpecialtyColorSchema>;
+
+export type CallOutcome = typeof callOutcomes.$inferSelect;
+export type InsertCallOutcome = z.infer<typeof insertCallOutcomeSchema>;
 
 export type UserRole = 'admin' | 'manager' | 'inside_sales_rep' | 'field_sales_rep' | 'data_loader';
