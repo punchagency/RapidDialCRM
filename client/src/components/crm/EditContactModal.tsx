@@ -5,15 +5,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Contact } from "@/lib/mockData";
+import { Prospect } from "@shared/schema";
 import { geocodeAddress } from "@/lib/geocoding";
 import { Search, MapPin } from "lucide-react";
 
 interface EditContactModalProps {
-  contact: Contact;
+  contact: Prospect;
   isOpen: boolean;
   onClose: () => void;
-  onSave: (updatedContact: Contact) => void;
+  onSave: (updatedContact: Prospect) => void;
+  canEdit?: boolean;
 }
 
 const TIMEZONES = [
@@ -104,12 +105,12 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
     
     setFormData(prev => ({
       ...prev,
-      address: fullAddress,
-      city: suggestion.address?.city || prev.city,
-      state: suggestion.address?.state || suggestion.address?.stateCode || prev.state,
-      zip: suggestion.address?.postalCode ? String(suggestion.address.postalCode) : prev.zip,
-      location_lat: position.lat ? parseFloat(position.lat) : prev.location_lat,
-      location_lng: position.lng ? parseFloat(position.lng) : prev.location_lng,
+      addressStreet: fullAddress,
+      addressCity: suggestion.address?.city || prev.addressCity,
+      addressState: suggestion.address?.state || suggestion.address?.stateCode || prev.addressState,
+      addressZip: suggestion.address?.postalCode ? String(suggestion.address.postalCode) : prev.addressZip,
+      addressLat: position.lat ? String(position.lat) : prev.addressLat,
+      addressLng: position.lng ? String(position.lng) : prev.addressLng,
     }));
 
     setAddressSuggestions([]);
@@ -125,24 +126,24 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Edit Contact: {(contact as any).businessName || (contact as any).name}</DialogTitle>
+          <DialogTitle>Edit Contact: {contact.businessName}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Name */}
+          {/* Business Name */}
           <div>
-            <Label htmlFor="name" className="text-sm font-medium mb-2 block">
-              Name
+            <Label htmlFor="business-name" className="text-sm font-medium mb-2 block">
+              Business Name
             </Label>
             <div className="relative">
               <Input
-                id="name"
-                value={formData.name}
+                id="business-name"
+                value={formData.businessName}
                 onChange={(e) => {
-                  setFormData(prev => ({ ...prev, name: e.target.value }));
+                  setFormData(prev => ({ ...prev, businessName: e.target.value }));
                   handleAddressSearch(e.target.value);
                 }}
-                placeholder="Contact name (searches HERE Maps)"
+                placeholder="Business name (searches HERE Maps)"
                 data-testid="edit-name-input"
               />
             </div>
@@ -196,50 +197,37 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
 
             {!addressQuery && (
               <p className="text-xs text-muted-foreground mt-2">
-                Current: {formData.address}
+                Current: {formData.addressStreet}
               </p>
             )}
           </div>
 
-          {/* Timezone */}
+          {/* Specialty */}
           <div>
-            <Label htmlFor="timezone" className="text-sm font-medium mb-2 block">
-              Timezone
+            <Label htmlFor="specialty" className="text-sm font-medium mb-2 block">
+              Specialty
             </Label>
-            <Select value={formData.timezone} onValueChange={(value) => 
-              setFormData(prev => ({ ...prev, timezone: value }))
-            }>
-              <SelectTrigger id="timezone" data-testid="edit-timezone-select">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TIMEZONES.map(tz => (
-                  <SelectItem key={tz} value={tz}>{tz}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input
+              id="specialty"
+              value={formData.specialty}
+              onChange={(e) => setFormData(prev => ({ ...prev, specialty: e.target.value }))}
+              placeholder="e.g., Chiropractor, Dentist"
+              data-testid="edit-specialty-input"
+            />
           </div>
 
-          {/* Deal Size */}
+          {/* Territory */}
           <div>
-            <Label htmlFor="dealSize" className="text-sm font-medium mb-2 block">
-              Deal Size
+            <Label htmlFor="territory" className="text-sm font-medium mb-2 block">
+              Territory
             </Label>
-            <Select 
-              value={formData.dealSize || ""} 
-              onValueChange={(value) => 
-                setFormData(prev => ({ ...prev, dealSize: value }))
-              }
-            >
-              <SelectTrigger id="dealSize" data-testid="edit-dealsize-select">
-                <SelectValue placeholder="Select deal size" />
-              </SelectTrigger>
-              <SelectContent>
-                {DEAL_SIZES.map(size => (
-                  <SelectItem key={size} value={size}>{size}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Input
+              id="territory"
+              value={formData.territory}
+              onChange={(e) => setFormData(prev => ({ ...prev, territory: e.target.value }))}
+              placeholder="e.g., South Florida, North Texas"
+              data-testid="edit-territory-input"
+            />
           </div>
         </div>
 
