@@ -86,11 +86,11 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
   ];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full w-full overflow-hidden">
+    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-full w-full overflow-hidden">
       {/* Left Column: Prospect Info */}
-      <div className="lg:col-span-1 flex flex-col gap-4 min-h-0 overflow-y-auto">
-        <Card className="border-none shadow-md flex-shrink-0">
-          <CardContent className="p-4">
+      <div className="lg:col-span-2 flex flex-col gap-4 min-h-0 overflow-y-auto">
+        <Card className="border-none shadow-md flex-1 flex flex-col">
+          <CardContent className="p-4 flex-1 flex flex-col">
             <div className="h-1 bg-pink-500 w-8 rounded mb-4" />
             <h2 className="text-lg font-bold text-foreground mb-1" data-testid="prospect-name">
               {prospect.businessName}
@@ -106,7 +106,7 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
               </div>
             </div>
 
-            <div className="space-y-3 text-sm">
+            <div className="space-y-3 text-sm flex-1">
               <div className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                 <div>
@@ -133,7 +133,7 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
             </div>
 
             {/* Key Stakeholders */}
-            <div className="mt-4 pt-4 border-t border-border/50">
+            <div className="mt-3 pt-3 border-t border-border/50">
               <p className="text-xs font-semibold text-muted-foreground uppercase mb-2 flex items-center gap-1">
                 <Users className="h-3 w-3" /> Key Stakeholders
               </p>
@@ -141,17 +141,52 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
             </div>
 
             {/* Last Interaction */}
-            <div className="mt-4 pt-4 border-t border-border/50">
+            <div className="mt-3 pt-3 border-t border-border/50">
               <p className="text-xs font-semibold text-muted-foreground uppercase mb-2 flex items-center gap-1">
                 <History className="h-3 w-3" /> Last Interaction
               </p>
               <p className="text-xs text-muted-foreground">No notes yet</p>
             </div>
+
+            {/* Call Button */}
+            <div className="mt-4 pt-4 border-t border-border/50">
+              {isCallActive ? (
+                <Button
+                  size="md"
+                  variant="destructive"
+                  className="w-full text-sm h-10"
+                  onClick={() => setIsCallActive(false)}
+                >
+                  <Phone className="h-4 w-4 mr-2" />
+                  End Call ({formatTime(timer)})
+                </Button>
+              ) : (
+                <Button
+                  size="md"
+                  className="w-full bg-green-600 hover:bg-green-700 text-sm h-10"
+                  onClick={handleCallClick}
+                  disabled={isConnecting}
+                  data-testid="call-button"
+                >
+                  {isConnecting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Connecting...
+                    </>
+                  ) : (
+                    <>
+                      <Phone className="h-4 w-4 mr-2" />
+                      Call Now
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Right Column: Call & Outcomes */}
+      {/* Right Column: Tabs & Outcomes */}
       <div className="lg:col-span-3 flex flex-col gap-4 min-h-0 overflow-hidden">
         {/* Tabs */}
         <Card className="border-none shadow-md flex-1 overflow-hidden flex flex-col">
@@ -211,72 +246,29 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
           </CardContent>
         </Card>
 
-        {/* Call Button + Outcome Selection */}
-        <div className="flex gap-4 flex-col flex-1 overflow-hidden">
-          <Card className="border-none shadow-md flex-shrink-0">
-            <CardContent className="p-4">
-              <div className="flex gap-2">
-                {isCallActive ? (
-                  <>
-                    <Button
-                      size="md"
-                      variant="destructive"
-                      className="flex-1 text-sm h-10"
-                      onClick={() => setIsCallActive(false)}
-                    >
-                      <Phone className="h-4 w-4 mr-2" />
-                      End Call ({formatTime(timer)})
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    size="md"
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-sm h-10"
-                    onClick={handleCallClick}
-                    disabled={isConnecting}
-                    data-testid="call-button"
-                  >
-                    {isConnecting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Connecting...
-                      </>
-                    ) : (
-                      <>
-                        <Phone className="h-4 w-4 mr-2" />
-                        Call Now
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Outcome Selection */}
-          <Card className="border-none shadow-md flex-1 overflow-hidden flex flex-col">
-            <CardContent className="p-6 flex-1 overflow-y-auto">
-              <div className="mb-4">
-                <p className="text-base font-semibold text-foreground mb-2">Select Outcome</p>
-                <p className="text-sm text-muted-foreground">Press appropriate shortcut key</p>
-              </div>
-              <div className="grid grid-cols-3 gap-3 auto-rows-max">
-              {outcomes.map((outcome, idx) => (
-                <Button
-                  key={outcome.key}
-                  variant="outline"
-                  size="sm"
-                  className={cn("h-auto py-2 px-2 flex flex-col items-center justify-center border text-xs font-medium", outcome.color)}
-                  onClick={() => handleComplete(outcome.label)}
-                  data-testid={`outcome-${outcome.key}`}
-                >
-                  <span className="text-center">{outcome.label}</span>
-                </Button>
-              ))}
+        {/* Outcome Selection */}
+        <Card className="border-none shadow-md flex-1 overflow-hidden flex flex-col">
+          <CardContent className="p-6 flex-1 overflow-y-auto">
+            <div className="mb-4">
+              <p className="text-base font-semibold text-foreground mb-2">Select Outcome</p>
+              <p className="text-sm text-muted-foreground">Press appropriate shortcut key</p>
             </div>
-            </CardContent>
-          </Card>
-        </div>
+            <div className="grid grid-cols-3 gap-3 auto-rows-max">
+            {outcomes.map((outcome, idx) => (
+              <Button
+                key={outcome.key}
+                variant="outline"
+                size="sm"
+                className={cn("h-auto py-2 px-2 flex flex-col items-center justify-center border text-xs font-medium", outcome.color)}
+                onClick={() => handleComplete(outcome.label)}
+                data-testid={`outcome-${outcome.key}`}
+              >
+                <span className="text-center">{outcome.label}</span>
+              </Button>
+            ))}
+          </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
