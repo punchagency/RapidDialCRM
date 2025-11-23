@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Phone, MapPin, Building2, Stethoscope, History, Mail, Check, ArrowRight, Loader2, Users, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { getSpecialtyColors } from "@/lib/specialtyColors";
 
 interface DialerCardProps {
   prospect: Prospect;
@@ -111,7 +112,8 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
               </h2>
               <Badge 
                 variant="secondary" 
-                className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 border-none font-semibold"
+                className={cn("text-xs px-2 py-0.5 border-none font-semibold", getSpecialtyColors(prospect.specialty).bgColor, getSpecialtyColors(prospect.specialty).textColor)}
+                data-testid="specialty-badge-dialer"
               >
                 {prospect.specialty}
               </Badge>

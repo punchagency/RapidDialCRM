@@ -16,6 +16,7 @@ import { FileUploadModal } from "@/components/crm/FileUploadModal";
 import { GeocodingStatus } from "@/components/crm/GeocodingStatus";
 import { useToast } from "@/hooks/use-toast";
 import { startBackgroundGeocoding, resetGeocodingProgress } from "@/lib/backgroundGeocoder";
+import { getSpecialtyColors } from "@/lib/specialtyColors";
 
 export default function Dashboard() {
   const { userRole } = useUserRole();
