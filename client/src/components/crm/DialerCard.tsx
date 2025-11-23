@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Phone, MapPin, Building2, Stethoscope, History, Mail, Check, ArrowRight, Loader2, Users } from "lucide-react";
+import { Phone, MapPin, Building2, Stethoscope, History, Mail, Check, ArrowRight, Loader2, Users, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -91,7 +91,20 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
       <div className="lg:col-span-2 flex flex-col gap-4 min-h-0 overflow-y-auto">
         <Card className="border-none shadow-md flex-1 flex flex-col">
           <CardContent className="p-4 flex-1 flex flex-col">
-            <div className="h-1 bg-pink-500 w-8 rounded mb-4" />
+            <div className="flex items-start justify-between mb-3">
+              <div className="h-1 bg-pink-500 w-8 rounded" />
+              {canEdit && onEditClick && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={onEditClick}
+                  data-testid="card-edit-button"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
             <h2 className="text-lg font-bold text-foreground mb-1" data-testid="prospect-name">
               {prospect.businessName}
             </h2>
@@ -108,7 +121,7 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
               </div>
               {isCallActive ? (
                 <Button
-                  size="md"
+                  size="sm"
                   variant="destructive"
                   className="px-3 text-xs h-auto"
                   onClick={() => setIsCallActive(false)}
@@ -117,7 +130,7 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
                 </Button>
               ) : (
                 <Button
-                  size="md"
+                  size="sm"
                   className="px-3 bg-green-600 hover:bg-green-700 text-xs h-auto"
                   onClick={handleCallClick}
                   disabled={isConnecting}

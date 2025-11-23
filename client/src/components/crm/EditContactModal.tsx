@@ -85,12 +85,15 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
   };
 
   useEffect(() => {
-    setFormData(contact);
-    setAddressSuggestions([]);
-    setAddressQuery("");
-    // Auto-search for address when modal opens with contact name
-    if (contact.name && contact.name.length > 2) {
-      handleAddressSearch(contact.name);
+    if (contact) {
+      setFormData(contact);
+      setAddressSuggestions([]);
+      setAddressQuery("");
+      // Auto-search for address when modal opens with contact name or business name
+      const searchName = (contact as any).businessName || (contact as any).name;
+      if (searchName && searchName.length > 2) {
+        handleAddressSearch(searchName);
+      }
     }
   }, [contact, isOpen]);
 
@@ -122,7 +125,7 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Edit Contact: {contact.name}</DialogTitle>
+          <DialogTitle>Edit Contact: {(contact as any).businessName || (contact as any).name}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
