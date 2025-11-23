@@ -19,27 +19,25 @@ interface CallOutcome {
 }
 
 const BACKGROUND_COLORS = [
-  { label: "Slate", value: "bg-slate-100", preview: "bg-slate-100" },
-  { label: "Gray", value: "bg-gray-100", preview: "bg-gray-100" },
-  { label: "Gray Dark", value: "bg-gray-700", preview: "bg-gray-700" },
-  { label: "Red", value: "bg-red-100", preview: "bg-red-100" },
-  { label: "Red Dark", value: "bg-red-600", preview: "bg-red-600" },
-  { label: "Orange", value: "bg-orange-100", preview: "bg-orange-100" },
-  { label: "Amber", value: "bg-amber-100", preview: "bg-amber-100" },
-  { label: "Yellow", value: "bg-yellow-100", preview: "bg-yellow-100" },
-  { label: "Lime", value: "bg-lime-100", preview: "bg-lime-100" },
-  { label: "Green", value: "bg-green-100", preview: "bg-green-100" },
-  { label: "Emerald", value: "bg-emerald-100", preview: "bg-emerald-100" },
-  { label: "Teal", value: "bg-teal-100", preview: "bg-teal-100" },
-  { label: "Cyan", value: "bg-cyan-100", preview: "bg-cyan-100" },
-  { label: "Sky", value: "bg-sky-100", preview: "bg-sky-100" },
-  { label: "Blue", value: "bg-blue-100", preview: "bg-blue-100" },
-  { label: "Indigo", value: "bg-indigo-100", preview: "bg-indigo-100" },
-  { label: "Violet", value: "bg-violet-100", preview: "bg-violet-100" },
-  { label: "Purple", value: "bg-purple-100", preview: "bg-purple-100" },
-  { label: "Purple Dark", value: "bg-purple-300", preview: "bg-purple-300" },
-  { label: "Fuchsia", value: "bg-fuchsia-100", preview: "bg-fuchsia-100" },
-  { label: "Pink", value: "bg-pink-100", preview: "bg-pink-100" },
+  // Positive (Green) - Light to Dark intensity
+  { label: "✓ Positive Light", value: "bg-lime-100", preview: "bg-lime-100" },
+  { label: "✓ Positive Good", value: "bg-green-100", preview: "bg-green-100" },
+  { label: "✓ Positive Strong", value: "bg-emerald-100", preview: "bg-emerald-100" },
+  { label: "✓ Positive Very Strong", value: "bg-teal-100", preview: "bg-teal-100" },
+  
+  // In-Between (Yellow) - Light to Dark intensity
+  { label: "⚠ Warning Light", value: "bg-yellow-100", preview: "bg-yellow-100" },
+  { label: "⚠ Warning Medium", value: "bg-amber-100", preview: "bg-amber-100" },
+  { label: "⚠ Warning Intense", value: "bg-orange-100", preview: "bg-orange-100" },
+  
+  // Negative (Red) - Light to Dark intensity
+  { label: "✗ Challenging", value: "bg-red-100", preview: "bg-red-100" },
+  { label: "✗ Very Bad", value: "bg-red-600", preview: "bg-red-600" },
+  
+  // Neutral (Gray)
+  { label: "○ Neutral Light", value: "bg-slate-100", preview: "bg-slate-100" },
+  { label: "○ Neutral Gray", value: "bg-gray-100", preview: "bg-gray-100" },
+  { label: "○ Neutral Dark", value: "bg-gray-700", preview: "bg-gray-700" },
 ];
 
 const TEXT_COLORS = [
