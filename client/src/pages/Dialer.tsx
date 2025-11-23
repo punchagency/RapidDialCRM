@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AnimatePresence, motion } from "framer-motion";
 import { useUserRole } from "@/lib/UserRoleContext";
 import { EditContactModal } from "@/components/crm/EditContactModal";
-import { fetchProspects, recordCallOutcome } from "@/lib/apiClient";
+import { fetchProspects, getProspect, recordCallOutcome } from "@/lib/apiClient";
 
 export default function Dialer() {
   const [location] = useLocation();
@@ -26,8 +26,29 @@ export default function Dialer() {
   useEffect(() => {
     async function loadProspects() {
       try {
-        const data = await fetchProspects();
-        setProspects(data);
+        const params = new URLSearchParams(window.location.search);
+        const prospectId = params.get("prospectId");
+        
+        // If opening with a specific prospect ID, load just that prospect + batch of prospects around it
+        if (prospectId) {
+          try {
+            const prospect = await getProspect(prospectId);
+            // Load a batch of prospects starting from a reasonable offset
+            const allProspects = await fetchProspects(undefined, 100, 0);
+            setProspects(allProspects);
+            
+            const idx = allProspects.findIndex(p => p.id === prospectId);
+            if (idx >= 0) setCurrentIndex(idx);
+          } catch (err) {
+            // Fallback to loading all if single fetch fails
+            const data = await fetchProspects();
+            setProspects(data);
+          }
+        } else {
+          // Load all prospects if no specific ID
+          const data = await fetchProspects();
+          setProspects(data);
+        }
         setIsLoading(false);
       } catch (error) {
         toast({

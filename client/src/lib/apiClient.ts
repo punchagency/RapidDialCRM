@@ -2,11 +2,15 @@ import { Prospect, FieldRep, Appointment } from "@shared/schema";
 
 const API_BASE = "";
 
-export async function fetchProspects(territory?: string): Promise<Prospect[]> {
-  const url = territory ? `/api/prospects?territory=${territory}` : "/api/prospects";
-  const response = await fetch(url);
+export async function fetchProspects(territory?: string, limit: number = 100, offset: number = 0): Promise<Prospect[]> {
+  const params = new URLSearchParams();
+  if (territory) params.append("territory", territory);
+  params.append("limit", limit.toString());
+  params.append("offset", offset.toString());
+  const response = await fetch(`/api/prospects?${params.toString()}`);
   if (!response.ok) throw new Error("Failed to fetch prospects");
-  return response.json();
+  const result = await response.json();
+  return result.data || result;
 }
 
 export async function getProspect(id: string): Promise<Prospect> {
