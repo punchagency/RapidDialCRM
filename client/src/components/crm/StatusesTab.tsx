@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { RotateCcw, Save, Trash2, GripHorizontal } from "lucide-react";
+import { RotateCcw, Save, Trash2, GripHorizontal, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface CallOutcome {
   id: string;
@@ -15,6 +16,110 @@ interface CallOutcome {
   borderColor?: string;
   hoverColor?: string;
   sortOrder: number;
+}
+
+const BACKGROUND_COLORS = [
+  { label: "Slate", value: "bg-slate-100", preview: "bg-slate-100" },
+  { label: "Gray", value: "bg-gray-100", preview: "bg-gray-100" },
+  { label: "Gray Dark", value: "bg-gray-700", preview: "bg-gray-700" },
+  { label: "Red", value: "bg-red-100", preview: "bg-red-100" },
+  { label: "Red Dark", value: "bg-red-600", preview: "bg-red-600" },
+  { label: "Orange", value: "bg-orange-100", preview: "bg-orange-100" },
+  { label: "Amber", value: "bg-amber-100", preview: "bg-amber-100" },
+  { label: "Yellow", value: "bg-yellow-100", preview: "bg-yellow-100" },
+  { label: "Lime", value: "bg-lime-100", preview: "bg-lime-100" },
+  { label: "Green", value: "bg-green-100", preview: "bg-green-100" },
+  { label: "Emerald", value: "bg-emerald-100", preview: "bg-emerald-100" },
+  { label: "Teal", value: "bg-teal-100", preview: "bg-teal-100" },
+  { label: "Cyan", value: "bg-cyan-100", preview: "bg-cyan-100" },
+  { label: "Sky", value: "bg-sky-100", preview: "bg-sky-100" },
+  { label: "Blue", value: "bg-blue-100", preview: "bg-blue-100" },
+  { label: "Indigo", value: "bg-indigo-100", preview: "bg-indigo-100" },
+  { label: "Violet", value: "bg-violet-100", preview: "bg-violet-100" },
+  { label: "Purple", value: "bg-purple-100", preview: "bg-purple-100" },
+  { label: "Purple Dark", value: "bg-purple-300", preview: "bg-purple-300" },
+  { label: "Fuchsia", value: "bg-fuchsia-100", preview: "bg-fuchsia-100" },
+  { label: "Pink", value: "bg-pink-100", preview: "bg-pink-100" },
+];
+
+const TEXT_COLORS = [
+  { label: "Slate", value: "text-slate-700", preview: "bg-slate-700" },
+  { label: "Gray", value: "text-gray-700", preview: "bg-gray-700" },
+  { label: "Gray Dark", value: "text-gray-800", preview: "bg-gray-800" },
+  { label: "White", value: "text-white", preview: "bg-white border border-gray-300" },
+  { label: "Red", value: "text-red-700", preview: "bg-red-700" },
+  { label: "Orange", value: "text-orange-700", preview: "bg-orange-700" },
+  { label: "Amber", value: "text-amber-700", preview: "bg-amber-700" },
+  { label: "Yellow", value: "text-yellow-700", preview: "bg-yellow-700" },
+  { label: "Lime", value: "text-lime-700", preview: "bg-lime-700" },
+  { label: "Green", value: "text-green-700", preview: "bg-green-700" },
+  { label: "Emerald", value: "text-emerald-700", preview: "bg-emerald-700" },
+  { label: "Teal", value: "text-teal-700", preview: "bg-teal-700" },
+  { label: "Cyan", value: "text-cyan-700", preview: "bg-cyan-700" },
+  { label: "Sky", value: "text-sky-700", preview: "bg-sky-700" },
+  { label: "Blue", value: "text-blue-700", preview: "bg-blue-700" },
+  { label: "Indigo", value: "text-indigo-700", preview: "bg-indigo-700" },
+  { label: "Violet", value: "text-violet-700", preview: "bg-violet-700" },
+  { label: "Purple", value: "text-purple-700", preview: "bg-purple-700" },
+  { label: "Fuchsia", value: "text-fuchsia-700", preview: "bg-fuchsia-700" },
+  { label: "Pink", value: "text-pink-700", preview: "bg-pink-700" },
+];
+
+function ColorPicker({ 
+  value, 
+  onChange, 
+  colors, 
+  type 
+}: { 
+  value: string; 
+  onChange: (value: string) => void; 
+  colors: typeof BACKGROUND_COLORS; 
+  type: 'bg' | 'text';
+}) {
+  const selectedColor = colors.find(c => c.value === value);
+  
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className="h-9 w-full justify-between border-transparent hover:border-input bg-transparent px-2"
+        >
+          <div className="flex items-center gap-2">
+            <div className={cn("w-5 h-5 rounded border", selectedColor?.preview || "bg-gray-200")} />
+            <span className="text-xs text-muted-foreground truncate">
+              {selectedColor?.label || value}
+            </span>
+          </div>
+          <ChevronDown className="h-3 w-3 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-64 p-2" align="start">
+        <div className="grid grid-cols-4 gap-1.5">
+          {colors.map((color) => (
+            <button
+              key={color.value}
+              onClick={() => onChange(color.value)}
+              className={cn(
+                "w-full h-10 rounded border-2 hover:scale-110 transition-transform",
+                color.preview,
+                value === color.value ? "border-primary ring-2 ring-primary ring-offset-1" : "border-gray-300"
+              )}
+              title={color.label}
+            />
+          ))}
+        </div>
+        <div className="mt-2 pt-2 border-t">
+          <Input
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={type === 'bg' ? "e.g. bg-green-100" : "e.g. text-green-700"}
+            className="h-8 text-xs font-mono"
+          />
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 export function StatusesTab() {
@@ -178,14 +283,15 @@ export function StatusesTab() {
             <TableHeader className="bg-muted/40">
               <TableRow>
                 <TableHead className="w-[40px]"></TableHead>
-                <TableHead className="w-[250px]">Label</TableHead>
-                <TableHead className="w-[200px]">Background Color</TableHead>
-                <TableHead className="w-[200px]">Text Color</TableHead>
+                <TableHead className="w-[220px]">Label</TableHead>
+                <TableHead className="w-[180px]">Background Color</TableHead>
+                <TableHead className="w-[180px]">Text Color</TableHead>
+                <TableHead className="w-[120px]">Preview</TableHead>
                 <TableHead className="w-[50px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {outcomes.map((outcome, index) => (
+              {outcomes.map((outcome) => (
                 <TableRow key={outcome.id} className="group hover:bg-muted/5">
                   <TableCell className="py-2">
                     <div className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground flex justify-center">
@@ -201,20 +307,29 @@ export function StatusesTab() {
                     />
                   </TableCell>
                   <TableCell className="py-2">
-                    <Input 
-                      value={outcome.bgColor} 
-                      onChange={(e) => updateOutcome(outcome.id, "bgColor", e.target.value)}
-                      placeholder="e.g. bg-green-100"
-                      className="h-9 border-transparent hover:border-input focus:border-input transition-colors bg-transparent font-mono text-xs"
+                    <ColorPicker
+                      value={outcome.bgColor}
+                      onChange={(value) => updateOutcome(outcome.id, "bgColor", value)}
+                      colors={BACKGROUND_COLORS}
+                      type="bg"
                     />
                   </TableCell>
                   <TableCell className="py-2">
-                    <Input 
-                      value={outcome.textColor} 
-                      onChange={(e) => updateOutcome(outcome.id, "textColor", e.target.value)}
-                      placeholder="e.g. text-green-700"
-                      className="h-9 border-transparent hover:border-input focus:border-input transition-colors bg-transparent font-mono text-xs"
+                    <ColorPicker
+                      value={outcome.textColor}
+                      onChange={(value) => updateOutcome(outcome.id, "textColor", value)}
+                      colors={TEXT_COLORS}
+                      type="text"
                     />
+                  </TableCell>
+                  <TableCell className="py-2">
+                    <div className={cn(
+                      "px-3 py-1.5 rounded-md text-sm font-semibold whitespace-nowrap w-fit border",
+                      outcome.bgColor,
+                      outcome.textColor
+                    )}>
+                      {outcome.label || "Preview"}
+                    </div>
                   </TableCell>
                   <TableCell className="py-2 text-right">
                     <Button 
