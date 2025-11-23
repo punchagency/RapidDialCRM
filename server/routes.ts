@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertProspectSchema, insertFieldRepSchema, insertAppointmentSchema, insertStakeholderSchema, insertUserSchema } from "@shared/schema";
 import { generateSmartCallingList, calculatePriorityScore } from "./services/optimization";
-import { geocodeProspects } from "./services/geocoding";
+import { geocodeProspects, getFullAddressFromHere } from "./services/geocoding";
 import { seedDatabase } from "./seedData";
 import { seedAllMockData } from "./seedAllData";
 
@@ -323,6 +323,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ status: "deleted" });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete user" });
+    }
+  });
+
+  // POST /api/update-prospect-addresses - Update all prospects with full addresses from HERE API
+  app.post("/api/update-prospect-addresses", async (req, res) => {
+    try {
+      const prospects = await storage.listAllProspects();
+      let updated = 0;
+      let failed = 0;
+      const errors = [];
+
+      for (const prospect of prospects) {
+        try {
+          const address = [
+            prospect.addressStreet,
+            prospect.addressCity,
+            prospect.addressState,
+            prospect.addressZip,
+          ]
+            .filter(Boolean)
+            .join(", ");
+
+          if (!address) {
+            failed++;
+            errors.push(`Prospect ${prospect.id}: No address to lookup`);
+            continue;
+          }
+
+          const result = await getFullAddressFromHere(address);
+          if (result) {
+            await storage.updateProspect(prospect.id, {
+              addressStreet: result.street || prospect.addressStreet,
+              addressCity: result.city || prospect.addressCity,
+              addressState: result.state || prospect.addressState,
+              addressZip: result.zip || prospect.addressZip,
+              addressLat: result.latitude.toString() as any,
+              addressLng: result.longitude.toString() as any,
+            });
+            updated++;
+          } else {
+            failed++;
+            errors.push(`Prospect ${prospect.id}: HERE API lookup failed`);
+          }
+
+          // Rate limiting
+          await new Promise(resolve => setTimeout(resolve, 200));
+        } catch (err) {
+          failed++;
+          errors.push(`Prospect ${prospect.id}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        }
+      }
+
+      res.json({
+        total: prospects.length,
+        updated,
+        failed,
+        errors: errors.slice(0, 10), // Return first 10 errors
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update prospect addresses" });
     }
   });
 

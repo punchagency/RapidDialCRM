@@ -12,6 +12,16 @@ export interface GeocodingResult {
   address: string;
 }
 
+export interface FullAddressResult {
+  latitude: number;
+  longitude: number;
+  fullAddress: string;
+  street?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+}
+
 export async function geocodeAddress(address: string): Promise<GeocodingResult | null> {
   try {
     const params = new URLSearchParams({
@@ -37,6 +47,46 @@ export async function geocodeAddress(address: string): Promise<GeocodingResult |
         latitude: item.position.lat,
         longitude: item.position.lng,
         address: item.address.label,
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Geocoding error:", error);
+    return null;
+  }
+}
+
+export async function getFullAddressFromHere(address: string): Promise<FullAddressResult | null> {
+  try {
+    const params = new URLSearchParams({
+      q: address,
+      apikey: HERE_API_KEY,
+    });
+
+    const response = await fetch(
+      `https://geocode.search.hereapi.com/v1/geocode?${params}`,
+      { method: "GET" }
+    );
+
+    if (!response.ok) {
+      console.error(`Geocoding error: ${response.status}`);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (data.items && data.items.length > 0) {
+      const item = data.items[0];
+      const addr = item.address;
+      return {
+        latitude: item.position.lat,
+        longitude: item.position.lng,
+        fullAddress: addr.label,
+        street: addr.street || addr.houseNumber ? `${addr.houseNumber || ''} ${addr.street || ''}`.trim() : undefined,
+        city: addr.city,
+        state: addr.stateCode,
+        zip: addr.postalCode,
       };
     }
 
