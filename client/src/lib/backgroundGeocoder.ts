@@ -72,7 +72,7 @@ export async function startBackgroundGeocoding() {
   // However, to ensure we check everyone, we will largely ignore the 'perfect' checks for now
   // and let the geocodedContacts set be the only source of truth for "done-ness" in this session.
   
-  const contactsToGeocode = MOCK_CONTACTS.filter(c => {
+  const prospectsToGeocode = MOCK_CONTACTS.filter(c => {
     if (!c.address) return false;
     
     // If we have already processed this ID in this current run/session (tracked by localStorage), skip it.
@@ -81,8 +81,8 @@ export async function startBackgroundGeocoding() {
     return true;
   });
   
-  // Prioritize contacts missing city/state/zip
-  contactsToGeocode.sort((a, b) => {
+  // Prioritize prospects missing city/state/zip
+  prospectsToGeocode.sort((a, b) => {
     const aMissingDetails = !a.city || !a.state || !a.zip;
     const bMissingDetails = !b.city || !b.state || !b.zip;
     
@@ -91,49 +91,49 @@ export async function startBackgroundGeocoding() {
     return 0;
   });
 
-  if (contactsToGeocode.length === 0) {
-    console.log('All contacts already geocoded');
+  if (prospectsToGeocode.length === 0) {
+    console.log('All prospects already geocoded');
     return;
   }
 
-  console.log(`Starting background geocoding for ${contactsToGeocode.length} contacts`);
+  console.log(`Starting background geocoding for ${prospectsToGeocode.length} prospects`);
 
   progress.isRunning = true;
   progress.startTime = Date.now();
   saveProgress(progress);
 
-  // Process contacts in batches with delays to respect rate limits
+  // Process prospects in batches with delays to respect rate limits
   let geocodedCount = 0;
   let failedCount = 0;
 
-  for (const contact of contactsToGeocode) {
+  for (const prospect of prospectsToGeocode) {
     if (!progress.isRunning) break;
 
     try {
-      const result = await geocodeAddress(contact.address);
+      const result = await geocodeAddress(prospect.address);
       
       if (result) {
-        // Update contact with coordinates and address details
-        contact.location_lat = result.lat;
-        contact.location_lng = result.lng;
+        // Update prospect with coordinates and address details
+        prospect.location_lat = result.lat;
+        prospect.location_lng = result.lng;
         
         // Update address fields with standardized city, state, zipcode (all as strings)
-        if (result.city) contact.city = result.city;
-        if (result.state) contact.state = result.state;
-        if (result.zipcode) contact.zip = String(result.zipcode);
+        if (result.city) prospect.city = result.city;
+        if (result.state) prospect.state = result.state;
+        if (result.zipcode) prospect.zip = String(result.zipcode);
         
         // Update full address from geocoder if available
         // This fixes cases where we only have a partial address (e.g. "7574 Pembroke Rd")
         if (result.fullAddress) {
-          contact.address = result.fullAddress;
+          prospect.address = result.fullAddress;
         }
         
-        geocodedContacts.add(contact.id);
+        geocodedContacts.add(prospect.id);
         geocodedCount++;
       } else {
         failedCount++;
-        if (!progress.failedAddresses.includes(contact.address)) {
-          progress.failedAddresses.push(contact.address);
+        if (!progress.failedAddresses.includes(prospect.address)) {
+          progress.failedAddresses.push(prospect.address);
         }
       }
 
@@ -142,21 +142,21 @@ export async function startBackgroundGeocoding() {
       saveProgress(progress);
       saveGeocodedContacts(geocodedContacts);
 
-      // Dispatch custom event for every contact (real-time updates)
+      // Dispatch custom event for every prospect (real-time updates)
       window.dispatchEvent(
         new CustomEvent('geocodingProgress', {
-          detail: { geocoded: geocodedCount, failed: failedCount, total: contactsToGeocode.length },
+          detail: { geocoded: geocodedCount, failed: failedCount, total: prospectsToGeocode.length },
         })
       );
 
-      // Log progress every 50 contacts
+      // Log progress every 50 prospects
       if ((geocodedCount + failedCount) % 50 === 0) {
         console.log(
-          `Geocoding progress: ${geocodedCount} succeeded, ${failedCount} failed of ${contactsToGeocode.length} total`
+          `Geocoding progress: ${geocodedCount} succeeded, ${failedCount} failed of ${prospectsToGeocode.length} total`
         );
       }
     } catch (error) {
-      console.error(`Error geocoding ${contact.company}:`, error);
+      console.error(`Error geocoding ${prospect.company}:`, error);
       failedCount++;
     }
   }

@@ -174,7 +174,7 @@ export default function Dialer() {
 
         {selectedContactForEdit && (
           <EditContactModal
-            prospect={selectedContactForEdit}
+            contact={selectedContactForEdit}
             isOpen={!!selectedContactForEdit}
             onClose={() => setSelectedContactForEdit(null)}
             onSave={handleSaveContact}

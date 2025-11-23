@@ -126,7 +126,7 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Edit Contact: {contact.businessName}</DialogTitle>
+          <DialogTitle>Edit Contact: {contact?.businessName || 'Loading...'}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 py-4">

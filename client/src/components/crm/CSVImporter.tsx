@@ -98,7 +98,7 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
           // Continue without coordinates - not a fatal error
         }
 
-        const contact: Contact = {
+        const prospect: Contact = {
           id: `imported-${contactId++}`,
           name: fullName || businessName,
           title: category,
@@ -125,7 +125,7 @@ export function CSVImporter({ onImportComplete }: CSVImporterProps) {
           }] : []
         };
 
-        contacts.push(contact);
+        contacts.push(prospect);
       } catch (err) {
         errors.push(`Row ${index + 2}: ${err instanceof Error ? err.message : 'Unknown error'}`);
       }

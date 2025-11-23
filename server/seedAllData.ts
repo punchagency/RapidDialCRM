@@ -24,8 +24,8 @@ export async function seedAllMockData() {
     "Ophthalmology": "South Florida",
   };
 
-  // Map Contact interface to InsertProspect
-  const mockContactsData = [
+  // Map Prospect interface to InsertProspect
+  const mockProspectsData = [
     { name: "100% Chiropractic - Davie", phone: "(954) 743-4133", address: "8570 Stirling Rd Suite 103, Building B, Hollywood, FL 33024", zip: "33024", city: "Hollywood", title: "Chiropractor" },
     { name: "163rd Chiropractic Clinic", phone: "(305) 945-6631", address: "18250 NW 2nd Ave", zip: "33169", city: "Miami", title: "Chiropractor" },
     { name: "Dr. Lorin Chasar, DC", phone: "(954) 990-5368", address: "4800 W Commercial Blvd, Tamarac, FL 33319", zip: "33319", city: "Tamarac", title: "Chiropractor" },
@@ -63,26 +63,26 @@ export async function seedAllMockData() {
     console.log(`Created ${fieldReps.length} field reps`);
 
     // Create prospects
-    for (const contact of mockContactsData) {
-      const specialty = contact.title || "Chiropractor";
+    for (const prospect of mockProspectsData) {
+      const specialty = prospect.title || "Chiropractor";
       const territory = specialtyToTerritory[specialty] || "South Florida";
       
-      const prospect: InsertProspect = {
-        businessName: contact.name,
-        phoneNumber: contact.phone,
-        addressStreet: contact.address.split(",")[0],
-        addressCity: contact.city,
+      const insertProspect: InsertProspect = {
+        businessName: prospect.name,
+        phoneNumber: prospect.phone,
+        addressStreet: prospect.address.split(",")[0],
+        addressCity: prospect.city,
         addressState: "FL",
-        addressZip: contact.zip,
+        addressZip: prospect.zip,
         specialty,
         territory,
         priorityScore: 50 + Math.floor(Math.random() * 150),
       };
       
-      await storage.createProspect(prospect);
+      await storage.createProspect(insertProspect);
     }
 
-    console.log(`Created ${mockContactsData.length} prospects from mock data`);
+    console.log(`Created ${mockProspectsData.length} prospects from mock data`);
   } catch (error) {
     console.error("Error seeding mock data:", error);
   }
