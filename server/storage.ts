@@ -256,13 +256,24 @@ export class DatabaseStorage implements IStorage {
 
   async initializeCallOutcomes(): Promise<void> {
     const defaultOutcomes = [
-      { label: "Booked", bgColor: "bg-green-100", textColor: "text-green-700", borderColor: "border-green-200", hoverColor: "hover:bg-green-200", sortOrder: 1 },
-      { label: "Call back", bgColor: "bg-yellow-100", textColor: "text-yellow-700", borderColor: "border-yellow-200", hoverColor: "hover:bg-yellow-200", sortOrder: 2 },
-      { label: "Don't Call", bgColor: "bg-gray-700", textColor: "text-white", borderColor: "border-gray-700", hoverColor: "hover:bg-gray-800", sortOrder: 3 },
-      { label: "Send an email", bgColor: "bg-blue-100", textColor: "text-blue-700", borderColor: "border-blue-200", hoverColor: "hover:bg-blue-200", sortOrder: 4 },
-      { label: "Not Interested", bgColor: "bg-red-600", textColor: "text-white", borderColor: "border-red-600", hoverColor: "hover:bg-red-700", sortOrder: 5 },
-      { label: "Hang up", bgColor: "bg-pink-100", textColor: "text-pink-700", borderColor: "border-pink-200", hoverColor: "hover:bg-pink-200", sortOrder: 6 },
-      { label: "Get back to you", bgColor: "bg-purple-300", textColor: "text-purple-700", borderColor: "border-purple-300", hoverColor: "hover:bg-purple-400", sortOrder: 7 },
+      { label: "New", bgColor: "bg-slate-100", textColor: "text-slate-700", borderColor: "border-slate-200", hoverColor: "hover:bg-slate-200", sortOrder: 1 },
+      { label: "Email Sent", bgColor: "bg-sky-100", textColor: "text-sky-700", borderColor: "border-sky-200", hoverColor: "hover:bg-sky-200", sortOrder: 2 },
+      { label: "No Answer", bgColor: "bg-amber-100", textColor: "text-amber-700", borderColor: "border-amber-200", hoverColor: "hover:bg-amber-200", sortOrder: 3 },
+      { label: "Connected", bgColor: "bg-indigo-100", textColor: "text-indigo-700", borderColor: "border-indigo-200", hoverColor: "hover:bg-indigo-200", sortOrder: 4 },
+      { label: "Responded", bgColor: "bg-violet-100", textColor: "text-violet-700", borderColor: "border-violet-200", hoverColor: "hover:bg-violet-200", sortOrder: 5 },
+      { label: "Qualified", bgColor: "bg-emerald-100", textColor: "text-emerald-700", borderColor: "border-emerald-200", hoverColor: "hover:bg-emerald-200", sortOrder: 6 },
+      { label: "Meeting Set", bgColor: "bg-teal-100", textColor: "text-teal-700", borderColor: "border-teal-200", hoverColor: "hover:bg-teal-200", sortOrder: 7 },
+      { label: "Visit Set", bgColor: "bg-cyan-100", textColor: "text-cyan-700", borderColor: "border-cyan-200", hoverColor: "hover:bg-cyan-200", sortOrder: 8 },
+      { label: "Call Set", bgColor: "bg-blue-100", textColor: "text-blue-700", borderColor: "border-blue-200", hoverColor: "hover:bg-blue-200", sortOrder: 9 },
+      { label: "Demo Done", bgColor: "bg-fuchsia-100", textColor: "text-fuchsia-700", borderColor: "border-fuchsia-200", hoverColor: "hover:bg-fuchsia-200", sortOrder: 10 },
+      { label: "Proposal", bgColor: "bg-purple-100", textColor: "text-purple-700", borderColor: "border-purple-200", hoverColor: "hover:bg-purple-200", sortOrder: 11 },
+      { label: "Negotiating", bgColor: "bg-pink-100", textColor: "text-pink-700", borderColor: "border-pink-200", hoverColor: "hover:bg-pink-200", sortOrder: 12 },
+      { label: "Closed Won", bgColor: "bg-green-100", textColor: "text-green-700", borderColor: "border-green-200", hoverColor: "hover:bg-green-200", sortOrder: 13 },
+      { label: "Closed Lost", bgColor: "bg-red-100", textColor: "text-red-700", borderColor: "border-red-200", hoverColor: "hover:bg-red-200", sortOrder: 14 },
+      { label: "Nurture", bgColor: "bg-lime-100", textColor: "text-lime-700", borderColor: "border-lime-200", hoverColor: "hover:bg-lime-200", sortOrder: 15 },
+      { label: "Follow Up", bgColor: "bg-orange-100", textColor: "text-orange-700", borderColor: "border-orange-200", hoverColor: "hover:bg-orange-200", sortOrder: 16 },
+      { label: "No Response", bgColor: "bg-gray-100", textColor: "text-gray-700", borderColor: "border-gray-200", hoverColor: "hover:bg-gray-200", sortOrder: 17 },
+      { label: "DNC", bgColor: "bg-gray-200", textColor: "text-gray-800", borderColor: "border-gray-300", hoverColor: "hover:bg-gray-300", sortOrder: 18 },
     ];
 
     for (const outcome of defaultOutcomes) {
