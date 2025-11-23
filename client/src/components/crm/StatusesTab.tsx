@@ -23,6 +23,7 @@ const BACKGROUND_COLORS = [
   { label: "✓ Positive Light", value: "bg-lime-100", preview: "bg-lime-100" },
   { label: "✓ Positive Good", value: "bg-green-100", preview: "bg-green-100" },
   { label: "✓ Positive Strong", value: "bg-emerald-100", preview: "bg-emerald-100" },
+  { label: "✓ Positive Very Good", value: "bg-green-700", preview: "bg-green-700" },
   { label: "✓ Positive Very Strong", value: "bg-teal-100", preview: "bg-teal-100" },
   
   // In-Between (Yellow) - Light to Dark intensity
@@ -75,6 +76,8 @@ function ColorPicker({
   type: 'bg' | 'text';
 }) {
   const selectedColor = colors.find(c => c.value === value);
+  // For custom values not in the preset list, use the value itself as preview
+  const previewColor = selectedColor?.preview || value || "bg-gray-200";
   
   return (
     <Popover>
@@ -84,7 +87,7 @@ function ColorPicker({
           className="h-9 w-full justify-between border-transparent hover:border-input bg-transparent px-2"
         >
           <div className="flex items-center gap-2">
-            <div className={cn("w-5 h-5 rounded border", selectedColor?.preview || "bg-gray-200")} />
+            <div className={cn("w-5 h-5 rounded border", previewColor)} />
             <span className="text-xs text-muted-foreground truncate">
               {selectedColor?.label || value}
             </span>
@@ -92,28 +95,33 @@ function ColorPicker({
           <ChevronDown className="h-3 w-3 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-2" align="start">
-        <div className="grid grid-cols-4 gap-1.5">
-          {colors.map((color) => (
-            <button
-              key={color.value}
-              onClick={() => onChange(color.value)}
-              className={cn(
-                "w-full h-10 rounded border-2 hover:scale-110 transition-transform",
-                color.preview,
-                value === color.value ? "border-primary ring-2 ring-primary ring-offset-1" : "border-gray-300"
-              )}
-              title={color.label}
-            />
-          ))}
+      <PopoverContent className="w-64 p-3" align="start">
+        <div className="mb-2">
+          <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">Preset Colors</label>
+          <div className="grid grid-cols-4 gap-1.5">
+            {colors.map((color) => (
+              <button
+                key={color.value}
+                onClick={() => onChange(color.value)}
+                className={cn(
+                  "w-full h-10 rounded border-2 hover:scale-110 transition-transform",
+                  color.preview,
+                  value === color.value ? "border-primary ring-2 ring-primary ring-offset-1" : "border-gray-300"
+                )}
+                title={color.label}
+              />
+            ))}
+          </div>
         </div>
-        <div className="mt-2 pt-2 border-t">
+        <div className="pt-2 border-t">
+          <label className="text-xs font-semibold text-muted-foreground mb-1.5 block">Custom Intensity</label>
           <Input
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            placeholder={type === 'bg' ? "e.g. bg-green-100" : "e.g. text-green-700"}
+            placeholder={type === 'bg' ? "e.g. bg-green-700" : "e.g. text-green-700"}
             className="h-8 text-xs font-mono"
           />
+          <p className="text-xs text-muted-foreground mt-1">Change the number: 50, 100, 200, 300, ... 950</p>
         </div>
       </PopoverContent>
     </Popover>
