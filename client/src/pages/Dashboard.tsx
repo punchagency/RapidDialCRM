@@ -104,9 +104,7 @@ export default function Dashboard() {
                           </Badge>
                         </div>
                         <p className="text-xs text-gray-500 font-medium truncate flex items-center gap-1.5">
-                          {prospect.specialty}
-                          <span className="w-1 h-1 rounded-full bg-gray-300" />
-                          {prospect.addressCity}, {prospect.addressState}
+                          {[prospect.addressStreet, prospect.addressCity, prospect.addressState, prospect.addressZip].filter(Boolean).join(", ") || "N/A"}
                         </p>
                       </div>
                       <Button size="sm" variant="ghost" className="text-gray-400 hover:text-pink-600 hover:bg-pink-50 rounded-full h-9 w-9 p-0 shrink-0">
