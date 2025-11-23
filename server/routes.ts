@@ -485,6 +485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!outcome) {
         return res.status(404).json({ error: "Call outcome not found" });
       }
+      cachedOutcomes = null; // Clear cache
       res.json(outcome);
     } catch (error) {
       res.status(500).json({ error: "Failed to update call outcome" });
@@ -495,6 +496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/call-outcomes/:id", async (req, res) => {
     try {
       await storage.deleteCallOutcome(req.params.id);
+      cachedOutcomes = null; // Clear cache
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete call outcome" });
