@@ -23,17 +23,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: "ok" });
   });
 
-  // GET /api/prospects - List all prospects
+  // GET /api/prospects - List all prospects with pagination
   app.get("/api/prospects", async (req, res) => {
     try {
       const territory = req.query.territory as string;
+      const limit = Math.min(parseInt(req.query.limit as string) || 20, 100);
+      const offset = parseInt(req.query.offset as string) || 0;
+      
       let prospects;
       if (territory) {
         prospects = await storage.listProspectsByTerritory(territory);
       } else {
         prospects = await storage.listAllProspects();
       }
-      res.json(prospects);
+      
+      const total = prospects.length;
+      const paginated = prospects.slice(offset, offset + limit);
+      
+      res.json({ data: paginated, total, offset, limit });
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch prospects" });
     }
