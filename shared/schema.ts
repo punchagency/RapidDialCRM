@@ -106,6 +106,18 @@ export const users = pgTable("users", {
   roleIdx: index("idx_users_role").on(table.role),
 }));
 
+// Specialty Colors Table
+export const specialtyColors = pgTable("specialty_colors", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  specialty: varchar("specialty", { length: 50 }).notNull().unique(),
+  bgColor: varchar("bg_color", { length: 20 }).notNull().default("bg-blue-100"),
+  textColor: varchar("text_color", { length: 20 }).notNull().default("text-blue-700"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => ({
+  specialtyIdx: index("idx_specialty_colors_specialty").on(table.specialty),
+}));
+
 // Zod Schemas
 export const insertProspectSchema = createInsertSchema(prospects).omit({
   id: true,
@@ -137,6 +149,12 @@ export const insertUserSchema = createInsertSchema(users).omit({
   updatedAt: true,
 });
 
+export const insertSpecialtyColorSchema = createInsertSchema(specialtyColors).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type Prospect = typeof prospects.$inferSelect;
 export type InsertProspect = z.infer<typeof insertProspectSchema>;
@@ -154,5 +172,8 @@ export type InsertStakeholder = z.infer<typeof insertStakeholderSchema>;
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+
+export type SpecialtyColor = typeof specialtyColors.$inferSelect;
+export type InsertSpecialtyColor = z.infer<typeof insertSpecialtyColorSchema>;
 
 export type UserRole = 'admin' | 'manager' | 'inside_sales_rep' | 'field_sales_rep' | 'data_loader';

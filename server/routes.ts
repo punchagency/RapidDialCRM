@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProspectSchema, insertFieldRepSchema, insertAppointmentSchema, insertStakeholderSchema, insertUserSchema } from "@shared/schema";
+import { insertProspectSchema, insertFieldRepSchema, insertAppointmentSchema, insertStakeholderSchema, insertUserSchema, insertSpecialtyColorSchema } from "@shared/schema";
 import { generateSmartCallingList, calculatePriorityScore } from "./services/optimization";
 import { geocodeProspects, getFullAddressFromHere } from "./services/geocoding";
 import { seedDatabase } from "./seedData";
@@ -11,6 +11,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Seed database on startup
   await seedDatabase().catch(err => console.error("Failed to seed database:", err));
   await seedAllMockData().catch(err => console.error("Failed to seed mock data:", err));
+  
+  // Initialize specialty colors
+  await storage.initializeSpecialtyColors(["Dental", "Chiropractor", "Optometry", "Physical Therapy", "Orthodontics"]).catch(err => console.error("Failed to initialize specialty colors:", err));
 
   // Health check
   app.get("/health", (_req, res) => {
@@ -383,6 +386,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ error: "Failed to update prospect addresses" });
+    }
+  });
+
+  // GET /api/specialty-colors - List all specialty colors
+  app.get("/api/specialty-colors", async (req, res) => {
+    try {
+      const colors = await storage.listSpecialtyColors();
+      res.json(colors);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch specialty colors" });
+    }
+  });
+
+  // GET /api/specialty-colors/:specialty - Get color for specific specialty
+  app.get("/api/specialty-colors/:specialty", async (req, res) => {
+    try {
+      const color = await storage.getSpecialtyColor(req.params.specialty);
+      if (!color) {
+        return res.status(404).json({ error: "Specialty color not found" });
+      }
+      res.json(color);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch specialty color" });
+    }
+  });
+
+  // PATCH /api/specialty-colors/:specialty - Update specialty color
+  app.patch("/api/specialty-colors/:specialty", async (req, res) => {
+    try {
+      const color = await storage.updateSpecialtyColor(req.params.specialty, req.body);
+      if (!color) {
+        return res.status(404).json({ error: "Specialty color not found" });
+      }
+      res.json(color);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update specialty color" });
     }
   });
 
