@@ -105,9 +105,17 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
                 </Button>
               )}
             </div>
-            <h2 className="text-lg font-bold text-foreground mb-1" data-testid="prospect-name">
-              {prospect.businessName}
-            </h2>
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <h2 className="text-lg font-bold text-foreground" data-testid="prospect-name">
+                {prospect.businessName}
+              </h2>
+              <Badge 
+                variant="secondary" 
+                className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 border-none font-semibold"
+              >
+                {prospect.specialty}
+              </Badge>
+            </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1 mb-4">
               <MapPin className="h-3 w-3" />
               {prospect.territory}

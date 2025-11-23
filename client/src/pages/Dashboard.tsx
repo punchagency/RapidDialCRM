@@ -91,8 +91,17 @@ export default function Dashboard() {
                         {i + 1}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3 mb-1">
-                          <p className="font-bold text-gray-900 truncate">{prospect.businessName}</p>
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <p className="font-bold text-gray-900">{prospect.businessName}</p>
+                          <Badge 
+                            variant="secondary" 
+                            className={cn(
+                              "text-[10px] h-5 px-2 rounded-full font-semibold border-none", 
+                              "bg-blue-100 text-blue-700"
+                            )}
+                          >
+                            {prospect.specialty}
+                          </Badge>
                           <Badge 
                             variant="secondary" 
                             className={cn(
