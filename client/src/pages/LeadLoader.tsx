@@ -11,9 +11,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Search, Upload, Plus, Database, Globe, CheckCircle, MapPin, Building, Briefcase, FileUp, Loader2, Info, Trash2, UserCog, Stethoscope, X, User } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { SubContact } from "@/lib/mockData";
+
+// Territory Options
+const TERRITORY_OPTIONS = [
+  "North Seattle (Everett/Lynnwood)",
+  "Bellevue / Redmond",
+  "Downtown / Capitol Hill",
+  "South Seattle / Renton",
+  "Tacoma Area",
+];
 
 // Mock Search Results
 const MOCK_SEARCH_RESULTS = [
@@ -230,12 +240,16 @@ export default function LeadLoader() {
                     <div className="space-y-4 mb-6">
                       <div>
                         <Label className="text-sm font-medium mb-2 block">Territory <span className="text-xs text-muted-foreground">(Optional)</span></Label>
-                        <Input
-                          placeholder="e.g., VA-North"
-                          value={territory}
-                          onChange={(e) => setTerritory(e.target.value)}
-                          data-testid="input-territory"
-                        />
+                        <Select value={territory} onValueChange={setTerritory}>
+                          <SelectTrigger data-testid="select-territory">
+                            <SelectValue placeholder="Select a territory or leave empty" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {TERRITORY_OPTIONS.map((t) => (
+                              <SelectItem key={t} value={t}>{t}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       <form onSubmit={handleSearch} className="flex gap-2">
                         <div className="relative flex-1">
