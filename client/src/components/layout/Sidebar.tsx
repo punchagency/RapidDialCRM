@@ -53,6 +53,7 @@ export function Sidebar() {
       { icon: LayoutDashboard, label: "Dashboard", href: "/", permission: "dashboard_view" as const },
       { icon: Phone, label: "Power Dialer", href: "/dialer", permission: "dialer_access" as const },
       { icon: Users, label: "Contacts", href: "/contacts", permission: "contacts_view" as const },
+      { icon: Briefcase, label: "Lead Management", href: "/lead-loader", permission: "contacts_view" as const },
       { icon: Map, label: "Territory", href: "/map", permission: "territories_view" as const },
       { icon: BarChart3, label: "Analytics", href: "/analytics", permission: "analytics_view" as const },
       { icon: FileText, label: "Scripts", href: "/scripts", permission: "scripts_view" as const },
