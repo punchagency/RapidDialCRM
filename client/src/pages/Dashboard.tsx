@@ -17,11 +17,18 @@ import { GeocodingStatus } from "@/components/crm/GeocodingStatus";
 import { useToast } from "@/hooks/use-toast";
 import { startBackgroundGeocoding, resetGeocodingProgress } from "@/lib/backgroundGeocoder";
 import { ProspectCard } from "@/components/crm/ProspectCard";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 export default function Dashboard() {
   const { userRole } = useUserRole();
   const statuses = getStatuses();
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isBulkSearchOpen, setIsBulkSearchOpen] = useState(false);
+  const [bulkSearchSpecialty, setBulkSearchSpecialty] = useState("");
+  const [bulkSearchLocation, setBulkSearchLocation] = useState("");
+  const [bulkSearchTerritory, setBulkSearchTerritory] = useState("");
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const { toast } = useToast();
 
@@ -61,6 +68,47 @@ export default function Dashboard() {
   const getStatusColor = (statusValue: string) => {
     const status = statuses.find(s => s.value === statusValue);
     return status ? status.color : "bg-secondary text-secondary-foreground";
+  };
+
+  const handleBulkSearch = async () => {
+    if (!bulkSearchSpecialty || !bulkSearchLocation || !bulkSearchTerritory) {
+      toast({
+        title: "Missing Fields",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/bulk-search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ specialty: bulkSearchSpecialty, location: bulkSearchLocation }),
+      });
+      const data = await res.json();
+      
+      if (data.results?.length > 0) {
+        // Redirect to lead loader with bulk import tab
+        window.location.href = "/lead-loader";
+        toast({
+          title: "Found Professionals",
+          description: `Found ${data.results.length} professionals. Visit Lead Management to import.`,
+        });
+      } else {
+        toast({
+          title: "No Results",
+          description: "No professionals found for your search",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Search Failed",
+        description: "Unable to search professionals",
+        variant: "destructive",
+      });
+    }
   };
 
   // Filter prospects - show all for now (database doesn't have status field yet)
@@ -327,7 +375,7 @@ export default function Dashboard() {
   const LoaderDashboard = () => (
     <div className="max-w-[1600px] mx-auto h-full flex flex-col">
        <GeocodingStatus />
-       <div className="grid grid-cols-3 gap-6 mb-8">
+       <div className="grid grid-cols-4 gap-6 mb-8">
           <Card className="bg-white shadow-sm border-none">
              <CardContent className="p-6 text-center">
                 <Upload className="h-8 w-8 mx-auto text-blue-500 mb-2" />
@@ -342,6 +390,14 @@ export default function Dashboard() {
                 <h3 className="font-bold text-lg">Data Quality</h3>
                 <p className="text-sm text-gray-500 mb-4">98% Accuracy Score</p>
                 <Button variant="outline" className="w-full">View Report</Button>
+             </CardContent>
+          </Card>
+          <Card className="bg-white shadow-sm border-none">
+             <CardContent className="p-6 text-center">
+                <Search className="h-8 w-8 mx-auto text-pink-500 mb-2" />
+                <h3 className="font-bold text-lg">Search Pros</h3>
+                <p className="text-sm text-gray-500 mb-4">Find & add by specialty</p>
+                <Button className="w-full bg-pink-600 hover:bg-pink-700" onClick={() => setIsBulkSearchOpen(true)}>Quick Search</Button>
              </CardContent>
           </Card>
           <Card className="bg-white shadow-sm border-none">
