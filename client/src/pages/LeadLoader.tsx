@@ -165,20 +165,34 @@ export default function LeadLoader() {
       });
       const data = await res.json();
       
-      const newPoolItems = contacts.map((c, i) => ({
-        id: `nlp-${Date.now()}-${i}`,
-        name: c.name,
-        location: `${c.city}, ${c.state}`,
-        type: c.type,
-        source: "NLP Search",
-        date: "Just now"
-      }));
-      setPool([...newPoolItems, ...pool]);
-      setSearchResults([]);
+      // Only add successfully added contacts to pool
+      if (data.details?.added && data.details.added.length > 0) {
+        const newPoolItems = data.details.added.map((c: any) => ({
+          id: `nlp-${Date.now()}-${Math.random()}`,
+          name: c.businessName,
+          location: `${c.addressCity}, ${c.addressState}`,
+          type: c.specialty,
+          source: "NLP Search",
+          date: "Just now"
+        }));
+        setPool([...newPoolItems, ...pool]);
+      }
+      
+      // Remove imported contacts from search results
+      setSearchResults(searchResults.filter(r => !contacts.find(c => c.name === r.name)));
+      
+      let message = "";
+      if (data.added > 0) {
+        message = `Added ${data.added} contact${data.added !== 1 ? "s" : ""}`;
+      }
+      if (data.skipped > 0) {
+        if (message) message += ", ";
+        message += `Skipped ${data.skipped} (no phone or duplicate)`;
+      }
       
       toast({
-        title: "Import Complete",
-        description: `Added ${data.added} contacts, skipped ${data.skipped}`,
+        title: data.added > 0 ? "Import Complete" : "Contacts Skipped",
+        description: message || "No contacts were added",
       });
     } catch (error) {
       toast({
