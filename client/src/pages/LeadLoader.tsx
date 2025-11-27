@@ -84,27 +84,65 @@ export default function LeadLoader() {
     }
   };
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
     
     setIsSearching(true);
-    // Simulate API search
-    setTimeout(() => {
-      setIsSearching(false);
-      setSearchResults(MOCK_SEARCH_RESULTS);
+    try {
+      // Parse search query to extract specialty and location
+      const query = searchQuery.toLowerCase();
+      
+      // Try to extract specialty and location from natural language query
+      // e.g., "dentists in mclean va" -> specialty: "dentist", location: "mclean va"
+      const parts = query.split(" in ");
+      let specialty = parts[0].trim();
+      let location = parts[1] ? parts[1].trim() : searchQuery.trim();
+      
+      // Remove trailing 's' from specialty if present
+      if (specialty.endsWith("s")) {
+        specialty = specialty.slice(0, -1);
+      }
+      
+      const res = await fetch("/api/bulk-search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ specialty, location }),
+      });
+      const data = await res.json();
+      
+      // Convert API results to the format expected by the UI
+      const results = (data.results || []).map((result: any, idx: number) => ({
+        id: `s${idx}`,
+        name: result.name,
+        address: result.address,
+        city: result.city,
+        zip: result.zip,
+        type: result.category || specialty,
+        status: "new",
+      }));
+      
+      setSearchResults(results);
       toast({
         title: "Search Complete",
-        description: `Found ${MOCK_SEARCH_RESULTS.length} potential leads matching "${searchQuery}"`,
+        description: `Found ${results.length} potential leads matching "${searchQuery}"`,
       });
-    }, 1500);
+    } catch (error) {
+      toast({
+        title: "Search Failed",
+        description: "Unable to search for leads",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSearching(false);
+    }
   };
 
-  const addToPool = (lead: typeof MOCK_SEARCH_RESULTS[0]) => {
+  const addToPool = (lead: any) => {
     const newLead = {
       id: `new-${Date.now()}`,
       name: lead.name,
-      location: `${lead.city}, WA`,
+      location: `${lead.city || "Unknown"}`,
       type: lead.type,
       source: "NLP Search",
       date: "Just now"
