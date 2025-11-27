@@ -375,21 +375,13 @@ export default function Dashboard() {
   const LoaderDashboard = () => (
     <div className="max-w-[1600px] mx-auto h-full flex flex-col">
        <GeocodingStatus />
-       <div className="grid grid-cols-4 gap-6 mb-8">
+       <div className="grid grid-cols-3 gap-6 mb-8">
           <Card className="bg-white shadow-sm border-none">
              <CardContent className="p-6 text-center">
                 <Upload className="h-8 w-8 mx-auto text-blue-500 mb-2" />
                 <h3 className="font-bold text-lg">Upload Leads</h3>
                 <p className="text-sm text-gray-500 mb-4">Import CSV/Excel files</p>
                 <Button className="w-full" onClick={() => setIsUploadModalOpen(true)}>Select File</Button>
-             </CardContent>
-          </Card>
-          <Card className="bg-white shadow-sm border-none">
-             <CardContent className="p-6 text-center">
-                <FileText className="h-8 w-8 mx-auto text-green-500 mb-2" />
-                <h3 className="font-bold text-lg">Data Quality</h3>
-                <p className="text-sm text-gray-500 mb-4">98% Accuracy Score</p>
-                <Button variant="outline" className="w-full">View Report</Button>
              </CardContent>
           </Card>
           <Card className="bg-white shadow-sm border-none">
@@ -468,6 +460,31 @@ export default function Dashboard() {
         onClose={() => setIsUploadModalOpen(false)}
         onFileSelect={handleFileUpload}
       />
+
+      {/* Bulk Search Dialog */}
+      <Dialog open={isBulkSearchOpen} onOpenChange={setIsBulkSearchOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Search & Add Professionals</DialogTitle>
+            <DialogDescription>Find professionals by specialty and location, then add them to your database.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm font-medium">Specialty</Label>
+              <Input placeholder="e.g., Dentist, Orthodontist" value={bulkSearchSpecialty} onChange={(e) => setBulkSearchSpecialty(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Location</Label>
+              <Input placeholder="e.g., 10001, New York, NY" value={bulkSearchLocation} onChange={(e) => setBulkSearchLocation(e.target.value)} />
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Territory</Label>
+              <Input placeholder="e.g., NY-North" value={bulkSearchTerritory} onChange={(e) => setBulkSearchTerritory(e.target.value)} />
+            </div>
+            <Button onClick={handleBulkSearch} className="w-full bg-pink-600 hover:bg-pink-700">Search Professionals</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
