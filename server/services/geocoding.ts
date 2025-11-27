@@ -145,6 +145,29 @@ export interface ProfessionalSearchResult {
   profession?: string;
 }
 
+async function getDetailedPlaceInfo(placeId: string): Promise<any> {
+  try {
+    const params = new URLSearchParams({
+      id: placeId,
+      apikey: HERE_API_KEY,
+    });
+
+    const response = await fetch(
+      `https://lookup.search.hereapi.com/v1/lookup?${params}`,
+      { method: "GET" }
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Lookup error:", error);
+    return null;
+  }
+}
+
 export async function searchProfessionalsByLocation(
   specialty: string,
   location: string,
@@ -208,11 +231,30 @@ export async function searchProfessionalsByLocation(
           addr.stateCode ? `${addr.stateCode} ${addr.postalCode}` : addr.postalCode
         ].filter(Boolean).join(", ");
 
+        // Extract contact info from Discover response, or use placeholder
+        let phone = item.contacts?.phone?.[0]?.value;
+        let email = item.contacts?.email?.[0]?.value;
+        let website = item.contacts?.website?.[0]?.value;
+
+        // If no phone found in Discover, try Lookup API for detailed contact info
+        if (!phone && item.id) {
+          try {
+            const detailedInfo = await getDetailedPlaceInfo(item.id);
+            if (detailedInfo && detailedInfo.contacts) {
+              phone = detailedInfo.contacts[0]?.phone?.[0]?.value || phone;
+              email = detailedInfo.contacts[0]?.email?.[0]?.value || email;
+              website = detailedInfo.contacts[0]?.www?.[0]?.value || website;
+            }
+          } catch (e) {
+            // Silently continue if lookup fails
+          }
+        }
+
         results.push({
           name: item.title || "",
-          phone: item.contacts?.phone?.[0]?.value,
-          email: item.contacts?.email?.[0]?.value,
-          website: item.contacts?.website?.[0]?.value,
+          phone,
+          email,
+          website,
           address: cleanAddress || addr.label || "",
           city: addr.city,
           state: addr.stateCode,
@@ -222,6 +264,11 @@ export async function searchProfessionalsByLocation(
           category: item.resultType,
           profession: specialtyConfig.profession,
         });
+
+        // Rate limiting - small delay between lookup requests
+        if (!phone && item.id) {
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
       }
     }
 
