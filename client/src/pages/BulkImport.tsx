@@ -9,12 +9,15 @@ import { Loader2, Search, Upload, CheckCircle, AlertCircle } from "lucide-react"
 interface SearchResult {
   name: string;
   phone?: string;
+  email?: string;
+  website?: string;
   address: string;
   city?: string;
   state?: string;
   zip?: string;
   latitude: number;
   longitude: number;
+  profession?: string;
 }
 
 export default function BulkImport() {
@@ -213,14 +216,20 @@ export default function BulkImport() {
                     <p className="font-semibold text-foreground" data-testid={`text-name-${idx}`}>
                       {result.name}
                     </p>
-                    {result.phone && (
-                      <p className="text-sm text-muted-foreground" data-testid={`text-phone-${idx}`}>
-                        {result.phone}
-                      </p>
-                    )}
                     <p className="text-xs text-muted-foreground line-clamp-1" data-testid={`text-address-${idx}`}>
-                      {[result.address, result.city, result.state, result.zip].filter(Boolean).join(", ")}
+                      {result.address}
                     </p>
+                    <div className="flex flex-wrap gap-3 mt-1 text-xs text-muted-foreground">
+                      {result.phone && (
+                        <p data-testid={`text-phone-${idx}`}>📞 {result.phone}</p>
+                      )}
+                      {result.email && (
+                        <p data-testid={`text-email-${idx}`}>✉️ {result.email}</p>
+                      )}
+                      {result.website && (
+                        <p data-testid={`text-website-${idx}`}>🌐 {result.website}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}

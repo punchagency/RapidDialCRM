@@ -134,6 +134,7 @@ export interface ProfessionalSearchResult {
   name: string;
   phone?: string;
   email?: string;
+  website?: string;
   address: string;
   city?: string;
   state?: string;
@@ -200,11 +201,19 @@ export async function searchProfessionalsByLocation(
     if (data.items && Array.isArray(data.items)) {
       for (const item of data.items) {
         const addr = item.address;
+        // Build clean address without duplication: street, city state zip
+        const cleanAddress = [
+          addr.street ? `${addr.houseNumber || ''} ${addr.street}`.trim() : '',
+          addr.city,
+          addr.stateCode ? `${addr.stateCode} ${addr.postalCode}` : addr.postalCode
+        ].filter(Boolean).join(", ");
+
         results.push({
           name: item.title || "",
           phone: item.contacts?.phone?.[0]?.value,
           email: item.contacts?.email?.[0]?.value,
-          address: addr.label || "",
+          website: item.contacts?.website?.[0]?.value,
+          address: cleanAddress || addr.label || "",
           city: addr.city,
           state: addr.stateCode,
           zip: addr.postalCode,
