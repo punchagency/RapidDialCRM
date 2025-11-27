@@ -145,21 +145,12 @@ export default function LeadLoader() {
   };
 
   const importContact = async (contacts: SearchResult[]) => {
-    if (!territory) {
-      toast({
-        title: "Missing Territory",
-        description: "Please enter a territory first",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsImportingAll(true);
     try {
       const res = await fetch("/api/bulk-add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contacts, territory, specialty: contacts[0]?.type || "Unknown" }),
+        body: JSON.stringify({ contacts, territory: territory || "Unassigned", specialty: contacts[0]?.type || "Unknown" }),
       });
       const data = await res.json();
       
@@ -238,7 +229,7 @@ export default function LeadLoader() {
                   <CardContent>
                     <div className="space-y-4 mb-6">
                       <div>
-                        <Label className="text-sm font-medium mb-2 block">Territory</Label>
+                        <Label className="text-sm font-medium mb-2 block">Territory <span className="text-xs text-muted-foreground">(Optional)</span></Label>
                         <Input
                           placeholder="e.g., VA-North"
                           value={territory}
