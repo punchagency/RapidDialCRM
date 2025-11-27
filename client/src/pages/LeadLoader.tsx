@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Search, Upload, Plus, Database, Globe, CheckCircle, MapPin, Building, Briefcase, FileUp, Loader2, Info, Trash2, UserCog, Stethoscope, X, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,17 @@ const MOCK_POOL = [
   { id: "p4", name: "Sammamish Medical", location: "Sammamish, WA", type: "General Practice", source: "Bulk Upload", date: "Yesterday" },
 ];
 
+interface SearchResult {
+  name: string;
+  phone?: string;
+  address: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  latitude: number;
+  longitude: number;
+}
+
 export default function LeadLoader() {
   const { toast } = useToast();
   const [searchQuery, setSearchTerm] = useState("");
@@ -38,6 +50,15 @@ export default function LeadLoader() {
   const [searchResults, setSearchResults] = useState<typeof MOCK_SEARCH_RESULTS>([]);
   const [pool, setPool] = useState(MOCK_POOL);
   const [isUploading, setIsUploading] = useState(false);
+
+  // Bulk Import State
+  const [bulkSpecialty, setBulkSpecialty] = useState("");
+  const [bulkLocation, setBulkLocation] = useState("");
+  const [bulkTerritory, setBulkTerritory] = useState("");
+  const [bulkResults, setBulkResults] = useState<SearchResult[]>([]);
+  const [bulkSelectedIds, setBulkSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkAdding, setBulkAdding] = useState(false);
 
   // Manual Entry State
   const [clientAdmins, setClientAdmins] = useState<SubContact[]>([{ id: "ca-1", name: "", role: "", email: "", phone: "" }]);
@@ -108,6 +129,118 @@ export default function LeadLoader() {
         description: "Processed 45 records. 42 new leads added to pool, 3 duplicates skipped.",
       });
     }, 2000);
+  };
+
+  const handleBulkSearch = async () => {
+    if (!bulkSpecialty || !bulkLocation) {
+      toast({
+        title: "Missing Fields",
+        description: "Please enter specialty and location",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setBulkLoading(true);
+    try {
+      const res = await fetch("/api/bulk-search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ specialty: bulkSpecialty, location: bulkLocation }),
+      });
+      const data = await res.json();
+      setBulkResults(data.results || []);
+      setBulkSelectedIds(new Set());
+      
+      toast({
+        title: "Search Complete",
+        description: `Found ${data.results?.length || 0} professionals`,
+      });
+    } catch (error) {
+      toast({
+        title: "Search Failed",
+        description: "Unable to search professionals",
+        variant: "destructive",
+      });
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleBulkSelectAll = (checked: boolean) => {
+    if (checked) {
+      setBulkSelectedIds(new Set(bulkResults.map((_, i) => i.toString())));
+    } else {
+      setBulkSelectedIds(new Set());
+    }
+  };
+
+  const handleBulkSelectOne = (id: string, checked: boolean) => {
+    const newSet = new Set(bulkSelectedIds);
+    if (checked) {
+      newSet.add(id);
+    } else {
+      newSet.delete(id);
+    }
+    setBulkSelectedIds(newSet);
+  };
+
+  const handleBulkAddSelected = async () => {
+    if (!bulkTerritory) {
+      toast({
+        title: "Missing Territory",
+        description: "Please enter a territory",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const contacts = bulkResults.filter((_, i) => bulkSelectedIds.has(i.toString()));
+    if (contacts.length === 0) {
+      toast({
+        title: "No Selection",
+        description: "Please select contacts to add",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setBulkAdding(true);
+    try {
+      const res = await fetch("/api/bulk-add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contacts, territory: bulkTerritory, specialty: bulkSpecialty }),
+      });
+      const data = await res.json();
+      
+      // Add to pool
+      const newPoolItems = contacts.map((c, i) => ({
+        id: `bulk-${Date.now()}-${i}`,
+        name: c.name,
+        location: `${c.city}, ${c.state}`,
+        type: bulkSpecialty,
+        source: "Bulk Search",
+        date: "Just now"
+      }));
+      setPool([...newPoolItems, ...pool]);
+
+      toast({
+        title: "Import Complete",
+        description: `Added ${data.added} contacts, skipped ${data.skipped}`,
+      });
+
+      setBulkResults([]);
+      setBulkSelectedIds(new Set());
+    } catch (error) {
+      toast({
+        title: "Import Failed",
+        description: "Unable to add contacts",
+        variant: "destructive",
+      });
+    } finally {
+      setBulkAdding(false);
+    }
   };
 
   return (
@@ -209,37 +342,104 @@ export default function LeadLoader() {
               </TabsContent>
 
               {/* TAB: IMPORT */}
-              <TabsContent value="import">
+              <TabsContent value="import" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Bulk Import Leads</CardTitle>
-                    <CardDescription>Upload CSV or Excel files to bulk add leads to the unassigned pool.</CardDescription>
+                    <CardTitle>Search & Bulk Add Professionals</CardTitle>
+                    <CardDescription>Search for professionals by specialty and location, then add them to your database.</CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="border-2 border-dashed border-border rounded-xl p-12 flex flex-col items-center justify-center text-center hover:bg-muted/30 transition-colors cursor-pointer" onClick={handleBulkUpload}>
-                      <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mb-4">
-                        <FileUp className="h-8 w-8 text-muted-foreground" />
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <Label className="text-sm font-medium mb-2 block">Specialty</Label>
+                        <Input
+                          placeholder="e.g., Dentist, Orthodontist"
+                          value={bulkSpecialty}
+                          onChange={(e) => setBulkSpecialty(e.target.value)}
+                        />
                       </div>
-                      <h3 className="font-semibold text-lg mb-1">Drag & Drop file here</h3>
-                      <p className="text-sm text-muted-foreground mb-4">or click to browse (CSV, XLSX)</p>
-                      <Button disabled={isUploading}>
-                        {isUploading ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin mr-2" /> Uploading...
-                          </>
-                        ) : "Select File"}
-                      </Button>
-                    </div>
-                    <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-lg flex gap-3">
-                      <Info className="h-5 w-5 text-blue-600 shrink-0" />
-                      <div className="text-sm text-blue-800 dark:text-blue-300">
-                        <p className="font-medium mb-1">Import Guidelines</p>
-                        <p>Ensure your CSV has headers: Name, Phone, Email, Address, City, State, Zip, Profession.</p>
-                        <p className="mt-1">Duplicates based on Phone/Email will be automatically skipped.</p>
+                      <div>
+                        <Label className="text-sm font-medium mb-2 block">Location</Label>
+                        <Input
+                          placeholder="e.g., 10001, New York, NY"
+                          value={bulkLocation}
+                          onChange={(e) => setBulkLocation(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium mb-2 block">Territory</Label>
+                        <Input
+                          placeholder="e.g., NY-North"
+                          value={bulkTerritory}
+                          onChange={(e) => setBulkTerritory(e.target.value)}
+                        />
                       </div>
                     </div>
+
+                    <Button
+                      onClick={handleBulkSearch}
+                      disabled={bulkLoading}
+                      className="w-full"
+                    >
+                      {bulkLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
+                      Search Professionals
+                    </Button>
                   </CardContent>
                 </Card>
+
+                {bulkResults.length > 0 && (
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <CardTitle>Results ({bulkResults.length})</CardTitle>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleBulkSelectAll(bulkSelectedIds.size !== bulkResults.length)}
+                      >
+                        {bulkSelectedIds.size === bulkResults.length ? "Deselect All" : "Select All"}
+                      </Button>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2 max-h-96 overflow-y-auto">
+                        {bulkResults.map((result, idx) => (
+                          <div
+                            key={idx}
+                            className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50"
+                          >
+                            <Checkbox
+                              checked={bulkSelectedIds.has(idx.toString())}
+                              onCheckedChange={(checked) => handleBulkSelectOne(idx.toString(), !!checked)}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-foreground">{result.name}</p>
+                              {result.phone && (
+                                <p className="text-sm text-muted-foreground">{result.phone}</p>
+                              )}
+                              <p className="text-xs text-muted-foreground line-clamp-1">
+                                {[result.address, result.city, result.state, result.zip].filter(Boolean).join(", ")}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <Button
+                        onClick={handleBulkAddSelected}
+                        disabled={bulkAdding || bulkSelectedIds.size === 0}
+                        className="w-full bg-green-600 hover:bg-green-700"
+                      >
+                        {bulkAdding ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                        Add {bulkSelectedIds.size} Contact{bulkSelectedIds.size !== 1 ? "s" : ""} to Pool
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {bulkResults.length === 0 && !bulkLoading && (
+                  <Card className="p-8 text-center text-muted-foreground">
+                    <p>Search for professionals to see results here</p>
+                  </Card>
+                )}
               </TabsContent>
 
               {/* TAB: MANUAL */}

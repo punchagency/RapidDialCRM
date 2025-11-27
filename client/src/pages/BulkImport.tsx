@@ -190,7 +190,7 @@ export default function BulkImport() {
             <CardTitle>Results ({results.length})</CardTitle>
             <Button
               variant="outline"
-              onClick={() => handleSelectAll(!selectedIds.size === results.length)}
+              onClick={() => handleSelectAll(selectedIds.size !== results.length)}
               data-testid="button-select-all"
             >
               {selectedIds.size === results.length ? "Deselect All" : "Select All"}
