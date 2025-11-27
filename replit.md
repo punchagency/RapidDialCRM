@@ -30,9 +30,21 @@ A comprehensive CRM system with contact management and Smart Calling & Route Opt
 The following secrets must be set for Twilio calling to work:
 - `TWILIO_ACCOUNT_SID` - Your Twilio Account SID
 - `TWILIO_AUTH_TOKEN` - Your Twilio Auth Token
-- `TWILIO_API_KEY` - Your Twilio API Key
+- `TWILIO_API_KEY` - Your Twilio API Key SID (starts with SK...)
+- `TWILIO_API_SECRET` - Your Twilio API Key Secret (used to sign access tokens)
 - `TWILIO_PHONE_NUMBER` - Your Twilio phone number (with country code, e.g., +1XXXXXXXXXX)
-- `TWILIO_TWIML_APP_SID` - (Optional) TwiML App SID for browser-initiated calls
+- `TWILIO_TWIML_APP_SID` - TwiML App SID for browser-initiated calls
+
+### Setting Up Twilio
+1. Create a Twilio account at twilio.com
+2. Get your Account SID and Auth Token from the Twilio Console dashboard
+3. Create an API Key: Console > Account > API Keys & Tokens > Create API Key
+   - Copy the SID (starts with SK...) as TWILIO_API_KEY
+   - Copy the Secret as TWILIO_API_SECRET (shown only once!)
+4. Get or buy a phone number: Console > Phone Numbers > Manage > Buy a Number
+5. Create a TwiML App: Console > Voice > TwiML Apps > Create TwiML App
+   - Set the Voice Request URL to your app's /api/twilio/voice endpoint
+   - Copy the SID as TWILIO_TWIML_APP_SID
 
 ### API Endpoints
 - `POST /api/twilio/token` - Generate access token for browser client

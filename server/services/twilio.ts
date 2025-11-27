@@ -3,10 +3,19 @@ import twilio from "twilio";
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const apiKey = process.env.TWILIO_API_KEY;
+const apiSecret = process.env.TWILIO_API_SECRET;
 const phoneNumber = process.env.TWILIO_PHONE_NUMBER;
+const twimlAppSid = process.env.TWILIO_TWIML_APP_SID;
 
-if (!accountSid || !authToken || !apiKey || !phoneNumber) {
-  console.warn("Twilio credentials not fully configured. Some features may not work.");
+const missingCredentials: string[] = [];
+if (!accountSid) missingCredentials.push("TWILIO_ACCOUNT_SID");
+if (!authToken) missingCredentials.push("TWILIO_AUTH_TOKEN");
+if (!apiKey) missingCredentials.push("TWILIO_API_KEY");
+if (!apiSecret) missingCredentials.push("TWILIO_API_SECRET");
+if (!phoneNumber) missingCredentials.push("TWILIO_PHONE_NUMBER");
+
+if (missingCredentials.length > 0) {
+  console.warn(`Twilio credentials not fully configured. Missing: ${missingCredentials.join(", ")}`);
 }
 
 const client = accountSid && authToken ? twilio(accountSid, authToken) : null;
@@ -14,14 +23,16 @@ const AccessToken = twilio.jwt.AccessToken;
 const VoiceGrant = AccessToken.VoiceGrant;
 
 export function generateAccessToken(identity: string): string {
-  if (!accountSid || !apiKey || !authToken) {
-    throw new Error("Twilio credentials not configured");
+  if (!accountSid || !apiKey || !apiSecret) {
+    throw new Error("Twilio credentials not configured. Missing: " + 
+      [!accountSid && "TWILIO_ACCOUNT_SID", !apiKey && "TWILIO_API_KEY", !apiSecret && "TWILIO_API_SECRET"]
+        .filter(Boolean).join(", "));
   }
 
   const accessToken = new AccessToken(
     accountSid,
     apiKey,
-    authToken,
+    apiSecret,
     { identity }
   );
 
