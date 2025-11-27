@@ -133,6 +133,7 @@ export async function geocodeProspects(
 export interface ProfessionalSearchResult {
   name: string;
   phone?: string;
+  email?: string;
   address: string;
   city?: string;
   state?: string;
@@ -140,6 +141,7 @@ export interface ProfessionalSearchResult {
   latitude: number;
   longitude: number;
   category?: string;
+  profession?: string;
 }
 
 export async function searchProfessionalsByLocation(
@@ -154,24 +156,30 @@ export async function searchProfessionalsByLocation(
       return [];
     }
 
-    // Map specialty to HERE category codes
-    const categoryMap: Record<string, string> = {
-      "dental": "dentist",
-      "dentist": "dentist",
-      "chiropractor": "chiropractor",
-      "optometry": "optometrist",
-      "optometrist": "optometrist",
-      "physical therapy": "physical-therapist",
-      "physical therapist": "physical-therapist",
-      "orthodontics": "dentist",
-      "orthodontist": "dentist",
+    // Map specialty to HERE category codes and profession types
+    const categoryMap: Record<string, { query: string; profession: string }> = {
+      "dental": { query: "dentist", profession: "Dentist" },
+      "dentist": { query: "dentist", profession: "Dentist" },
+      "chiropractor": { query: "chiropractor", profession: "Chiropractor" },
+      "optometry": { query: "optometrist", profession: "Optometrist" },
+      "optometrist": { query: "optometrist", profession: "Optometrist" },
+      "physical therapy": { query: "physical-therapist", profession: "Physical Therapist" },
+      "physical therapist": { query: "physical-therapist", profession: "Physical Therapist" },
+      "orthodontics": { query: "dentist", profession: "Orthodontist" },
+      "orthodontist": { query: "dentist", profession: "Orthodontist" },
+      "lawyer": { query: "lawyer", profession: "Lawyer" },
+      "attorney": { query: "attorney", profession: "Attorney" },
+      "law": { query: "lawyer", profession: "Lawyer" },
     };
 
-    const hereCategory = categoryMap[specialty.toLowerCase()] || specialty.toLowerCase();
+    const specialtyConfig = categoryMap[specialty.toLowerCase()] || {
+      query: specialty.toLowerCase(),
+      profession: specialty.charAt(0).toUpperCase() + specialty.slice(1)
+    };
 
     const params = new URLSearchParams({
       at: `${locationResult.latitude},${locationResult.longitude}`,
-      q: hereCategory,
+      q: specialtyConfig.query,
       limit: "50",
       apikey: HERE_API_KEY,
     });
@@ -195,6 +203,7 @@ export async function searchProfessionalsByLocation(
         results.push({
           name: item.title || "",
           phone: item.contacts?.phone?.[0]?.value,
+          email: item.contacts?.email?.[0]?.value,
           address: addr.label || "",
           city: addr.city,
           state: addr.stateCode,
@@ -202,6 +211,7 @@ export async function searchProfessionalsByLocation(
           latitude: item.position.lat,
           longitude: item.position.lng,
           category: item.resultType,
+          profession: specialtyConfig.profession,
         });
       }
     }
