@@ -70,6 +70,7 @@ export default function LeadLoader() {
 
   const [territory, setTerritory] = useState("");
   const [isImportingAll, setIsImportingAll] = useState(false);
+  const [showWithoutPhone, setShowWithoutPhone] = useState(false);
 
   // Manual Entry State
   const [clientAdmins, setClientAdmins] = useState<SubContact[]>([{ id: "ca-1", name: "", role: "", email: "", phone: "" }]);
@@ -285,11 +286,22 @@ export default function LeadLoader() {
 
                     {searchResults.length > 0 && (
                       <div className="border rounded-lg overflow-hidden">
-                        <div className="bg-muted/50 px-4 py-2 border-b text-xs font-medium text-muted-foreground flex justify-between">
+                        <div className="bg-muted/50 px-4 py-3 border-b text-xs font-medium text-muted-foreground flex justify-between items-center">
                           <span>Search Results</span>
-                          <span>{searchResults.length} found</span>
+                          <div className="flex items-center gap-3">
+                            <span>{searchResults.filter(r => showWithoutPhone || r.phone).length} of {searchResults.length} shown</span>
+                            <Button 
+                              size="sm" 
+                              variant={showWithoutPhone ? "secondary" : "outline"}
+                              onClick={() => setShowWithoutPhone(!showWithoutPhone)}
+                              data-testid="button-toggle-no-phone"
+                              className="text-xs h-7"
+                            >
+                              {showWithoutPhone ? "Show All" : "Hide No Phone"}
+                            </Button>
+                          </div>
                         </div>
-                        {searchResults.map((result) => (
+                        {searchResults.filter(r => showWithoutPhone || r.phone).map((result) => (
                           <div 
                             key={result.id} 
                             className="flex items-start justify-between p-4 border-b last:border-0 hover:bg-muted/20 transition-colors"
@@ -327,13 +339,13 @@ export default function LeadLoader() {
                         ))}
                         <div className="bg-muted/20 px-4 py-3 border-t">
                           <Button
-                            onClick={() => importContact(searchResults)}
-                            disabled={isImportingAll}
+                            onClick={() => importContact(searchResults.filter(r => showWithoutPhone || r.phone))}
+                            disabled={isImportingAll || searchResults.filter(r => showWithoutPhone || r.phone).length === 0}
                             className="w-full bg-green-600 hover:bg-green-700"
                             data-testid="button-import-all"
                           >
                             {isImportingAll ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
-                            Import All {searchResults.length} Results
+                            Import All {searchResults.filter(r => showWithoutPhone || r.phone).length} Results
                           </Button>
                         </div>
                       </div>
