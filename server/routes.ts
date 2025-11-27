@@ -6,6 +6,7 @@ import { generateSmartCallingList, calculatePriorityScore } from "./services/opt
 import { geocodeProspects, getFullAddressFromHere } from "./services/geocoding";
 import { seedDatabase } from "./seedData";
 import { seedAllMockData } from "./seedAllData";
+import { generateAccessToken, getTwiMLForBrowserCall, makeOutboundCall, phoneNumber as twilioPhoneNumber } from "./services/twilio";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Seed database on startup
@@ -501,6 +502,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       res.status(500).json({ error: "Failed to delete call outcome" });
     }
+  });
+
+  // ==================== TWILIO ENDPOINTS ====================
+
+  // POST /api/twilio/token - Generate Twilio access token for browser client
+  app.post("/api/twilio/token", async (req, res) => {
+    try {
+      const { identity } = req.body;
+      if (!identity) {
+        return res.status(400).json({ error: "Identity is required" });
+      }
+      
+      const token = generateAccessToken(identity);
+      res.json({ token, identity });
+    } catch (error) {
+      console.error("Twilio token error:", error);
+      res.status(500).json({ error: "Failed to generate Twilio token" });
+    }
+  });
+
+  // POST /api/twilio/voice - TwiML endpoint for handling browser-initiated calls
+  app.post("/api/twilio/voice", async (req, res) => {
+    try {
+      const to = req.body.To || req.body.to;
+      const twiml = getTwiMLForBrowserCall(to);
+      res.type("text/xml");
+      res.send(twiml);
+    } catch (error) {
+      console.error("Twilio voice error:", error);
+      res.status(500).send("Error generating TwiML");
+    }
+  });
+
+  // POST /api/twilio/call - Initiate outbound call from server
+  app.post("/api/twilio/call", async (req, res) => {
+    try {
+      const { to, prospectId } = req.body;
+      if (!to) {
+        return res.status(400).json({ error: "Phone number (to) is required" });
+      }
+
+      const call = await makeOutboundCall(to);
+      
+      // Log call attempt if prospectId provided
+      if (prospectId) {
+        await storage.recordCallOutcome(prospectId, "system", "Call initiated", `Call SID: ${call.sid}`);
+      }
+
+      res.json({
+        success: true,
+        callSid: call.sid,
+        status: call.status,
+        to: call.to,
+        from: call.from,
+      });
+    } catch (error) {
+      console.error("Twilio call error:", error);
+      res.status(500).json({ error: "Failed to initiate call" });
+    }
+  });
+
+  // POST /api/twilio/status - Call status callback from Twilio
+  app.post("/api/twilio/status", async (req, res) => {
+    try {
+      const { CallSid, CallStatus, To, Duration } = req.body;
+      console.log(`Call ${CallSid} to ${To}: ${CallStatus} (duration: ${Duration}s)`);
+      res.sendStatus(200);
+    } catch (error) {
+      console.error("Twilio status error:", error);
+      res.sendStatus(500);
+    }
+  });
+
+  // GET /api/twilio/config - Get Twilio configuration (non-sensitive)
+  app.get("/api/twilio/config", async (req, res) => {
+    res.json({
+      configured: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN),
+      phoneNumber: twilioPhoneNumber ? twilioPhoneNumber.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2") : null,
+    });
   });
 
   const httpServer = createServer(app);

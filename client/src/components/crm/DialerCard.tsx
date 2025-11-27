@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Prospect } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -6,10 +6,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Phone, MapPin, Building2, Stethoscope, History, Mail, Check, ArrowRight, Loader2, Users, Edit } from "lucide-react";
+import { Phone, MapPin, Building2, Stethoscope, History, Mail, Check, ArrowRight, Loader2, Users, Edit, PhoneOff, Mic, MicOff, Volume2, VolumeX, Hash } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getSpecialtyColors } from "@/lib/specialtyColors";
+import { useTwilioDevice, CallStatus } from "@/hooks/useTwilioDevice";
 
 interface DialerCardProps {
   prospect: Prospect;
@@ -22,14 +23,29 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
   if (!prospect) return null;
 
   const [notes, setNotes] = useState("");
-  const [isCallActive, setIsCallActive] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [timer, setTimer] = useState(0);
   const [activeTab, setActiveTab] = useState("notes");
   const [outcomes, setOutcomes] = useState<any[]>([]);
+  const [showDialpad, setShowDialpad] = useState(false);
   const { toast } = useToast();
 
-  React.useEffect(() => {
+  const {
+    callStatus,
+    isMuted,
+    formattedDuration,
+    error,
+    isReady,
+    initializeDevice,
+    makeCall,
+    hangUp,
+    toggleMute,
+    sendDigits,
+  } = useTwilioDevice({ identity: "crm-dialer" });
+
+  useEffect(() => {
+    initializeDevice();
+  }, [initializeDevice]);
+
+  useEffect(() => {
     async function loadOutcomes() {
       try {
         const response = await fetch("/api/call-outcomes");
@@ -44,47 +60,88 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
     loadOutcomes();
   }, []);
 
-  // Simple timer effect
-  React.useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isCallActive) {
-      interval = setInterval(() => {
-        setTimer((t) => t + 1);
-      }, 1000);
-    } else {
-      setTimer(0);
+  const handleCallClick = async () => {
+    if (!isReady) {
+      toast({
+        title: "Phone Not Ready",
+        description: "Initializing phone system, please wait...",
+        variant: "destructive",
+      });
+      return;
     }
-    return () => clearInterval(interval);
-  }, [isCallActive]);
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
+    try {
+      await makeCall(prospect.phoneNumber);
+      toast({
+        title: "Calling...",
+        description: `Dialing ${prospect.phoneNumber}`,
+      });
+    } catch (err) {
+      toast({
+        title: "Call Failed",
+        description: error || "Unable to place call",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleCallClick = async () => {
-    setIsConnecting(true);
-    setTimeout(() => {
-      setIsConnecting(false);
-      setIsCallActive(true);
-      toast({
-        title: "Call Initiated",
-        description: `Calling ${prospect.phoneNumber}...`,
-      });
-    }, 1500);
+  const handleHangUp = () => {
+    hangUp();
+    toast({
+      title: "Call Ended",
+      description: `Duration: ${formattedDuration}`,
+    });
   };
 
   const handleComplete = (status: string) => {
+    if (callStatus === "connected" || callStatus === "ringing") {
+      hangUp();
+    }
     onComplete(status, notes);
     setNotes("");
-    setIsCallActive(false);
   };
 
+  const handleDialpadDigit = (digit: string) => {
+    sendDigits(digit);
+    toast({
+      title: `Sent: ${digit}`,
+      duration: 500,
+    });
+  };
+
+  const getCallStatusDisplay = (): { text: string; color: string } => {
+    switch (callStatus) {
+      case "idle":
+        return { text: isReady ? "Ready" : "Initializing...", color: isReady ? "text-green-600" : "text-yellow-600" };
+      case "connecting":
+        return { text: "Connecting...", color: "text-yellow-600" };
+      case "ringing":
+        return { text: "Ringing...", color: "text-blue-600" };
+      case "connected":
+        return { text: `Connected - ${formattedDuration}`, color: "text-green-600" };
+      case "disconnected":
+        return { text: "Call Ended", color: "text-gray-600" };
+      case "error":
+        return { text: "Error", color: "text-red-600" };
+      default:
+        return { text: "Unknown", color: "text-gray-600" };
+    }
+  };
+
+  const statusDisplay = getCallStatusDisplay();
+  const isInCall = ["connected", "ringing", "connecting"].includes(callStatus);
+  const isConnecting = callStatus === "connecting";
+
+  const dialpadButtons = [
+    ["1", "2", "3"],
+    ["4", "5", "6"],
+    ["7", "8", "9"],
+    ["*", "0", "#"],
+  ];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 h-full w-full overflow-hidden">
-      {/* Left Column: Prospect Info */}
+      {/* Left Column: Prospect Info & Call Controls */}
       <div className="lg:col-span-2 flex flex-col gap-4 min-h-0 overflow-y-auto">
         <Card className="border-none shadow-md flex-1 flex flex-col">
           <CardContent className="p-4 flex-1 flex flex-col">
@@ -119,38 +176,98 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
               {prospect.territory}
             </p>
 
-            <div className="flex gap-2 items-stretch mb-4">
+            {/* Phone Number & Call Button */}
+            <div className="flex gap-2 items-stretch mb-3">
               <div className="bg-muted/40 rounded-lg p-3 flex-1">
                 <div className="text-2xl font-mono font-bold text-foreground">
                   {prospect.phoneNumber}
                 </div>
+                <div className={cn("text-xs font-medium mt-1", statusDisplay.color)}>
+                  {statusDisplay.text}
+                </div>
               </div>
-              {isCallActive ? (
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  className="px-3 text-xs h-auto"
-                  onClick={() => setIsCallActive(false)}
-                >
-                  <Phone className="h-4 w-4" />
-                </Button>
+            </div>
+
+            {/* Call Control Buttons */}
+            <div className="flex gap-2 mb-4">
+              {isInCall ? (
+                <>
+                  <Button
+                    size="lg"
+                    variant="destructive"
+                    className="flex-1 h-14 text-base font-semibold"
+                    onClick={handleHangUp}
+                    data-testid="hangup-button"
+                  >
+                    <PhoneOff className="h-5 w-5 mr-2" />
+                    End Call
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant={isMuted ? "destructive" : "outline"}
+                    className="h-14 w-14"
+                    onClick={toggleMute}
+                    data-testid="mute-button"
+                  >
+                    {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant={showDialpad ? "secondary" : "outline"}
+                    className="h-14 w-14"
+                    onClick={() => setShowDialpad(!showDialpad)}
+                    data-testid="dialpad-button"
+                  >
+                    <Hash className="h-5 w-5" />
+                  </Button>
+                </>
               ) : (
                 <Button
-                  size="sm"
-                  className="px-3 bg-green-600 hover:bg-green-700 text-xs h-auto"
+                  size="lg"
+                  className="flex-1 h-14 bg-green-600 hover:bg-green-700 text-base font-semibold"
                   onClick={handleCallClick}
-                  disabled={isConnecting}
+                  disabled={isConnecting || !isReady}
                   data-testid="call-button"
                 >
                   {isConnecting ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
                   ) : (
-                    <Phone className="h-4 w-4" />
+                    <Phone className="h-5 w-5 mr-2" />
                   )}
+                  {isConnecting ? "Connecting..." : "Start Call"}
                 </Button>
               )}
             </div>
 
+            {/* Dialpad (shown during call) */}
+            {showDialpad && isInCall && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-4"
+              >
+                <div className="grid grid-cols-3 gap-2 p-3 bg-muted/30 rounded-lg">
+                  {dialpadButtons.map((row, rowIdx) => (
+                    <React.Fragment key={rowIdx}>
+                      {row.map((digit) => (
+                        <Button
+                          key={digit}
+                          variant="outline"
+                          className="h-12 text-xl font-semibold"
+                          onClick={() => handleDialpadDigit(digit)}
+                          data-testid={`dialpad-${digit}`}
+                        >
+                          {digit}
+                        </Button>
+                      ))}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {/* Address & Details */}
             <div className="space-y-3 text-sm flex-1">
               <div className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
