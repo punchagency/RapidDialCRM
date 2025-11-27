@@ -33,14 +33,20 @@ const MOCK_POOL = [
 ];
 
 interface SearchResult {
+  id: string;
   name: string;
   phone?: string;
+  email?: string;
+  website?: string;
   address: string;
   city?: string;
   state?: string;
   zip?: string;
   latitude: number;
   longitude: number;
+  profession?: string;
+  type?: string;
+  status?: string;
 }
 
 export default function LeadLoader() {
@@ -51,14 +57,8 @@ export default function LeadLoader() {
   const [pool, setPool] = useState(MOCK_POOL);
   const [isUploading, setIsUploading] = useState(false);
 
-  // Bulk Import State
-  const [bulkSpecialty, setBulkSpecialty] = useState("");
-  const [bulkLocation, setBulkLocation] = useState("");
-  const [bulkTerritory, setBulkTerritory] = useState("");
-  const [bulkResults, setBulkResults] = useState<SearchResult[]>([]);
-  const [bulkSelectedIds, setBulkSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkLoading, setBulkLoading] = useState(false);
-  const [bulkAdding, setBulkAdding] = useState(false);
+  const [territory, setTerritory] = useState("");
+  const [isImportingAll, setIsImportingAll] = useState(false);
 
   // Manual Entry State
   const [clientAdmins, setClientAdmins] = useState<SubContact[]>([{ id: "ca-1", name: "", role: "", email: "", phone: "" }]);
@@ -115,10 +115,16 @@ export default function LeadLoader() {
       const results = (data.results || []).map((result: any, idx: number) => ({
         id: `s${idx}`,
         name: result.name,
+        phone: result.phone,
+        email: result.email,
+        website: result.website,
         address: result.address,
         city: result.city,
+        state: result.state,
         zip: result.zip,
-        type: result.category || specialty,
+        latitude: result.latitude,
+        longitude: result.longitude,
+        type: result.profession || result.category || specialty,
         status: "new",
       }));
       
@@ -138,24 +144,53 @@ export default function LeadLoader() {
     }
   };
 
+  const importContact = async (contacts: SearchResult[]) => {
+    if (!territory) {
+      toast({
+        title: "Missing Territory",
+        description: "Please enter a territory first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsImportingAll(true);
+    try {
+      const res = await fetch("/api/bulk-add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contacts, territory, specialty: contacts[0]?.type || "Unknown" }),
+      });
+      const data = await res.json();
+      
+      const newPoolItems = contacts.map((c, i) => ({
+        id: `nlp-${Date.now()}-${i}`,
+        name: c.name,
+        location: `${c.city}, ${c.state}`,
+        type: c.type,
+        source: "NLP Search",
+        date: "Just now"
+      }));
+      setPool([...newPoolItems, ...pool]);
+      setSearchResults([]);
+      
+      toast({
+        title: "Import Complete",
+        description: `Added ${data.added} contacts, skipped ${data.skipped}`,
+      });
+    } catch (error) {
+      toast({
+        title: "Import Failed",
+        description: "Unable to import contacts",
+        variant: "destructive",
+      });
+    } finally {
+      setIsImportingAll(false);
+    }
+  };
+
   const addToPool = (lead: any) => {
-    const newLead = {
-      id: `new-${Date.now()}`,
-      name: lead.name,
-      location: `${lead.city || "Unknown"}`,
-      type: lead.type,
-      source: "NLP Search",
-      date: "Just now"
-    };
-    setPool([newLead, ...pool]);
-    
-    // Remove from results visually to show it's done
-    setSearchResults(searchResults.filter(r => r.id !== lead.id));
-    
-    toast({
-      title: "Lead Added",
-      description: `${lead.name} added to Unassigned Pool.`,
-    });
+    importContact([lead]);
   };
 
   const handleBulkUpload = () => {
@@ -169,117 +204,6 @@ export default function LeadLoader() {
     }, 2000);
   };
 
-  const handleBulkSearch = async () => {
-    if (!bulkSpecialty || !bulkLocation) {
-      toast({
-        title: "Missing Fields",
-        description: "Please enter specialty and location",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setBulkLoading(true);
-    try {
-      const res = await fetch("/api/bulk-search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ specialty: bulkSpecialty, location: bulkLocation }),
-      });
-      const data = await res.json();
-      setBulkResults(data.results || []);
-      setBulkSelectedIds(new Set());
-      
-      toast({
-        title: "Search Complete",
-        description: `Found ${data.results?.length || 0} professionals`,
-      });
-    } catch (error) {
-      toast({
-        title: "Search Failed",
-        description: "Unable to search professionals",
-        variant: "destructive",
-      });
-    } finally {
-      setBulkLoading(false);
-    }
-  };
-
-  const handleBulkSelectAll = (checked: boolean) => {
-    if (checked) {
-      setBulkSelectedIds(new Set(bulkResults.map((_, i) => i.toString())));
-    } else {
-      setBulkSelectedIds(new Set());
-    }
-  };
-
-  const handleBulkSelectOne = (id: string, checked: boolean) => {
-    const newSet = new Set(bulkSelectedIds);
-    if (checked) {
-      newSet.add(id);
-    } else {
-      newSet.delete(id);
-    }
-    setBulkSelectedIds(newSet);
-  };
-
-  const handleBulkAddSelected = async () => {
-    if (!bulkTerritory) {
-      toast({
-        title: "Missing Territory",
-        description: "Please enter a territory",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const contacts = bulkResults.filter((_, i) => bulkSelectedIds.has(i.toString()));
-    if (contacts.length === 0) {
-      toast({
-        title: "No Selection",
-        description: "Please select contacts to add",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setBulkAdding(true);
-    try {
-      const res = await fetch("/api/bulk-add", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contacts, territory: bulkTerritory, specialty: bulkSpecialty }),
-      });
-      const data = await res.json();
-      
-      // Add to pool
-      const newPoolItems = contacts.map((c, i) => ({
-        id: `bulk-${Date.now()}-${i}`,
-        name: c.name,
-        location: `${c.city}, ${c.state}`,
-        type: bulkSpecialty,
-        source: "Bulk Search",
-        date: "Just now"
-      }));
-      setPool([...newPoolItems, ...pool]);
-
-      toast({
-        title: "Import Complete",
-        description: `Added ${data.added} contacts, skipped ${data.skipped}`,
-      });
-
-      setBulkResults([]);
-      setBulkSelectedIds(new Set());
-    } catch (error) {
-      toast({
-        title: "Import Failed",
-        description: "Unable to add contacts",
-        variant: "destructive",
-      });
-    } finally {
-      setBulkAdding(false);
-    }
-  };
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -298,7 +222,6 @@ export default function LeadLoader() {
             <Tabs defaultValue="search" className="space-y-6">
               <TabsList className="bg-card border border-border p-1 w-full justify-start">
                 <TabsTrigger value="search" className="gap-2"><Globe className="h-4 w-4" /> Lead Discovery (NLP)</TabsTrigger>
-                <TabsTrigger value="import" className="gap-2"><Upload className="h-4 w-4" /> Bulk Import</TabsTrigger>
                 <TabsTrigger value="manual" id="manual-trigger" className="gap-2"><Plus className="h-4 w-4" /> Manual Entry</TabsTrigger>
                 <TabsTrigger value="pool" className="gap-2"><Database className="h-4 w-4" /> Unassigned Pool <Badge variant="secondary" className="ml-2 h-5 px-1.5">{pool.length}</Badge></TabsTrigger>
               </TabsList>
@@ -313,20 +236,32 @@ export default function LeadLoader() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <form onSubmit={handleSearch} className="flex gap-2 mb-6">
-                      <div className="relative flex-1">
-                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          placeholder="e.g. Find all orthopedic surgeons near Everett, WA" 
-                          className="pl-10 h-10 text-base"
-                          value={searchQuery}
-                          onChange={(e) => setSearchTerm(e.target.value)}
+                    <div className="space-y-4 mb-6">
+                      <div>
+                        <Label className="text-sm font-medium mb-2 block">Territory</Label>
+                        <Input
+                          placeholder="e.g., VA-North"
+                          value={territory}
+                          onChange={(e) => setTerritory(e.target.value)}
+                          data-testid="input-territory"
                         />
                       </div>
-                      <Button type="submit" disabled={isSearching} className="w-32">
-                        {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
-                      </Button>
-                    </form>
+                      <form onSubmit={handleSearch} className="flex gap-2">
+                        <div className="relative flex-1">
+                          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                          <Input 
+                            placeholder="e.g. Find all orthopedic surgeons near Everett, WA" 
+                            className="pl-10 h-10 text-base"
+                            value={searchQuery}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            data-testid="input-search-query"
+                          />
+                        </div>
+                        <Button type="submit" disabled={isSearching} className="w-32">
+                          {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : "Search"}
+                        </Button>
+                      </form>
+                    </div>
 
                     {searchResults.length > 0 && (
                       <div className="border rounded-lg overflow-hidden">
@@ -337,148 +272,56 @@ export default function LeadLoader() {
                         {searchResults.map((result) => (
                           <div 
                             key={result.id} 
-                            className={cn(
-                              "flex items-center justify-between p-4 border-b last:border-0 transition-colors",
-                              result.status === "exists" ? "bg-muted/40 opacity-60" : "hover:bg-muted/20"
-                            )}
+                            className="flex items-start justify-between p-4 border-b last:border-0 hover:bg-muted/20 transition-colors"
+                            data-testid={`card-result-${result.id}`}
                           >
-                            <div className="flex items-start gap-3">
-                              <div className={cn(
-                                "mt-1 p-2 rounded-full",
-                                result.status === "exists" ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"
-                              )}>
+                            <div className="flex items-start gap-3 flex-1">
+                              <div className="mt-1 p-2 rounded-full bg-primary/10 text-primary">
                                 <Building className="h-4 w-4" />
                               </div>
-                              <div>
-                                <h4 className={cn("font-semibold text-sm", result.status === "exists" && "text-muted-foreground")}>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="font-semibold text-sm text-foreground" data-testid={`text-name-${result.id}`}>
                                   {result.name}
                                 </h4>
-                                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                                  <MapPin className="h-3 w-3" /> {result.address}, {result.city} {result.zip}
+                                <p className="text-xs text-muted-foreground line-clamp-1 mt-1" data-testid={`text-address-${result.id}`}>
+                                  {result.address}
                                 </p>
-                                <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                                  <Briefcase className="h-3 w-3" /> {result.type}
-                                </p>
+                                <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
+                                  {result.phone && (
+                                    <p data-testid={`text-phone-${result.id}`}>📞 {result.phone}</p>
+                                  )}
+                                  {result.email && (
+                                    <p data-testid={`text-email-${result.id}`}>✉️ {result.email}</p>
+                                  )}
+                                  {result.website && (
+                                    <p data-testid={`text-website-${result.id}`}>🌐 {result.website}</p>
+                                  )}
+                                </div>
                               </div>
                             </div>
                             
-                            {result.status === "exists" ? (
-                              <Badge variant="outline" className="bg-muted text-muted-foreground border-muted-foreground/20 gap-1 pointer-events-none select-none">
-                                <Info className="h-3 w-3" /> In System
-                              </Badge>
-                            ) : (
-                              <Button size="sm" variant="outline" className="gap-2 hover:bg-primary hover:text-primary-foreground" onClick={() => addToPool(result)}>
-                                <Plus className="h-4 w-4" /> Add to Pool
-                              </Button>
-                            )}
+                            <Button size="sm" variant="outline" className="gap-2 hover:bg-primary hover:text-primary-foreground ml-4" onClick={() => addToPool(result)} data-testid={`button-add-${result.id}`}>
+                              <Plus className="h-4 w-4" /> Add
+                            </Button>
                           </div>
                         ))}
+                        <div className="bg-muted/20 px-4 py-3 border-t">
+                          <Button
+                            onClick={() => importContact(searchResults)}
+                            disabled={isImportingAll}
+                            className="w-full bg-green-600 hover:bg-green-700"
+                            data-testid="button-import-all"
+                          >
+                            {isImportingAll ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
+                            Import All {searchResults.length} Results
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </CardContent>
                 </Card>
               </TabsContent>
 
-              {/* TAB: IMPORT */}
-              <TabsContent value="import" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Search & Bulk Add Professionals</CardTitle>
-                    <CardDescription>Search for professionals by specialty and location, then add them to your database.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <Label className="text-sm font-medium mb-2 block">Specialty</Label>
-                        <Input
-                          placeholder="e.g., Dentist, Orthodontist"
-                          value={bulkSpecialty}
-                          onChange={(e) => setBulkSpecialty(e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium mb-2 block">Location</Label>
-                        <Input
-                          placeholder="e.g., 10001, New York, NY"
-                          value={bulkLocation}
-                          onChange={(e) => setBulkLocation(e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium mb-2 block">Territory</Label>
-                        <Input
-                          placeholder="e.g., NY-North"
-                          value={bulkTerritory}
-                          onChange={(e) => setBulkTerritory(e.target.value)}
-                        />
-                      </div>
-                    </div>
-
-                    <Button
-                      onClick={handleBulkSearch}
-                      disabled={bulkLoading}
-                      className="w-full"
-                    >
-                      {bulkLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
-                      Search Professionals
-                    </Button>
-                  </CardContent>
-                </Card>
-
-                {bulkResults.length > 0 && (
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between">
-                      <CardTitle>Results ({bulkResults.length})</CardTitle>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleBulkSelectAll(bulkSelectedIds.size !== bulkResults.length)}
-                      >
-                        {bulkSelectedIds.size === bulkResults.length ? "Deselect All" : "Select All"}
-                      </Button>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2 max-h-96 overflow-y-auto">
-                        {bulkResults.map((result, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50"
-                          >
-                            <Checkbox
-                              checked={bulkSelectedIds.has(idx.toString())}
-                              onCheckedChange={(checked) => handleBulkSelectOne(idx.toString(), !!checked)}
-                            />
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-foreground">{result.name}</p>
-                              {result.phone && (
-                                <p className="text-sm text-muted-foreground">{result.phone}</p>
-                              )}
-                              <p className="text-xs text-muted-foreground line-clamp-1">
-                                {[result.address, result.city, result.state, result.zip].filter(Boolean).join(", ")}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-
-                      <Button
-                        onClick={handleBulkAddSelected}
-                        disabled={bulkAdding || bulkSelectedIds.size === 0}
-                        className="w-full bg-green-600 hover:bg-green-700"
-                      >
-                        {bulkAdding ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
-                        Add {bulkSelectedIds.size} Contact{bulkSelectedIds.size !== 1 ? "s" : ""} to Pool
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {bulkResults.length === 0 && !bulkLoading && (
-                  <Card className="p-8 text-center text-muted-foreground">
-                    <p>Search for professionals to see results here</p>
-                  </Card>
-                )}
-              </TabsContent>
 
               {/* TAB: MANUAL */}
               <TabsContent value="manual">
