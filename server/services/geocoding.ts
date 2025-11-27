@@ -225,11 +225,15 @@ export async function searchProfessionalsByLocation(
       for (const item of data.items) {
         const addr = item.address;
         // Build clean address without duplication: street, city state zip
-        const cleanAddress = [
+        const addressParts = [
           addr.street ? `${addr.houseNumber || ''} ${addr.street}`.trim() : '',
           addr.city,
           addr.stateCode ? `${addr.stateCode} ${addr.postalCode}` : addr.postalCode
-        ].filter(Boolean).join(", ");
+        ].filter(Boolean);
+        
+        // Remove any duplicate address components
+        const uniqueParts = addressParts.filter((part, idx, arr) => arr.indexOf(part) === idx);
+        const cleanAddress = uniqueParts.join(", ");
 
         // Extract contact info from Discover response, or use placeholder
         let phone = item.contacts?.phone?.[0]?.value;
