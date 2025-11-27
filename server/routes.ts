@@ -7,6 +7,7 @@ import { geocodeProspects, getFullAddressFromHere } from "./services/geocoding";
 import { seedDatabase } from "./seedData";
 import { seedAllMockData } from "./seedAllData";
 import { generateAccessToken, getTwiMLForBrowserCall, makeOutboundCall, phoneNumber as twilioPhoneNumber } from "./services/twilio";
+import { searchProfessionalsByLocation, type ProfessionalSearchResult } from "./services/geocoding";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Seed database on startup
@@ -581,6 +582,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
       configured: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN),
       phoneNumber: twilioPhoneNumber ? twilioPhoneNumber.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2") : null,
     });
+  });
+
+  // POST /api/bulk-search - Search for professionals by location and specialty
+  app.post("/api/bulk-search", async (req, res) => {
+    try {
+      const { specialty, location } = req.body;
+      if (!specialty || !location) {
+        return res.status(400).json({ error: "Missing specialty or location" });
+      }
+      const results = await searchProfessionalsByLocation(specialty, location);
+      res.json({ results });
+    } catch (error) {
+      console.error("Bulk search error:", error);
+      res.status(500).json({ error: "Search failed" });
+    }
+  });
+
+  // POST /api/bulk-add - Add multiple prospects if not already in database
+  app.post("/api/bulk-add", async (req, res) => {
+    try {
+      const { contacts, territory, specialty } = req.body;
+      if (!Array.isArray(contacts) || !territory || !specialty) {
+        return res.status(400).json({ error: "Invalid request body" });
+      }
+
+      const existingProspects = await storage.listAllProspects();
+      const existingPhones = new Set(existingProspects.map(p => p.phoneNumber));
+      
+      const added: any[] = [];
+      const skipped: any[] = [];
+
+      for (const contact of contacts) {
+        if (!contact.phone) {
+          skipped.push({ name: contact.name, reason: "No phone number" });
+          continue;
+        }
+
+        if (existingPhones.has(contact.phone)) {
+          skipped.push({ name: contact.name, reason: "Already in database" });
+          continue;
+        }
+
+        try {
+          const prospect = await storage.createProspect({
+            businessName: contact.name,
+            phoneNumber: contact.phone,
+            addressStreet: contact.address,
+            addressCity: contact.city,
+            addressState: contact.state,
+            addressZip: contact.zip,
+            specialty,
+            territory,
+            addressLat: contact.latitude.toString(),
+            addressLng: contact.longitude.toString(),
+          });
+          added.push(prospect);
+        } catch (err) {
+          skipped.push({ name: contact.name, reason: "Failed to add" });
+        }
+      }
+
+      res.json({ added: added.length, skipped: skipped.length, details: { added, skipped } });
+    } catch (error) {
+      console.error("Bulk add error:", error);
+      res.status(500).json({ error: "Failed to add contacts" });
+    }
   });
 
   const httpServer = createServer(app);

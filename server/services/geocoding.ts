@@ -129,3 +129,86 @@ export async function geocodeProspects(
 
   return results;
 }
+
+export interface ProfessionalSearchResult {
+  name: string;
+  phone?: string;
+  address: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  latitude: number;
+  longitude: number;
+  category?: string;
+}
+
+export async function searchProfessionalsByLocation(
+  specialty: string,
+  location: string,
+  radius: number = 5000
+): Promise<ProfessionalSearchResult[]> {
+  try {
+    // First geocode the location to get coordinates
+    const locationResult = await geocodeAddress(location);
+    if (!locationResult) {
+      return [];
+    }
+
+    // Map specialty to HERE category codes
+    const categoryMap: Record<string, string> = {
+      "dental": "dentist",
+      "dentist": "dentist",
+      "chiropractor": "chiropractor",
+      "optometry": "optometrist",
+      "optometrist": "optometrist",
+      "physical therapy": "physical-therapist",
+      "physical therapist": "physical-therapist",
+      "orthodontics": "dentist",
+      "orthodontist": "dentist",
+    };
+
+    const hereCategory = categoryMap[specialty.toLowerCase()] || specialty.toLowerCase();
+
+    const params = new URLSearchParams({
+      at: `${locationResult.latitude},${locationResult.longitude}`,
+      q: hereCategory,
+      limit: "50",
+      apikey: HERE_API_KEY,
+    });
+
+    const response = await fetch(
+      `https://discover.search.hereapi.com/v1/discover?${params}`,
+      { method: "GET" }
+    );
+
+    if (!response.ok) {
+      console.error(`Search error: ${response.status}`);
+      return [];
+    }
+
+    const data = await response.json();
+    const results: ProfessionalSearchResult[] = [];
+
+    if (data.items && Array.isArray(data.items)) {
+      for (const item of data.items) {
+        const addr = item.address;
+        results.push({
+          name: item.title || "",
+          phone: item.contacts?.phone?.[0]?.value,
+          address: addr.label || "",
+          city: addr.city,
+          state: addr.stateCode,
+          zip: addr.postalCode,
+          latitude: item.position.lat,
+          longitude: item.position.lng,
+          category: item.resultType,
+        });
+      }
+    }
+
+    return results;
+  } catch (error) {
+    console.error("Professional search error:", error);
+    return [];
+  }
+}

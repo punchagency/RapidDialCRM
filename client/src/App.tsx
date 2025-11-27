@@ -14,6 +14,7 @@ import FieldReps from "@/pages/FieldReps";
 import OrgChart from "@/pages/OrgChart";
 import LeadLoader from "@/pages/LeadLoader";
 import DataImporter from "@/pages/DataImporter";
+import BulkImport from "@/pages/BulkImport";
 import Login from "@/pages/Login";
 import HipaaCompliance from "@/pages/HipaaCompliance";
 import ScriptsManagement from "@/pages/ScriptsManagement";
@@ -36,6 +37,7 @@ function Router() {
       <Route path="/org-chart" component={OrgChart} />
       <Route path="/lead-loader" component={LeadLoader} />
       <Route path="/data-import" component={DataImporter} />
+      <Route path="/bulk-import" component={BulkImport} />
       <Route path="/analytics" component={Dashboard} />
       <Route path="/hipaa" component={HipaaCompliance} />
       <Route path="/scripts" component={ScriptsManagement} />
