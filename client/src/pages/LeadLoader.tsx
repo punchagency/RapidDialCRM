@@ -16,13 +16,14 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { SubContact } from "@/lib/mockData";
 
-// Territory Options
+// Territory Options - matching cities from Field View
 const TERRITORY_OPTIONS = [
-  "North Seattle (Everett/Lynnwood)",
-  "Bellevue / Redmond",
-  "Downtown / Capitol Hill",
-  "South Seattle / Renton",
-  "Tacoma Area",
+  "Miami",
+  "Washington, DC",
+  "Los Angeles",
+  "New York",
+  "Chicago",
+  "Dallas",
 ];
 
 // Mock Search Results
