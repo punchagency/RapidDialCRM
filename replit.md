@@ -4,6 +4,11 @@
 A comprehensive CRM system with contact management and Smart Calling & Route Optimization capabilities. The system includes intelligent address lookup using HERE Maps API, RBAC permissions, stakeholder management, and Twilio-powered browser-based calling.
 
 ## Recent Changes
+- **2024-11-28**: Added multi-territory and multi-profession user assignments
+  - Users can now be assigned to multiple territories (Miami, Washington DC, Los Angeles, New York, Chicago, Dallas)
+  - Users can be assigned to multiple professions (Dental, Chiropractor, Optometry, Physical Therapy, Orthodontics, Legal, Financial, Real Estate)
+  - New "User Assignments" tab in Settings for admins/managers to manage assignments
+  - Junction tables (user_territories, user_professions) for many-to-many relationships
 - **2024-11-27**: Added Twilio integration for browser-based audio calling with full dialer interface
 - Call controls: Start call, end call, mute/unmute, DTMF dialpad
 - Backend endpoints for Twilio token generation and TwiML voice handling
@@ -68,3 +73,9 @@ The dialer uses Twilio Client SDK v1.14 loaded dynamically in the browser. The `
 - Database seeding runs automatically on startup
 - Use `npm run db:push` to sync schema changes
 - Call outcomes are stored in the database, not hardcoded
+
+## Security Notes (Production)
+This is a prototype/mockup application. For production deployment:
+- **Authentication**: Add proper session-based authentication (e.g., Passport.js, Replit Auth)
+- **Authorization**: The user assignment routes (`/api/users/:id/territories`, `/api/users/:id/professions`) currently rely on frontend role enforcement only. Add server-side middleware to verify admin/manager roles
+- **API Protection**: All API routes should require authentication in production

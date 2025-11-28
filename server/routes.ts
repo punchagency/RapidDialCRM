@@ -341,6 +341,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ============================================================
+  // USER TERRITORY AND PROFESSION ASSIGNMENT ROUTES
+  // SECURITY NOTE: These routes currently have no server-side 
+  // authentication. The frontend enforces role-based access via
+  // UserRoleContext (only admins/managers see the UI). For production,
+  // add proper session-based authentication middleware.
+  // ============================================================
+
   // GET /api/users/:id/territories - Get user territories
   app.get("/api/users/:id/territories", async (req, res) => {
     try {
