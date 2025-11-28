@@ -36,12 +36,7 @@ const MOCK_SEARCH_RESULTS = [
 ];
 
 // Mock Unassigned Pool
-const MOCK_POOL = [
-  { id: "p1", name: "Bellevue Dermatology", location: "Bellevue, WA", type: "Dermatology", source: "Bulk Upload", date: "2 hrs ago" },
-  { id: "p2", name: "Redmond Pediatrics", location: "Redmond, WA", type: "Pediatrics", source: "Manual Entry", date: "4 hrs ago" },
-  { id: "p3", name: "Kirkland Vision Center", location: "Kirkland, WA", type: "Optometry", source: "NLP Search", date: "Yesterday" },
-  { id: "p4", name: "Sammamish Medical", location: "Sammamish, WA", type: "General Practice", source: "Bulk Upload", date: "Yesterday" },
-];
+const MOCK_POOL: any[] = [];
 
 interface SearchResult {
   id: string;
