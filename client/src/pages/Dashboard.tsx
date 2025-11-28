@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { GamificationWidget } from "@/components/crm/GamificationWidget";
 import { getStatuses } from "@/lib/statusUtils";
-import { Prospect } from "@shared/schema";
+import { Prospect, User } from "@shared/schema";
 import { fetchProspects } from "@/lib/apiClient";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import { ProspectCard } from "@/components/crm/ProspectCard";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Dashboard() {
   const { userRole } = useUserRole();
@@ -267,6 +268,41 @@ export default function Dashboard() {
     </div>
   );
 
+  const { data: leaderboardUsers = [] } = useQuery<User[]>({
+    queryKey: ["/api/users"],
+    queryFn: async () => {
+      const res = await fetch("/api/users");
+      return res.json();
+    },
+  });
+
+  const roleLabels: Record<string, string> = {
+    admin: "Admin",
+    manager: "Sales Manager",
+    inside_sales_rep: "Inside Sales",
+    field_sales_rep: "Field Sales",
+    data_loader: "Data Loader",
+  };
+
+  const roleColors: Record<string, { bg: string; text: string }> = {
+    admin: { bg: "bg-red-200", text: "text-red-700" },
+    manager: { bg: "bg-purple-200", text: "text-purple-700" },
+    inside_sales_rep: { bg: "bg-blue-200", text: "text-blue-700" },
+    field_sales_rep: { bg: "bg-green-200", text: "text-green-700" },
+    data_loader: { bg: "bg-gray-200", text: "text-gray-700" },
+  };
+
+  const getInitials = (name: string) => {
+    return name.split(" ").map(n => n[0]).join("").toUpperCase();
+  };
+
+  const getPerformanceBadge = (index: number) => {
+    if (index === 0) return <Badge className="bg-yellow-500">Top Performer</Badge>;
+    if (index === 1) return <Badge className="bg-green-500">High Performer</Badge>;
+    if (index < 4) return <Badge variant="outline">On Track</Badge>;
+    return null;
+  };
+
   const ManagerDashboard = () => (
     <div className="max-w-[1600px] mx-auto h-full flex flex-col">
       <div className="grid grid-cols-4 gap-4 mb-8">
@@ -320,29 +356,31 @@ export default function Dashboard() {
          <Card className="border-none shadow-sm p-6 bg-white">
             <CardHeader className="p-0 mb-6">
                <CardTitle>Leaderboard</CardTitle>
-               <CardDescription>Real-time activity monitoring</CardDescription>
+               <CardDescription>Team activity and performance</CardDescription>
             </CardHeader>
-            <div className="space-y-4">
-               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                     <div className="h-10 w-10 rounded-full bg-blue-200 flex items-center justify-center font-bold text-blue-700">AJ</div>
-                     <div>
-                        <p className="font-semibold">Alex Johnson</p>
-                        <p className="text-xs text-gray-500">Inside Sales • On Call</p>
+            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+               {leaderboardUsers.filter(u => u.isActive).map((user, index) => {
+                  const colors = roleColors[user.role] || { bg: "bg-gray-200", text: "text-gray-700" };
+                  return (
+                     <div key={user.id} data-testid={`leaderboard-user-${user.id}`} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div className="flex items-center gap-3">
+                           <div className={cn("h-10 w-10 rounded-full flex items-center justify-center font-bold", colors.bg, colors.text)}>
+                              {getInitials(user.name)}
+                           </div>
+                           <div>
+                              <p className="font-semibold">{user.name}</p>
+                              <p className="text-xs text-gray-500">{roleLabels[user.role] || user.role} {user.territory ? `• ${user.territory}` : ""}</p>
+                           </div>
+                        </div>
+                        {getPerformanceBadge(index)}
                      </div>
+                  );
+               })}
+               {leaderboardUsers.length === 0 && (
+                  <div className="text-center text-gray-500 py-4">
+                     No users found
                   </div>
-                  <Badge className="bg-green-500">High Performer</Badge>
-               </div>
-               <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                     <div className="h-10 w-10 rounded-full bg-green-200 flex items-center justify-center font-bold text-green-700">MF</div>
-                     <div>
-                        <p className="font-semibold">Mike Field</p>
-                        <p className="text-xs text-gray-500">Field Sales • Traveling</p>
-                     </div>
-                  </div>
-                  <Badge variant="outline">On Track</Badge>
-               </div>
+               )}
             </div>
          </Card>
 
