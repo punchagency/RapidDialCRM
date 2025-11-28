@@ -109,6 +109,28 @@ export const users = pgTable("users", {
   territoryIdx: index("idx_users_territory").on(table.territory),
 }));
 
+// User Territories Junction Table (many-to-many)
+export const userTerritories = pgTable("user_territories", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  territory: varchar("territory", { length: 50 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("idx_user_territories_user").on(table.userId),
+  territoryIdx: index("idx_user_territories_territory").on(table.territory),
+}));
+
+// User Professions Junction Table (many-to-many)
+export const userProfessions = pgTable("user_professions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  profession: varchar("profession", { length: 50 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => ({
+  userIdx: index("idx_user_professions_user").on(table.userId),
+  professionIdx: index("idx_user_professions_profession").on(table.profession),
+}));
+
 // Specialty Colors Table
 export const specialtyColors = pgTable("specialty_colors", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -168,6 +190,16 @@ export const insertUserSchema = createInsertSchema(users).omit({
   updatedAt: true,
 });
 
+export const insertUserTerritorySchema = createInsertSchema(userTerritories).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUserProfessionSchema = createInsertSchema(userProfessions).omit({
+  id: true,
+  createdAt: true,
+});
+
 export const insertSpecialtyColorSchema = createInsertSchema(specialtyColors).omit({
   id: true,
   createdAt: true,
@@ -197,6 +229,12 @@ export type InsertStakeholder = z.infer<typeof insertStakeholderSchema>;
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+
+export type UserTerritory = typeof userTerritories.$inferSelect;
+export type InsertUserTerritory = z.infer<typeof insertUserTerritorySchema>;
+
+export type UserProfession = typeof userProfessions.$inferSelect;
+export type InsertUserProfession = z.infer<typeof insertUserProfessionSchema>;
 
 export type SpecialtyColor = typeof specialtyColors.$inferSelect;
 export type InsertSpecialtyColor = z.infer<typeof insertSpecialtyColorSchema>;
