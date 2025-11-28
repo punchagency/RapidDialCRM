@@ -341,6 +341,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/users/:id/territories - Get user territories
+  app.get("/api/users/:id/territories", async (req, res) => {
+    try {
+      const territories = await storage.getUserTerritories(req.params.id);
+      res.json(territories.map(t => t.territory));
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch user territories" });
+    }
+  });
+
+  // PUT /api/users/:id/territories - Set user territories
+  app.put("/api/users/:id/territories", async (req, res) => {
+    try {
+      const { territories } = req.body;
+      if (!Array.isArray(territories)) {
+        return res.status(400).json({ error: "territories must be an array" });
+      }
+      const result = await storage.setUserTerritories(req.params.id, territories);
+      res.json(result.map(t => t.territory));
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update user territories" });
+    }
+  });
+
+  // GET /api/territories - List all available territories
+  app.get("/api/territories", async (req, res) => {
+    try {
+      const territories = await storage.listAllTerritories();
+      res.json(territories);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch territories" });
+    }
+  });
+
+  // GET /api/users/:id/professions - Get user professions
+  app.get("/api/users/:id/professions", async (req, res) => {
+    try {
+      const professions = await storage.getUserProfessions(req.params.id);
+      res.json(professions.map(p => p.profession));
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch user professions" });
+    }
+  });
+
+  // PUT /api/users/:id/professions - Set user professions
+  app.put("/api/users/:id/professions", async (req, res) => {
+    try {
+      const { professions } = req.body;
+      if (!Array.isArray(professions)) {
+        return res.status(400).json({ error: "professions must be an array" });
+      }
+      const result = await storage.setUserProfessions(req.params.id, professions);
+      res.json(result.map(p => p.profession));
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update user professions" });
+    }
+  });
+
+  // GET /api/professions - List all available professions
+  app.get("/api/professions", async (req, res) => {
+    try {
+      const professions = await storage.listAllProfessions();
+      res.json(professions);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch professions" });
+    }
+  });
+
+  // GET /api/users/:id/assignments - Get user territories and professions together
+  app.get("/api/users/:id/assignments", async (req, res) => {
+    try {
+      const [territories, professions] = await Promise.all([
+        storage.getUserTerritories(req.params.id),
+        storage.getUserProfessions(req.params.id)
+      ]);
+      res.json({
+        territories: territories.map(t => t.territory),
+        professions: professions.map(p => p.profession)
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch user assignments" });
+    }
+  });
+
+  // PUT /api/users/:id/assignments - Set user territories and professions together
+  app.put("/api/users/:id/assignments", async (req, res) => {
+    try {
+      const { territories, professions } = req.body;
+      if (!Array.isArray(territories) || !Array.isArray(professions)) {
+        return res.status(400).json({ error: "territories and professions must be arrays" });
+      }
+      
+      const [newTerritories, newProfessions] = await Promise.all([
+        storage.setUserTerritories(req.params.id, territories),
+        storage.setUserProfessions(req.params.id, professions)
+      ]);
+      
+      res.json({
+        territories: newTerritories.map(t => t.territory),
+        professions: newProfessions.map(p => p.profession)
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update user assignments" });
+    }
+  });
+
   // POST /api/update-prospect-addresses - Update all prospects with full addresses from HERE API
   app.post("/api/update-prospect-addresses", async (req, res) => {
     try {

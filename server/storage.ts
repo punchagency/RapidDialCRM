@@ -1,4 +1,4 @@
-import { type Prospect, type InsertProspect, type FieldRep, type InsertFieldRep, type Appointment, type InsertAppointment, type Stakeholder, type InsertStakeholder, type User, type InsertUser, type SpecialtyColor, type InsertSpecialtyColor, type CallOutcome, type InsertCallOutcome, prospects, fieldReps, appointments, callHistory, stakeholders, users, specialtyColors, callOutcomes } from "@shared/schema";
+import { type Prospect, type InsertProspect, type FieldRep, type InsertFieldRep, type Appointment, type InsertAppointment, type Stakeholder, type InsertStakeholder, type User, type InsertUser, type SpecialtyColor, type InsertSpecialtyColor, type CallOutcome, type InsertCallOutcome, type UserTerritory, type InsertUserTerritory, type UserProfession, type InsertUserProfession, prospects, fieldReps, appointments, callHistory, stakeholders, users, specialtyColors, callOutcomes, userTerritories, userProfessions } from "@shared/schema";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { eq, and, desc, asc, isNull } from "drizzle-orm";
@@ -58,6 +58,16 @@ export interface IStorage {
   updateCallOutcome(id: string, outcome: Partial<InsertCallOutcome>): Promise<CallOutcome | undefined>;
   deleteCallOutcome(id: string): Promise<void>;
   initializeCallOutcomes(): Promise<void>;
+
+  // User Territories
+  getUserTerritories(userId: string): Promise<UserTerritory[]>;
+  setUserTerritories(userId: string, territories: string[]): Promise<UserTerritory[]>;
+  listAllTerritories(): Promise<string[]>;
+
+  // User Professions
+  getUserProfessions(userId: string): Promise<UserProfession[]>;
+  setUserProfessions(userId: string, professions: string[]): Promise<UserProfession[]>;
+  listAllProfessions(): Promise<string[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -271,6 +281,48 @@ export class DatabaseStorage implements IStorage {
         await db.insert(callOutcomes).values(outcome).onConflictDoNothing();
       }
     }
+  }
+
+  // User Territories
+  async getUserTerritories(userId: string): Promise<UserTerritory[]> {
+    return await db.select().from(userTerritories).where(eq(userTerritories.userId, userId));
+  }
+
+  async setUserTerritories(userId: string, territories: string[]): Promise<UserTerritory[]> {
+    await db.delete(userTerritories).where(eq(userTerritories.userId, userId));
+    
+    if (territories.length === 0) {
+      return [];
+    }
+    
+    const values = territories.map(territory => ({ userId, territory }));
+    const results = await db.insert(userTerritories).values(values).returning();
+    return results;
+  }
+
+  async listAllTerritories(): Promise<string[]> {
+    return ["Miami", "Washington DC", "Los Angeles", "New York", "Chicago", "Dallas"];
+  }
+
+  // User Professions
+  async getUserProfessions(userId: string): Promise<UserProfession[]> {
+    return await db.select().from(userProfessions).where(eq(userProfessions.userId, userId));
+  }
+
+  async setUserProfessions(userId: string, professions: string[]): Promise<UserProfession[]> {
+    await db.delete(userProfessions).where(eq(userProfessions.userId, userId));
+    
+    if (professions.length === 0) {
+      return [];
+    }
+    
+    const values = professions.map(profession => ({ userId, profession }));
+    const results = await db.insert(userProfessions).values(values).returning();
+    return results;
+  }
+
+  async listAllProfessions(): Promise<string[]> {
+    return ["Dental", "Chiropractor", "Optometry", "Physical Therapy", "Orthodontics", "Legal", "Financial", "Real Estate"];
   }
 }
 
