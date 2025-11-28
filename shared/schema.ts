@@ -99,12 +99,14 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash").notNull(),
   name: text("name").notNull(),
   role: varchar("role", { length: 50 }).notNull().default("data_loader"),
+  territory: varchar("territory", { length: 50 }),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => ({
   emailIdx: index("idx_users_email").on(table.email),
   roleIdx: index("idx_users_role").on(table.role),
+  territoryIdx: index("idx_users_territory").on(table.territory),
 }));
 
 // Specialty Colors Table
