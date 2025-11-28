@@ -362,18 +362,20 @@ export default function Dashboard() {
                {leaderboardUsers.filter(u => u.isActive).map((user, index) => {
                   const colors = roleColors[user.role] || { bg: "bg-gray-200", text: "text-gray-700" };
                   return (
-                     <div key={user.id} data-testid={`leaderboard-user-${user.id}`} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                        <div className="flex items-center gap-3">
-                           <div className={cn("h-10 w-10 rounded-full flex items-center justify-center font-bold", colors.bg, colors.text)}>
-                              {getInitials(user.name)}
+                     <Link key={user.id} href={`/users/${user.id}`}>
+                        <div data-testid={`leaderboard-user-${user.id}`} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                           <div className="flex items-center gap-3">
+                              <div className={cn("h-10 w-10 rounded-full flex items-center justify-center font-bold", colors.bg, colors.text)}>
+                                 {getInitials(user.name)}
+                              </div>
+                              <div>
+                                 <p className="font-semibold hover:text-primary transition-colors">{user.name}</p>
+                                 <p className="text-xs text-gray-500">{roleLabels[user.role] || user.role} {user.territory ? `• ${user.territory}` : ""}</p>
+                              </div>
                            </div>
-                           <div>
-                              <p className="font-semibold">{user.name}</p>
-                              <p className="text-xs text-gray-500">{roleLabels[user.role] || user.role} {user.territory ? `• ${user.territory}` : ""}</p>
-                           </div>
+                           {getPerformanceBadge(index)}
                         </div>
-                        {getPerformanceBadge(index)}
-                     </div>
+                     </Link>
                   );
                })}
                {leaderboardUsers.length === 0 && (

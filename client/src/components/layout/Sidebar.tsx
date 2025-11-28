@@ -1,26 +1,50 @@
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Phone, LayoutDashboard, Users, BarChart3, Settings, LogOut, Map, Plug, Headphones, Star, Briefcase, ShieldCheck, Network, UserCog, Database, Headset, FileText, Lock } from "lucide-react";
+import { Phone, LayoutDashboard, Users, BarChart3, Settings, LogOut, Map, Plug, Headphones, Star, Briefcase, ShieldCheck, Network, UserCog, Database, Headset, FileText, Lock, Eye, X, ChevronDown, User as UserIcon } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import avatar from "@assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
 import managerAvatar from "@assets/generated_images/Professional_user_avatar_2_9f00e114.png";
 import { useUserRole } from "@/lib/UserRoleContext";
-import { getRoleLabel, getRoleColor } from "@/lib/permissions";
+import { getRoleLabel, getRoleColor, UserRole } from "@/lib/permissions";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { User } from "@shared/schema";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function Sidebar() {
   const [location, setLocation] = useLocation();
-  const { userRole, setUserRole, canAccess } = useUserRole();
+  const { 
+    userRole, 
+    actualRole, 
+    setUserRole, 
+    canAccess, 
+    isImpersonating, 
+    impersonatedUser,
+    startImpersonation,
+    stopImpersonation,
+    canImpersonate 
+  } = useUserRole();
 
   const [, forceUpdate] = useState(0);
 
-  // Listen to history changes to force re-render for query params
+  const { data: users = [] } = useQuery<User[]>({
+    queryKey: ["/api/users"],
+    enabled: canImpersonate && actualRole === "admin",
+  });
+
   useEffect(() => {
     const update = () => forceUpdate(n => n + 1);
     
     window.addEventListener('popstate', update);
     
-    // Patch history to catch pushState/replaceState (instant updates)
     const originalPush = history.pushState;
     const originalReplace = history.replaceState;
 
@@ -72,21 +96,48 @@ export function Sidebar() {
     return getVisibleNavItems();
   };
 
-  // Helper to check if a link is active, including query params
   const isLinkActive = (href: string) => {
     if (href.includes("?")) {
-      // For links with query params (like tabs), we need to check both path and search string
       const [path, query] = href.split("?");
       const currentSearch = window.location.search;
       return location === path && currentSearch.includes(query);
     }
-    // For standard links, exact match or simple prefix for sub-routes if needed
-    // Using exact match for now as per existing behavior logic mostly
     return location === href;
+  };
+
+  const mapDbRoleToLabel = (dbRole: string): string => {
+    const labels: Record<string, string> = {
+      admin: "Admin",
+      manager: "Manager",
+      inside_sales_rep: "Inside Sales",
+      field_sales_rep: "Field Sales",
+      data_loader: "Data Loader",
+    };
+    return labels[dbRole] || dbRole;
+  };
+
+  const getUserInitials = (user: User): string => {
+    return user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   return (
     <div className="h-screen w-64 bg-card border-r border-border flex flex-col shrink-0 z-20 relative">
+      {isImpersonating && impersonatedUser && (
+        <div className="bg-amber-500 text-amber-950 px-4 py-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Eye className="h-4 w-4" />
+            <span className="text-xs font-medium">Viewing as: {impersonatedUser.name}</span>
+          </div>
+          <button 
+            onClick={stopImpersonation}
+            className="p-1 hover:bg-amber-600 rounded"
+            data-testid="button-exit-impersonation"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      )}
+
       <div className="p-6 flex items-center gap-2">
         <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center shadow-lg shadow-primary/20">
           <Phone className="h-5 w-5 text-primary-foreground" />
@@ -150,7 +201,6 @@ export function Sidebar() {
         )}
       </div>
 
-      {/* HIPAA Compliance & Permissions */}
       <div className="px-6 py-2 space-y-2">
         <Link href="/hipaa">
            <div className="flex items-center gap-2 text-[10px] text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-md border border-emerald-200 w-fit shadow-sm cursor-pointer hover:bg-emerald-100 transition-colors">
@@ -179,9 +229,11 @@ export function Sidebar() {
             />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate text-foreground">
-                  {userRole === "manager" ? "Sarah Miller" : userRole === "admin" ? "Admin User" : "Alex Johnson"}
+                  {isImpersonating && impersonatedUser ? impersonatedUser.name : (userRole === "manager" ? "Sarah Miller" : userRole === "admin" ? "Admin User" : "Alex Johnson")}
               </p>
-              <p className="text-xs text-muted-foreground truncate capitalize">{userRole.replace(/_/g, ' ')} Role</p>
+              <p className="text-xs text-muted-foreground truncate capitalize">
+                {isImpersonating ? `Viewing as ${userRole.replace(/_/g, ' ')}` : `${userRole.replace(/_/g, ' ')} Role`}
+              </p>
             </div>
             <Settings className={cn(
               "h-4 w-4 transition-colors", 
@@ -190,14 +242,59 @@ export function Sidebar() {
           </div>
         </Link>
         
-        {/* Role Switching Buttons */}
+        {canImpersonate && actualRole === "admin" && !isImpersonating && (
+          <div className="mb-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full justify-between text-xs"
+                  data-testid="button-impersonate"
+                >
+                  <span className="flex items-center gap-2">
+                    <Eye className="h-3 w-3" />
+                    View As User
+                  </span>
+                  <ChevronDown className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Impersonate User</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {users.length === 0 ? (
+                  <DropdownMenuItem disabled>No users available</DropdownMenuItem>
+                ) : (
+                  users.map((user) => (
+                    <DropdownMenuItem 
+                      key={user.id}
+                      onClick={() => startImpersonation(user)}
+                      className="flex items-center gap-2 cursor-pointer"
+                      data-testid={`impersonate-user-${user.id}`}
+                    >
+                      <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-xs font-medium">
+                        {getUserInitials(user)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{user.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{mapDbRoleToLabel(user.role)}</p>
+                      </div>
+                    </DropdownMenuItem>
+                  ))
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-1 mt-2 mb-2">
            <button 
              onClick={() => setUserRole("admin")}
              className={cn(
                  "text-[10px] py-1 rounded border transition-all", 
-                 userRole === "admin" ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
+                 actualRole === "admin" && !isImpersonating ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
              )}
+             data-testid="button-role-admin"
            >
               Admin
            </button>
@@ -205,8 +302,9 @@ export function Sidebar() {
              onClick={() => setUserRole("manager")}
              className={cn(
                  "text-[10px] py-1 rounded border transition-all", 
-                 userRole === "manager" ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
+                 actualRole === "manager" && !isImpersonating ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
              )}
+             data-testid="button-role-manager"
            >
               Manager
            </button>
@@ -214,8 +312,9 @@ export function Sidebar() {
              onClick={() => setUserRole("sales_rep")}
              className={cn(
                  "text-[10px] py-1 rounded border transition-all", 
-                 userRole === "sales_rep" ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
+                 actualRole === "sales_rep" && !isImpersonating ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
              )}
+             data-testid="button-role-sales_rep"
            >
               Sales Rep
            </button>
@@ -223,8 +322,9 @@ export function Sidebar() {
              onClick={() => setUserRole("loader")}
              className={cn(
                  "text-[10px] py-1 rounded border transition-all", 
-                 userRole === "loader" ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
+                 actualRole === "loader" && !isImpersonating ? "bg-primary/10 border-primary text-primary font-medium" : "bg-background border-border text-muted-foreground hover:bg-muted"
              )}
+             data-testid="button-role-loader"
            >
               Loader
            </button>

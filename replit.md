@@ -4,6 +4,12 @@
 A comprehensive CRM system with contact management and Smart Calling & Route Optimization capabilities. The system includes intelligent address lookup using HERE Maps API, RBAC permissions, stakeholder management, and Twilio-powered browser-based calling.
 
 ## Recent Changes
+- **2024-11-28**: Added Admin Impersonation feature and User Profile pages
+  - Admins can now "View As" any user to see the app from their perspective
+  - New User Profile page at /users/:id showing user details, territories, and professions
+  - Impersonation banner shows when viewing as another user with exit button
+  - Leaderboard users and User Assignments now link to individual user profiles
+  - UserRoleContext extended with actualRole vs effectiveRole for impersonation
 - **2024-11-28**: Added multi-territory and multi-profession user assignments
   - Users can now be assigned to multiple territories (Miami, Washington DC, Los Angeles, New York, Chicago, Dallas)
   - Users can be assigned to multiple professions (Dental, Chiropractor, Optometry, Physical Therapy, Orthodontics, Legal, Financial, Real Estate)
@@ -64,6 +70,24 @@ The dialer uses Twilio Client SDK v1.14 loaded dynamically in the browser. The `
 - Making outbound calls
 - Call controls (mute, hangup, DTMF)
 - Call status tracking
+
+## Admin Impersonation
+
+Administrators can view the application from any user's perspective:
+- Click "View As User" button in the sidebar to open the user dropdown
+- Select a user to impersonate and see the app as they would see it
+- An amber banner displays at the top showing who you're viewing as
+- Click the X on the banner to exit impersonation and return to admin view
+- The effectiveRole determines the dashboard view and permissions shown
+- The actualRole (admin) is preserved to allow exiting impersonation
+
+### User Profile Pages
+Individual user profiles are available at `/users/:id`:
+- Shows user details (name, email, role, active status)
+- Displays assigned territories and professions
+- Admins/managers can edit assignments directly on the profile
+- "View As" button allows direct impersonation from the profile page
+- Activity summary section (placeholder for future metrics)
 
 ## User Preferences
 - Specialty colors are user-settable via Settings > Specialty Colors

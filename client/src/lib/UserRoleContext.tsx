@@ -47,6 +47,7 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
     const mapping: Record<string, UserRole> = {
       admin: "admin",
       manager: "manager",
+      sales_manager: "manager",
       inside_sales_rep: "sales_rep",
       field_sales_rep: "sales_rep",
       data_loader: "loader",

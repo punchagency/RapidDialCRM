@@ -5,10 +5,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Users, Map, Briefcase, Save, Check } from "lucide-react";
+import { Users, Map, Briefcase, Save, Check, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 
 type User = {
   id: string;
@@ -196,7 +197,16 @@ export function UserAssignmentsTab() {
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium leading-none truncate">{user.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-medium leading-none truncate">{user.name}</p>
+                          <Link href={`/users/${user.id}`}>
+                            <ExternalLink 
+                              className="h-3 w-3 text-muted-foreground hover:text-primary transition-colors" 
+                              data-testid={`link-user-profile-${user.id}`}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </Link>
+                        </div>
                         <Badge
                           variant="secondary"
                           className={cn("text-[10px] mt-1", roleColors[user.role])}
