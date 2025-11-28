@@ -7,12 +7,13 @@ import { FieldSettingsTab } from "@/components/crm/FieldSettingsTab";
 import { SecurityTab } from "@/components/crm/SecurityTab";
 import { TeamStructureTab } from "@/components/crm/TeamStructureTab";
 import { StatusesTab } from "@/components/crm/StatusesTab";
+import { UserAssignmentsTab } from "@/components/crm/UserAssignmentsTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { User, Bell, Shield, Plug, FileText, Briefcase, Map, Network, CheckCircle, ChevronRight, Lock } from "lucide-react";
+import { User, Bell, Shield, Plug, FileText, Briefcase, Map, Network, CheckCircle, ChevronRight, Lock, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/lib/UserRoleContext";
 
@@ -22,6 +23,7 @@ export default function Settings() {
   const configTabs = [
     { value: "profile", icon: User, label: "Profile" },
     { value: "statuses", icon: CheckCircle, label: "Call Statuses" },
+    { value: "assignments", icon: MapPin, label: "User Assignments" },
     { value: "team", icon: Network, label: "Team Structure" },
     { value: "security", icon: Shield, label: "Security" },
     { value: "notifications", icon: Bell, label: "Notifications" },
@@ -36,6 +38,7 @@ export default function Settings() {
 
   const visibleConfigTabs = configTabs.filter(tab => {
     if (tab.value === "team") return canAccess("team_management");
+    if (tab.value === "assignments") return canAccess("team_management");
     return true;
   });
 
@@ -121,6 +124,10 @@ export default function Settings() {
 
                 <TabsContent value="statuses" className="mt-0">
                   <StatusesTab />
+                </TabsContent>
+
+                <TabsContent value="assignments" className="mt-0">
+                  <UserAssignmentsTab />
                 </TabsContent>
 
                 <TabsContent value="team" className="mt-0">
