@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,13 +10,35 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Search, Upload, Plus, Database, Globe, CheckCircle, MapPin, Building, Briefcase, FileUp, Loader2, Info, Trash2, UserCog, Stethoscope, X, User } from "lucide-react";
+import { Search, Upload, Plus, Database, Globe, CheckCircle, MapPin, Building, Briefcase, FileUp, Loader2, Info, Trash2, UserCog, Stethoscope, X, User, Map as MapIcon, Check } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { SubContact } from "@/lib/mockData";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
 
-// Territory Options - matching cities from Field View
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+let DefaultIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41]
+});
+
+const SelectedIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconSize: [30, 48],
+    iconAnchor: [15, 48],
+    className: 'selected-marker'
+});
+
+L.Marker.prototype.options.icon = DefaultIcon;
+
 const TERRITORY_OPTIONS = [
   "Miami",
   "Washington, DC",
@@ -26,7 +48,6 @@ const TERRITORY_OPTIONS = [
   "Dallas",
 ];
 
-// Mock Search Results
 const MOCK_SEARCH_RESULTS = [
   { id: "s1", name: "Evergreen Dental", address: "123 Main St", city: "Seattle", zip: "98101", type: "Dentist", status: "new" },
   { id: "s2", name: "Seattle Smiles", address: "456 Pike St", city: "Seattle", zip: "98101", type: "Dentist", status: "new" },
@@ -35,7 +56,6 @@ const MOCK_SEARCH_RESULTS = [
   { id: "s5", name: "Westlake Family Dentistry", address: "400 Westlake Ave", city: "Seattle", zip: "98109", type: "Dentist", status: "new" },
 ];
 
-// Mock Unassigned Pool
 const MOCK_POOL: any[] = [];
 
 interface SearchResult {
@@ -55,11 +75,21 @@ interface SearchResult {
   status?: string;
 }
 
+function MapUpdater({ center }: { center: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center[0] !== 0 && center[1] !== 0) {
+      map.flyTo(center, 12);
+    }
+  }, [center, map]);
+  return null;
+}
+
 export default function LeadLoader() {
   const { toast } = useToast();
   const [searchQuery, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState<typeof MOCK_SEARCH_RESULTS>([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [pool, setPool] = useState(MOCK_POOL);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -67,7 +97,9 @@ export default function LeadLoader() {
   const [isImportingAll, setIsImportingAll] = useState(false);
   const [showWithoutPhone, setShowWithoutPhone] = useState(false);
 
-  // Manual Entry State
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [mapCenter, setMapCenter] = useState<[number, number]>([39.8283, -98.5795]);
+
   const [clientAdmins, setClientAdmins] = useState<SubContact[]>([{ id: "ca-1", name: "", role: "", email: "", phone: "" }]);
   const [providers, setProviders] = useState<SubContact[]>([{ id: "pv-1", name: "", role: "", email: "", phone: "" }]);
 
@@ -91,22 +123,48 @@ export default function LeadLoader() {
     }
   };
 
+  const toggleSelection = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    const geoResults = searchResults.filter(r => r.latitude && r.longitude);
+    setSelectedIds(new Set(geoResults.map(r => r.id)));
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  useEffect(() => {
+    const geoResults = searchResults.filter(r => r.latitude && r.longitude);
+    if (geoResults.length > 0) {
+      const avgLat = geoResults.reduce((sum, r) => sum + r.latitude, 0) / geoResults.length;
+      const avgLng = geoResults.reduce((sum, r) => sum + r.longitude, 0) / geoResults.length;
+      setMapCenter([avgLat, avgLng]);
+    }
+  }, [searchResults]);
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
     
     setIsSearching(true);
+    setSelectedIds(new Set());
     try {
-      // Parse search query to extract specialty and location
       const query = searchQuery.toLowerCase();
-      
-      // Try to extract specialty and location from natural language query
-      // e.g., "dentists in mclean va" -> specialty: "dentist", location: "mclean va"
       const parts = query.split(" in ");
       let specialty = parts[0].trim();
       let location = parts[1] ? parts[1].trim() : searchQuery.trim();
       
-      // Remove trailing 's' from specialty if present
       if (specialty.endsWith("s")) {
         specialty = specialty.slice(0, -1);
       }
@@ -118,7 +176,6 @@ export default function LeadLoader() {
       });
       const data = await res.json();
       
-      // Convert API results to the format expected by the UI
       const results = (data.results || []).map((result: any, idx: number) => ({
         id: `s${idx}`,
         name: result.name,
@@ -161,7 +218,6 @@ export default function LeadLoader() {
       });
       const data = await res.json();
       
-      // Only add successfully added contacts to pool
       if (data.details?.added && data.details.added.length > 0) {
         const newPoolItems = data.details.added.map((c: any) => ({
           id: `nlp-${Date.now()}-${Math.random()}`,
@@ -174,8 +230,12 @@ export default function LeadLoader() {
         setPool([...newPoolItems, ...pool]);
       }
       
-      // Remove imported contacts from search results
       setSearchResults(searchResults.filter(r => !contacts.find(c => c.name === r.name)));
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        contacts.forEach(c => next.delete(c.id));
+        return next;
+      });
       
       let message = "";
       if (data.added > 0) {
@@ -201,8 +261,15 @@ export default function LeadLoader() {
     }
   };
 
-  const addToPool = (lead: any) => {
+  const addToPool = (lead: SearchResult) => {
     importContact([lead]);
+  };
+
+  const addSelectedToPool = () => {
+    const selectedLeads = searchResults.filter(r => selectedIds.has(r.id));
+    if (selectedLeads.length > 0) {
+      importContact(selectedLeads);
+    }
   };
 
   const handleBulkUpload = () => {
@@ -216,6 +283,7 @@ export default function LeadLoader() {
     }, 2000);
   };
 
+  const geoResults = searchResults.filter(r => r.latitude && r.longitude);
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -230,10 +298,14 @@ export default function LeadLoader() {
         </header>
 
         <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             <Tabs defaultValue="search" className="space-y-6">
               <TabsList className="bg-card border border-border p-1 w-full justify-start">
-                <TabsTrigger value="search" className="gap-2"><Globe className="h-4 w-4" /> Lead Discovery (NLP)</TabsTrigger>
+                <TabsTrigger value="search" className="gap-2"><Globe className="h-4 w-4" /> Lead Discovery</TabsTrigger>
+                <TabsTrigger value="map" className="gap-2" data-testid="tab-map-selection">
+                  <MapIcon className="h-4 w-4" /> Map Selection
+                  {selectedIds.size > 0 && <Badge variant="default" className="ml-2 h-5 px-1.5 bg-primary">{selectedIds.size}</Badge>}
+                </TabsTrigger>
                 <TabsTrigger value="manual" id="manual-trigger" className="gap-2"><Plus className="h-4 w-4" /> Manual Entry</TabsTrigger>
                 <TabsTrigger value="pool" className="gap-2"><Database className="h-4 w-4" /> Unassigned Pool <Badge variant="secondary" className="ml-2 h-5 px-1.5">{pool.length}</Badge></TabsTrigger>
               </TabsList>
@@ -349,6 +421,167 @@ export default function LeadLoader() {
                 </Card>
               </TabsContent>
 
+              {/* TAB: MAP SELECTION */}
+              <TabsContent value="map" className="space-y-4">
+                <div className="grid grid-cols-12 gap-4 h-[600px]">
+                  <div className="col-span-8 rounded-lg overflow-hidden border bg-card">
+                    {geoResults.length === 0 ? (
+                      <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-8">
+                        <MapIcon className="h-16 w-16 mb-4 opacity-30" />
+                        <h3 className="text-lg font-semibold mb-2">No Locations to Display</h3>
+                        <p className="text-sm text-center max-w-md">
+                          Use the Lead Discovery tab to search for businesses first. Results with location data will appear on this map.
+                        </p>
+                      </div>
+                    ) : (
+                      <MapContainer 
+                        center={mapCenter} 
+                        zoom={10} 
+                        style={{ height: "100%", width: "100%" }}
+                        zoomControl={true}
+                      >
+                        <TileLayer
+                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        <MapUpdater center={mapCenter} />
+                        
+                        {geoResults.map((result) => {
+                          const isSelected = selectedIds.has(result.id);
+                          return (
+                            <Marker 
+                              key={result.id} 
+                              position={[result.latitude, result.longitude]}
+                              icon={isSelected ? SelectedIcon : DefaultIcon}
+                              eventHandlers={{
+                                click: () => toggleSelection(result.id),
+                              }}
+                            >
+                              <Popup>
+                                <div className="min-w-[200px]">
+                                  <div className="font-semibold text-sm">{result.name}</div>
+                                  <div className="text-xs text-gray-600 mt-1">{result.address}</div>
+                                  {result.phone && <div className="text-xs mt-1">📞 {result.phone}</div>}
+                                  <Button 
+                                    size="sm" 
+                                    variant={isSelected ? "secondary" : "default"}
+                                    className="w-full mt-2 text-xs h-7"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleSelection(result.id);
+                                    }}
+                                    data-testid={`button-map-select-${result.id}`}
+                                  >
+                                    {isSelected ? <><Check className="h-3 w-3 mr-1" /> Selected</> : <><Plus className="h-3 w-3 mr-1" /> Select</>}
+                                  </Button>
+                                </div>
+                              </Popup>
+                            </Marker>
+                          );
+                        })}
+                      </MapContainer>
+                    )}
+                  </div>
+
+                  <div className="col-span-4 flex flex-col">
+                    <Card className="flex-1 flex flex-col">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-base">Selected Leads</CardTitle>
+                          <Badge variant={selectedIds.size > 0 ? "default" : "secondary"}>
+                            {selectedIds.size} selected
+                          </Badge>
+                        </div>
+                        <CardDescription className="text-xs">
+                          Click markers on the map to select leads
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="flex-1 flex flex-col p-0">
+                        <div className="px-4 pb-3 flex gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex-1 text-xs"
+                            onClick={selectAll}
+                            disabled={geoResults.length === 0}
+                            data-testid="button-select-all"
+                          >
+                            Select All ({geoResults.length})
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex-1 text-xs"
+                            onClick={clearSelection}
+                            disabled={selectedIds.size === 0}
+                            data-testid="button-clear-selection"
+                          >
+                            Clear
+                          </Button>
+                        </div>
+                        
+                        <ScrollArea className="flex-1 px-4">
+                          <div className="space-y-2 pb-4">
+                            {geoResults.map((result) => {
+                              const isSelected = selectedIds.has(result.id);
+                              return (
+                                <div 
+                                  key={result.id}
+                                  onClick={() => toggleSelection(result.id)}
+                                  className={cn(
+                                    "p-3 rounded-lg border cursor-pointer transition-all",
+                                    isSelected 
+                                      ? "bg-primary/10 border-primary" 
+                                      : "bg-card border-border hover:border-primary/50"
+                                  )}
+                                  data-testid={`map-lead-${result.id}`}
+                                >
+                                  <div className="flex items-start gap-2">
+                                    <Checkbox 
+                                      checked={isSelected}
+                                      onCheckedChange={() => toggleSelection(result.id)}
+                                      className="mt-0.5"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium truncate">{result.name}</p>
+                                      <p className="text-xs text-muted-foreground truncate">{result.address}</p>
+                                      {result.phone && (
+                                        <p className="text-xs text-muted-foreground mt-1">📞 {result.phone}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                            {geoResults.length === 0 && (
+                              <div className="text-center py-8 text-muted-foreground text-sm">
+                                No results with location data
+                              </div>
+                            )}
+                          </div>
+                        </ScrollArea>
+
+                        <div className="p-4 border-t bg-muted/30">
+                          <Button
+                            onClick={addSelectedToPool}
+                            disabled={selectedIds.size === 0 || isImportingAll}
+                            className="w-full bg-green-600 hover:bg-green-700"
+                            data-testid="button-add-selected-to-pool"
+                          >
+                            {isImportingAll ? (
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            ) : (
+                              <Plus className="h-4 w-4 mr-2" />
+                            )}
+                            Add {selectedIds.size} to Unassigned Pool
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              </TabsContent>
+
 
               {/* TAB: MANUAL */}
               <TabsContent value="manual">
@@ -359,7 +592,6 @@ export default function LeadLoader() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-8">
-                      {/* Business Info */}
                       <div>
                         <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wider flex items-center gap-2">
                            <Building className="h-4 w-4" /> Business Information
@@ -390,7 +622,6 @@ export default function LeadLoader() {
 
                       <Separator />
 
-                      {/* Client Admins */}
                       <div>
                         <div className="flex items-center justify-between mb-4">
                            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
@@ -425,7 +656,6 @@ export default function LeadLoader() {
 
                       <Separator />
 
-                      {/* Providers */}
                       <div>
                         <div className="flex items-center justify-between mb-4">
                            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
@@ -523,6 +753,11 @@ export default function LeadLoader() {
           </div>
         </div>
       </main>
+      <style>{`
+        .selected-marker {
+          filter: hue-rotate(120deg) saturate(1.5);
+        }
+      `}</style>
     </div>
   );
 }
