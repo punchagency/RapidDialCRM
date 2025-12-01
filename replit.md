@@ -4,6 +4,12 @@
 A comprehensive CRM system with contact management and Smart Calling & Route Optimization capabilities. The system includes intelligent address lookup using HERE Maps API, RBAC permissions, stakeholder management, and Twilio-powered browser-based calling.
 
 ## Recent Changes
+- **2024-12-01**: Added Map Selection tab to Lead Management tool
+  - New interactive map view to visualize search results geographically
+  - Click markers or sidebar items to select multiple leads
+  - Select All / Clear selection buttons for bulk operations
+  - Add selected leads to Unassigned Pool with one click
+  - Shares search results with Lead Discovery tab for seamless workflow
 - **2024-11-28**: Added Admin Impersonation feature and User Profile pages
   - Admins can now "View As" any user to see the app from their perspective
   - New User Profile page at /users/:id showing user details, territories, and professions
