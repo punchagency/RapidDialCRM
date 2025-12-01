@@ -539,6 +539,7 @@ export default function LeadLoader() {
                                   <div className="flex items-start gap-2">
                                     <Checkbox 
                                       checked={isSelected}
+                                      onClick={(e) => e.stopPropagation()}
                                       onCheckedChange={() => toggleSelection(result.id)}
                                       className="mt-0.5"
                                     />
