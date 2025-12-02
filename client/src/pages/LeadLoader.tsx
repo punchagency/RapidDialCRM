@@ -76,38 +76,60 @@ interface SearchResult {
 }
 
 interface MapUpdaterProps {
-  center: [number, number];
-  bounds: L.LatLngBounds | null;
+  geocodeBounds: L.LatLngBounds | null;
+  resultsBounds: L.LatLngBounds | null;
   selectedLocation: [number, number] | null;
 }
 
-function MapUpdater({ center, bounds, selectedLocation }: MapUpdaterProps) {
+function MapUpdater({ geocodeBounds, resultsBounds, selectedLocation }: MapUpdaterProps) {
   const map = useMap();
+  const moveendHandlerRef = React.useRef<(() => void) | null>(null);
   
-  // Fit bounds when results change (show all results)
+  // Priority 1: Fit to geocode bounds when location is searched (centers on town)
   useEffect(() => {
-    if (bounds && bounds.isValid()) {
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
+    if (geocodeBounds && geocodeBounds.isValid() && !resultsBounds) {
+      map.fitBounds(geocodeBounds, { padding: [48, 48], maxZoom: 13 });
     }
-  }, [bounds, map]);
+  }, [geocodeBounds, resultsBounds, map]);
   
-  // Handle initial geocode center (when no bounds)
+  // Priority 2: Fit to results bounds when results load (shows all markers)
   useEffect(() => {
-    if (!bounds && center[0] !== 0 && center[1] !== 0) {
-      map.flyTo(center, 12);
+    if (resultsBounds && resultsBounds.isValid()) {
+      map.fitBounds(resultsBounds, { padding: [40, 40], maxZoom: 14 });
     }
-  }, [center, bounds, map]);
+  }, [resultsBounds, map]);
   
-  // Pan to selected location with vertical offset so marker appears near top
+  // Priority 3: Pan to selected location with vertical offset
   useEffect(() => {
+    // Clean up any existing moveend handler before setting a new one
+    if (moveendHandlerRef.current) {
+      map.off('moveend', moveendHandlerRef.current);
+      moveendHandlerRef.current = null;
+    }
+    
     if (selectedLocation && selectedLocation[0] !== 0) {
-      map.flyTo(selectedLocation, map.getZoom(), { duration: 0.5 });
-      // After flying, pan down so marker appears in upper portion of map
-      setTimeout(() => {
+      // Fly to the location
+      map.flyTo(selectedLocation, Math.max(map.getZoom(), 14), { duration: 0.4 });
+      
+      // Create handler for after flight completes
+      const handleMoveEnd = () => {
         const mapHeight = map.getSize().y;
-        map.panBy([0, -mapHeight * 0.25], { animate: true, duration: 0.3 });
-      }, 550);
+        map.panBy([0, -mapHeight * 0.3], { animate: true, duration: 0.25 });
+        // Clean up this handler after it runs
+        map.off('moveend', handleMoveEnd);
+        moveendHandlerRef.current = null;
+      };
+      
+      moveendHandlerRef.current = handleMoveEnd;
+      map.once('moveend', handleMoveEnd);
     }
+    
+    // Cleanup on unmount
+    return () => {
+      if (moveendHandlerRef.current) {
+        map.off('moveend', moveendHandlerRef.current);
+      }
+    };
   }, [selectedLocation, map]);
   
   return null;
@@ -128,6 +150,7 @@ export default function LeadLoader() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [mapCenter, setMapCenter] = useState<[number, number]>([39.8283, -98.5795]);
   const [selectedLocation, setSelectedLocation] = useState<[number, number] | null>(null);
+  const [geocodeBounds, setGeocodeBounds] = useState<L.LatLngBounds | null>(null);
 
   const [clientAdmins, setClientAdmins] = useState<SubContact[]>([{ id: "ca-1", name: "", role: "", email: "", phone: "" }]);
   const [providers, setProviders] = useState<SubContact[]>([{ id: "pv-1", name: "", role: "", email: "", phone: "" }]);
@@ -173,24 +196,36 @@ export default function LeadLoader() {
     setSelectedIds(new Set());
   };
 
+  // Reset selected location when search results change
   useEffect(() => {
-    const geoResults = searchResults.filter(r => r.latitude && r.longitude);
-    if (geoResults.length > 0) {
-      const avgLat = geoResults.reduce((sum, r) => sum + r.latitude, 0) / geoResults.length;
-      const avgLng = geoResults.reduce((sum, r) => sum + r.longitude, 0) / geoResults.length;
-      setMapCenter([avgLat, avgLng]);
-    }
+    setSelectedLocation(null);
   }, [searchResults]);
 
-  const geocodeLocation = async (location: string) => {
+  // Geocode location and return bounding box for proper map centering
+  const geocodeLocation = async (location: string): Promise<L.LatLngBounds | null> => {
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`
       );
       const data = await response.json();
       if (data.length > 0) {
-        const { lat, lon } = data[0];
-        return [parseFloat(lat), parseFloat(lon)] as [number, number];
+        const result = data[0];
+        // Nominatim returns boundingbox as [south, north, west, east]
+        if (result.boundingbox) {
+          const [south, north, west, east] = result.boundingbox.map(parseFloat);
+          return L.latLngBounds(
+            [south, west], // southwest corner
+            [north, east]  // northeast corner
+          );
+        }
+        // Fallback to center point if no bounding box
+        const { lat, lon } = result;
+        const center: L.LatLngTuple = [parseFloat(lat), parseFloat(lon)];
+        // Create a small bounds around the center (roughly 5km)
+        return L.latLngBounds(
+          [center[0] - 0.05, center[1] - 0.05],
+          [center[0] + 0.05, center[1] + 0.05]
+        );
       }
     } catch (error) {
       console.error("Geocoding error:", error);
@@ -214,10 +249,10 @@ export default function LeadLoader() {
         specialty = specialty.slice(0, -1);
       }
       
-      // Geocode the location to center the map
-      const locationCoords = await geocodeLocation(location);
-      if (locationCoords) {
-        setMapCenter(locationCoords);
+      // Geocode the location to center the map on the town
+      const locationBounds = await geocodeLocation(location);
+      if (locationBounds) {
+        setGeocodeBounds(locationBounds);
       }
       
       const res = await fetch("/api/bulk-search", {
@@ -408,7 +443,7 @@ export default function LeadLoader() {
                     </div>
 
                     {searchResults.length > 0 && (
-                      <div className="grid grid-cols-12 gap-4 h-[350px] overflow-hidden">
+                      <div className="grid grid-cols-12 gap-4 h-[520px] overflow-hidden">
                         <div className="col-span-8 rounded-lg overflow-hidden border bg-card h-full">
                           {geoResults.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-8">
@@ -429,7 +464,7 @@ export default function LeadLoader() {
                                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                               />
-                              <MapUpdater center={mapCenter} bounds={mapBounds} selectedLocation={selectedLocation} />
+                              <MapUpdater geocodeBounds={geocodeBounds} resultsBounds={mapBounds} selectedLocation={selectedLocation} />
                               
                               {geoResults.map((result) => {
                                 const isSelected = selectedIds.has(result.id);
