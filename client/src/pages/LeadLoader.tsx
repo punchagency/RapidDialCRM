@@ -337,8 +337,8 @@ export default function LeadLoader() {
                       Use natural language to find businesses. Try "Dentists in 98101" or "Cardiologists in Seattle". Results appear on the map.
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4 mb-6">
+                  <CardContent className="flex flex-col">
+                    <div className="space-y-4 mb-4">
                       <div>
                         <Label className="text-sm font-medium mb-2 block">Territory <span className="text-xs text-muted-foreground">(Optional)</span></Label>
                         <Select value={territory} onValueChange={setTerritory}>
@@ -370,8 +370,8 @@ export default function LeadLoader() {
                     </div>
 
                     {searchResults.length > 0 && (
-                      <div className="grid grid-cols-12 gap-4 h-[480px]">
-                        <div className="col-span-8 rounded-lg overflow-hidden border bg-card">
+                      <div className="grid grid-cols-12 gap-4 h-[350px] overflow-hidden">
+                        <div className="col-span-8 rounded-lg overflow-hidden border bg-card h-full">
                           {geoResults.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-8">
                               <MapIcon className="h-16 w-16 mb-4 opacity-30" />
