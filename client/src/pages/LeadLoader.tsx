@@ -401,7 +401,10 @@ export default function LeadLoader() {
                                     position={[result.latitude, result.longitude]}
                                     icon={isSelected ? SelectedIcon : DefaultIcon}
                                     eventHandlers={{
-                                      click: () => toggleSelection(result.id),
+                                      click: () => {
+                                        toggleSelection(result.id);
+                                        setMapCenter([result.latitude, result.longitude]);
+                                      },
                                     }}
                                   >
                                     <Popup>
@@ -459,7 +462,10 @@ export default function LeadLoader() {
                                     return (
                                       <div 
                                         key={result.id}
-                                        onClick={() => toggleSelection(result.id)}
+                                        onClick={() => {
+                                          toggleSelection(result.id);
+                                          setMapCenter([result.latitude, result.longitude]);
+                                        }}
                                         className={cn(
                                           "p-2 rounded-lg border cursor-pointer transition-all text-xs",
                                           isSelected 
@@ -472,7 +478,10 @@ export default function LeadLoader() {
                                           <Checkbox 
                                             checked={isSelected}
                                             onClick={(e) => e.stopPropagation()}
-                                            onCheckedChange={() => toggleSelection(result.id)}
+                                            onCheckedChange={() => {
+                                              toggleSelection(result.id);
+                                              setMapCenter([result.latitude, result.longitude]);
+                                            }}
                                             className="mt-0.5"
                                           />
                                           <div className="flex-1 min-w-0">
