@@ -156,6 +156,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET /api/appointments/today - Get all today's appointments with details
+  app.get("/api/appointments/today", async (req, res) => {
+    try {
+      const territory = req.query.territory as string | undefined;
+      const appointments = await storage.listTodayAppointments(territory);
+      res.json(appointments);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch today's appointments" });
+    }
+  });
+
   // POST /api/call-outcome - Record call outcome
   app.post("/api/call-outcome", async (req, res) => {
     try {

@@ -24,6 +24,7 @@ export interface IStorage {
   // Appointments
   getAppointment(id: string): Promise<Appointment | undefined>;
   listAppointmentsByFieldRepAndDate(fieldRepId: string, date: string): Promise<Appointment[]>;
+  listTodayAppointments(territory?: string): Promise<any[]>;
   createAppointment(appointment: InsertAppointment): Promise<Appointment>;
   updateAppointment(id: string, appointment: Partial<InsertAppointment>): Promise<Appointment | undefined>;
 
@@ -133,6 +134,40 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(appointments).where(
       and(eq(appointments.fieldRepId, fieldRepId), eq(appointments.scheduledDate, date))
     ).orderBy(asc(appointments.scheduledTime));
+  }
+
+  async listTodayAppointments(territory?: string): Promise<any[]> {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Join appointments with prospects and field_reps to get full details
+    const result = await db
+      .select({
+        id: appointments.id,
+        scheduledDate: appointments.scheduledDate,
+        scheduledTime: appointments.scheduledTime,
+        durationMinutes: appointments.durationMinutes,
+        status: appointments.status,
+        prospectId: appointments.prospectId,
+        prospectName: prospects.businessName,
+        prospectPhone: prospects.phoneNumber,
+        prospectAddress: prospects.addressStreet,
+        prospectCity: prospects.addressCity,
+        fieldRepId: appointments.fieldRepId,
+        fieldRepName: fieldReps.name,
+        territory: fieldReps.territory,
+      })
+      .from(appointments)
+      .leftJoin(prospects, eq(appointments.prospectId, prospects.id))
+      .leftJoin(fieldReps, eq(appointments.fieldRepId, fieldReps.id))
+      .where(eq(appointments.scheduledDate, today))
+      .orderBy(asc(appointments.scheduledTime));
+    
+    // Filter by territory if provided
+    if (territory) {
+      return result.filter(a => a.territory === territory);
+    }
+    
+    return result;
   }
 
   async createAppointment(appointment: InsertAppointment): Promise<Appointment> {
