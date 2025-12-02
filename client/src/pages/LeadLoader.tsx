@@ -370,7 +370,7 @@ export default function LeadLoader() {
                     </div>
 
                     {searchResults.length > 0 && (
-                      <div className="grid grid-cols-12 gap-4 h-[650px]">
+                      <div className="grid grid-cols-12 gap-4 h-[480px]">
                         <div className="col-span-8 rounded-lg overflow-hidden border bg-card">
                           {geoResults.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-8">
@@ -403,7 +403,7 @@ export default function LeadLoader() {
                                     eventHandlers={{
                                       click: () => {
                                         toggleSelection(result.id);
-                                        setMapCenter([result.latitude, result.longitude]);
+                                        setMapCenter([result.latitude + 0.04, result.longitude]);
                                       },
                                     }}
                                   >
@@ -464,7 +464,7 @@ export default function LeadLoader() {
                                         key={result.id}
                                         onClick={() => {
                                           toggleSelection(result.id);
-                                          setMapCenter([result.latitude, result.longitude]);
+                                          setMapCenter([result.latitude + 0.04, result.longitude]);
                                         }}
                                         className={cn(
                                           "p-2 rounded-lg border cursor-pointer transition-all text-xs",
@@ -480,7 +480,7 @@ export default function LeadLoader() {
                                             onClick={(e) => e.stopPropagation()}
                                             onCheckedChange={() => {
                                               toggleSelection(result.id);
-                                              setMapCenter([result.latitude, result.longitude]);
+                                              setMapCenter([result.latitude + 0.04, result.longitude]);
                                             }}
                                             className="mt-0.5"
                                           />
