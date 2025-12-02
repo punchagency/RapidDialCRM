@@ -53,10 +53,12 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}) {
   const initializeDevice = useCallback(async () => {
     if (!window.Twilio?.Device) {
       setError("Twilio SDK not loaded");
+      console.error("Twilio SDK not loaded");
       return;
     }
 
     try {
+      console.log("Fetching Twilio token...");
       const response = await fetch("/api/twilio/token", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -64,25 +66,28 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}) {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to get Twilio token");
+        const errorText = await response.text();
+        throw new Error(`Failed to get Twilio token: ${response.status} ${errorText}`);
       }
 
       const { token } = await response.json();
+      console.log("Token received, creating device...");
       
       const twilioDevice = new window.Twilio.Device(token, {
         codecPreferences: ["opus", "pcmu"],
         fakeLocalDTMF: true,
         enableRingingState: true,
+        debug: true,
       });
 
       twilioDevice.on("ready", () => {
-        console.log("Twilio Device ready");
+        console.log("✓ Twilio Device ready");
         setIsReady(true);
         setError(null);
       });
 
       twilioDevice.on("error", (err: any) => {
-        console.error("Twilio Device error:", err);
+        console.error("✗ Twilio Device error:", err);
         setError(err.message || "Device error");
         setCallStatus("error");
       });
