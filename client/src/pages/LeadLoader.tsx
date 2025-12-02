@@ -301,11 +301,7 @@ export default function LeadLoader() {
           <div className="max-w-6xl mx-auto">
             <Tabs defaultValue="search" className="space-y-6">
               <TabsList className="bg-card border border-border p-1 w-full justify-start">
-                <TabsTrigger value="search" className="gap-2"><Globe className="h-4 w-4" /> Lead Discovery</TabsTrigger>
-                <TabsTrigger value="map" className="gap-2" data-testid="tab-map-selection">
-                  <MapIcon className="h-4 w-4" /> Map Selection
-                  {selectedIds.size > 0 && <Badge variant="default" className="ml-2 h-5 px-1.5 bg-primary">{selectedIds.size}</Badge>}
-                </TabsTrigger>
+                <TabsTrigger value="search" className="gap-2"><Globe className="h-4 w-4" /> Lead Discovery {selectedIds.size > 0 && <Badge variant="default" className="ml-2 h-5 px-1.5 bg-primary">{selectedIds.size}</Badge>}</TabsTrigger>
                 <TabsTrigger value="manual" id="manual-trigger" className="gap-2"><Plus className="h-4 w-4" /> Manual Entry</TabsTrigger>
                 <TabsTrigger value="pool" className="gap-2"><Database className="h-4 w-4" /> Unassigned Pool <Badge variant="secondary" className="ml-2 h-5 px-1.5">{pool.length}</Badge></TabsTrigger>
               </TabsList>
@@ -316,7 +312,7 @@ export default function LeadLoader() {
                   <CardHeader>
                     <CardTitle>Find New Business Leads</CardTitle>
                     <CardDescription>
-                      Use natural language to find businesses. Try "Dentists in 98101" or "Cardiologists in Seattle".
+                      Use natural language to find businesses. Try "Dentists in 98101" or "Cardiologists in Seattle". Results appear on the map.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -352,68 +348,161 @@ export default function LeadLoader() {
                     </div>
 
                     {searchResults.length > 0 && (
-                      <div className="border rounded-lg overflow-hidden">
-                        <div className="bg-muted/50 px-4 py-3 border-b text-xs font-medium text-muted-foreground flex justify-between items-center">
-                          <span>Search Results</span>
-                          <div className="flex items-center gap-3">
-                            <span>{searchResults.filter(r => showWithoutPhone || r.phone).length} of {searchResults.length} shown</span>
+                      <div className="grid grid-cols-12 gap-4 h-[650px]">
+                        <div className="col-span-8 rounded-lg overflow-hidden border bg-card">
+                          {geoResults.length === 0 ? (
+                            <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-8">
+                              <MapIcon className="h-16 w-16 mb-4 opacity-30" />
+                              <h3 className="text-lg font-semibold mb-2">No Locations</h3>
+                              <p className="text-sm text-center max-w-md">
+                                Your search returned results, but they don't have location data.
+                              </p>
+                            </div>
+                          ) : (
+                            <MapContainer 
+                              center={mapCenter} 
+                              zoom={12} 
+                              style={{ height: "100%", width: "100%" }}
+                              zoomControl={true}
+                            >
+                              <TileLayer
+                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                              />
+                              <MapUpdater center={mapCenter} />
+                              
+                              {geoResults.map((result) => {
+                                const isSelected = selectedIds.has(result.id);
+                                return (
+                                  <Marker 
+                                    key={result.id} 
+                                    position={[result.latitude, result.longitude]}
+                                    icon={isSelected ? SelectedIcon : DefaultIcon}
+                                    eventHandlers={{
+                                      click: () => toggleSelection(result.id),
+                                    }}
+                                  >
+                                    <Popup>
+                                      <div className="min-w-[200px]">
+                                        <div className="font-semibold text-sm">{result.name}</div>
+                                        <div className="text-xs text-gray-600 mt-1">{result.address}</div>
+                                        {result.phone && <div className="text-xs mt-1">📞 {result.phone}</div>}
+                                      </div>
+                                    </Popup>
+                                  </Marker>
+                                );
+                              })}
+                            </MapContainer>
+                          )}
+                        </div>
+
+                        <div className="col-span-4 flex flex-col gap-4">
+                          <Card className="flex-1 flex flex-col">
+                            <CardHeader className="pb-3">
+                              <div className="flex items-center justify-between">
+                                <CardTitle className="text-base">Results</CardTitle>
+                                <Badge variant={selectedIds.size > 0 ? "default" : "secondary"}>
+                                  {selectedIds.size} selected
+                                </Badge>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="flex-1 flex flex-col p-0">
+                              <div className="px-4 pb-3 flex gap-2 text-xs">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="flex-1 text-xs"
+                                  onClick={selectAll}
+                                  disabled={geoResults.length === 0}
+                                  data-testid="button-select-all"
+                                >
+                                  All ({geoResults.length})
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  className="flex-1 text-xs"
+                                  onClick={clearSelection}
+                                  disabled={selectedIds.size === 0}
+                                  data-testid="button-clear-selection"
+                                >
+                                  Clear
+                                </Button>
+                              </div>
+                              
+                              <ScrollArea className="flex-1 px-4">
+                                <div className="space-y-2 pb-4">
+                                  {searchResults.filter(r => showWithoutPhone || r.phone).map((result) => {
+                                    const isSelected = selectedIds.has(result.id);
+                                    return (
+                                      <div 
+                                        key={result.id}
+                                        onClick={() => toggleSelection(result.id)}
+                                        className={cn(
+                                          "p-2 rounded-lg border cursor-pointer transition-all text-xs",
+                                          isSelected 
+                                            ? "bg-primary/10 border-primary" 
+                                            : "bg-card border-border hover:border-primary/50"
+                                        )}
+                                        data-testid={`lead-result-${result.id}`}
+                                      >
+                                        <div className="flex items-start gap-2">
+                                          <Checkbox 
+                                            checked={isSelected}
+                                            onClick={(e) => e.stopPropagation()}
+                                            onCheckedChange={() => toggleSelection(result.id)}
+                                            className="mt-0.5"
+                                          />
+                                          <div className="flex-1 min-w-0">
+                                            <p className="text-xs font-medium truncate">{result.name}</p>
+                                            {result.phone && <p className="text-xs text-muted-foreground truncate">📞 {result.phone}</p>}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </ScrollArea>
+
+                              <div className="p-3 border-t bg-muted/30 space-y-2">
+                                <Button
+                                  onClick={addSelectedToPool}
+                                  disabled={selectedIds.size === 0 || isImportingAll}
+                                  className="w-full bg-green-600 hover:bg-green-700 text-xs h-8"
+                                  data-testid="button-add-selected-to-pool"
+                                >
+                                  {isImportingAll ? (
+                                    <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                                  ) : (
+                                    <Plus className="h-3 w-3 mr-2" />
+                                  )}
+                                  Add {selectedIds.size} to Pool
+                                </Button>
+                                <Button
+                                  onClick={() => importContact(searchResults.filter(r => showWithoutPhone || r.phone))}
+                                  disabled={isImportingAll || searchResults.filter(r => showWithoutPhone || r.phone).length === 0}
+                                  className="w-full text-xs h-8"
+                                  variant="outline"
+                                  data-testid="button-import-all"
+                                >
+                                  {isImportingAll ? <Loader2 className="h-3 w-3 mr-2 animate-spin" /> : <Upload className="h-3 w-3 mr-2" />}
+                                  All Results
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+
+                          <div className="flex gap-2">
                             <Button 
                               size="sm" 
                               variant={showWithoutPhone ? "secondary" : "outline"}
                               onClick={() => setShowWithoutPhone(!showWithoutPhone)}
                               data-testid="button-toggle-no-phone"
-                              className="text-xs h-7"
+                              className="text-xs w-full"
                             >
                               {showWithoutPhone ? "Show All" : "Hide No Phone"}
                             </Button>
                           </div>
-                        </div>
-                        {searchResults.filter(r => showWithoutPhone || r.phone).map((result) => (
-                          <div 
-                            key={result.id} 
-                            className="flex items-start justify-between p-4 border-b last:border-0 hover:bg-muted/20 transition-colors"
-                            data-testid={`card-result-${result.id}`}
-                          >
-                            <div className="flex items-start gap-3 flex-1">
-                              <div className="mt-1 p-2 rounded-full bg-primary/10 text-primary">
-                                <Building className="h-4 w-4" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="font-semibold text-sm text-foreground" data-testid={`text-name-${result.id}`}>
-                                  {result.name}
-                                </h4>
-                                <p className="text-xs text-muted-foreground line-clamp-1 mt-1" data-testid={`text-address-${result.id}`}>
-                                  {result.address}
-                                </p>
-                                <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
-                                  {result.phone && (
-                                    <p data-testid={`text-phone-${result.id}`}>📞 {result.phone}</p>
-                                  )}
-                                  {result.email && (
-                                    <p data-testid={`text-email-${result.id}`}>✉️ {result.email}</p>
-                                  )}
-                                  {result.website && (
-                                    <p data-testid={`text-website-${result.id}`}>🌐 {result.website}</p>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <Button size="sm" variant="outline" className="gap-2 hover:bg-primary hover:text-primary-foreground ml-4" onClick={() => addToPool(result)} data-testid={`button-add-${result.id}`}>
-                              <Plus className="h-4 w-4" /> Add
-                            </Button>
-                          </div>
-                        ))}
-                        <div className="bg-muted/20 px-4 py-3 border-t">
-                          <Button
-                            onClick={() => importContact(searchResults.filter(r => showWithoutPhone || r.phone))}
-                            disabled={isImportingAll || searchResults.filter(r => showWithoutPhone || r.phone).length === 0}
-                            className="w-full bg-green-600 hover:bg-green-700"
-                            data-testid="button-import-all"
-                          >
-                            {isImportingAll ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Upload className="h-4 w-4 mr-2" />}
-                            Import All {searchResults.filter(r => showWithoutPhone || r.phone).length} Results
-                          </Button>
                         </div>
                       </div>
                     )}
@@ -421,167 +510,6 @@ export default function LeadLoader() {
                 </Card>
               </TabsContent>
 
-              {/* TAB: MAP SELECTION */}
-              <TabsContent value="map" className="space-y-4">
-                <div className="grid grid-cols-12 gap-4 h-[600px]">
-                  <div className="col-span-8 rounded-lg overflow-hidden border bg-card">
-                    {geoResults.length === 0 ? (
-                      <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-8">
-                        <MapIcon className="h-16 w-16 mb-4 opacity-30" />
-                        <h3 className="text-lg font-semibold mb-2">No Locations to Display</h3>
-                        <p className="text-sm text-center max-w-md">
-                          Use the Lead Discovery tab to search for businesses first. Results with location data will appear on this map.
-                        </p>
-                      </div>
-                    ) : (
-                      <MapContainer 
-                        center={mapCenter} 
-                        zoom={10} 
-                        style={{ height: "100%", width: "100%" }}
-                        zoomControl={true}
-                      >
-                        <TileLayer
-                          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                        />
-                        <MapUpdater center={mapCenter} />
-                        
-                        {geoResults.map((result) => {
-                          const isSelected = selectedIds.has(result.id);
-                          return (
-                            <Marker 
-                              key={result.id} 
-                              position={[result.latitude, result.longitude]}
-                              icon={isSelected ? SelectedIcon : DefaultIcon}
-                              eventHandlers={{
-                                click: () => toggleSelection(result.id),
-                              }}
-                            >
-                              <Popup>
-                                <div className="min-w-[200px]">
-                                  <div className="font-semibold text-sm">{result.name}</div>
-                                  <div className="text-xs text-gray-600 mt-1">{result.address}</div>
-                                  {result.phone && <div className="text-xs mt-1">📞 {result.phone}</div>}
-                                  <Button 
-                                    size="sm" 
-                                    variant={isSelected ? "secondary" : "default"}
-                                    className="w-full mt-2 text-xs h-7"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      toggleSelection(result.id);
-                                    }}
-                                    data-testid={`button-map-select-${result.id}`}
-                                  >
-                                    {isSelected ? <><Check className="h-3 w-3 mr-1" /> Selected</> : <><Plus className="h-3 w-3 mr-1" /> Select</>}
-                                  </Button>
-                                </div>
-                              </Popup>
-                            </Marker>
-                          );
-                        })}
-                      </MapContainer>
-                    )}
-                  </div>
-
-                  <div className="col-span-4 flex flex-col">
-                    <Card className="flex-1 flex flex-col">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="text-base">Selected Leads</CardTitle>
-                          <Badge variant={selectedIds.size > 0 ? "default" : "secondary"}>
-                            {selectedIds.size} selected
-                          </Badge>
-                        </div>
-                        <CardDescription className="text-xs">
-                          Click markers on the map to select leads
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="flex-1 flex flex-col p-0">
-                        <div className="px-4 pb-3 flex gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="flex-1 text-xs"
-                            onClick={selectAll}
-                            disabled={geoResults.length === 0}
-                            data-testid="button-select-all"
-                          >
-                            Select All ({geoResults.length})
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="flex-1 text-xs"
-                            onClick={clearSelection}
-                            disabled={selectedIds.size === 0}
-                            data-testid="button-clear-selection"
-                          >
-                            Clear
-                          </Button>
-                        </div>
-                        
-                        <ScrollArea className="flex-1 px-4">
-                          <div className="space-y-2 pb-4">
-                            {geoResults.map((result) => {
-                              const isSelected = selectedIds.has(result.id);
-                              return (
-                                <div 
-                                  key={result.id}
-                                  onClick={() => toggleSelection(result.id)}
-                                  className={cn(
-                                    "p-3 rounded-lg border cursor-pointer transition-all",
-                                    isSelected 
-                                      ? "bg-primary/10 border-primary" 
-                                      : "bg-card border-border hover:border-primary/50"
-                                  )}
-                                  data-testid={`map-lead-${result.id}`}
-                                >
-                                  <div className="flex items-start gap-2">
-                                    <Checkbox 
-                                      checked={isSelected}
-                                      onClick={(e) => e.stopPropagation()}
-                                      onCheckedChange={() => toggleSelection(result.id)}
-                                      className="mt-0.5"
-                                    />
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-sm font-medium truncate">{result.name}</p>
-                                      <p className="text-xs text-muted-foreground truncate">{result.address}</p>
-                                      {result.phone && (
-                                        <p className="text-xs text-muted-foreground mt-1">📞 {result.phone}</p>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                            {geoResults.length === 0 && (
-                              <div className="text-center py-8 text-muted-foreground text-sm">
-                                No results with location data
-                              </div>
-                            )}
-                          </div>
-                        </ScrollArea>
-
-                        <div className="p-4 border-t bg-muted/30">
-                          <Button
-                            onClick={addSelectedToPool}
-                            disabled={selectedIds.size === 0 || isImportingAll}
-                            className="w-full bg-green-600 hover:bg-green-700"
-                            data-testid="button-add-selected-to-pool"
-                          >
-                            {isImportingAll ? (
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            ) : (
-                              <Plus className="h-4 w-4 mr-2" />
-                            )}
-                            Add {selectedIds.size} to Unassigned Pool
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-              </TabsContent>
 
 
               {/* TAB: MANUAL */}
