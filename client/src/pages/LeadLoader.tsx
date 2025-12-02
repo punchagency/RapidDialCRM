@@ -403,7 +403,7 @@ export default function LeadLoader() {
                                     eventHandlers={{
                                       click: () => {
                                         toggleSelection(result.id);
-                                        setMapCenter([result.latitude + 0.04, result.longitude]);
+                                        setMapCenter([result.latitude - 0.15, result.longitude]);
                                       },
                                     }}
                                   >
@@ -438,10 +438,10 @@ export default function LeadLoader() {
                                   variant="outline" 
                                   className="flex-1 text-xs"
                                   onClick={selectAll}
-                                  disabled={geoResults.length === 0}
+                                  disabled={searchResults.length === 0}
                                   data-testid="button-select-all"
                                 >
-                                  All ({geoResults.length})
+                                  All ({searchResults.length})
                                 </Button>
                                 <Button 
                                   size="sm" 
@@ -457,14 +457,14 @@ export default function LeadLoader() {
                               
                               <ScrollArea className="flex-1 px-4">
                                 <div className="space-y-2 pb-4">
-                                  {searchResults.filter(r => showWithoutPhone || r.phone).map((result) => {
+                                  {searchResults.map((result) => {
                                     const isSelected = selectedIds.has(result.id);
                                     return (
                                       <div 
                                         key={result.id}
                                         onClick={() => {
                                           toggleSelection(result.id);
-                                          setMapCenter([result.latitude + 0.04, result.longitude]);
+                                          setMapCenter([result.latitude - 0.15, result.longitude]);
                                         }}
                                         className={cn(
                                           "p-2 rounded-lg border cursor-pointer transition-all text-xs",
@@ -480,7 +480,7 @@ export default function LeadLoader() {
                                             onClick={(e) => e.stopPropagation()}
                                             onCheckedChange={() => {
                                               toggleSelection(result.id);
-                                              setMapCenter([result.latitude + 0.04, result.longitude]);
+                                              setMapCenter([result.latitude - 0.15, result.longitude]);
                                             }}
                                             className="mt-0.5"
                                           />
