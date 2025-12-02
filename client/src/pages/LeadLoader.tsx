@@ -75,13 +75,41 @@ interface SearchResult {
   status?: string;
 }
 
-function MapUpdater({ center }: { center: [number, number] }) {
+interface MapUpdaterProps {
+  center: [number, number];
+  bounds: L.LatLngBounds | null;
+  selectedLocation: [number, number] | null;
+}
+
+function MapUpdater({ center, bounds, selectedLocation }: MapUpdaterProps) {
   const map = useMap();
+  
+  // Fit bounds when results change (show all results)
   useEffect(() => {
-    if (center[0] !== 0 && center[1] !== 0) {
+    if (bounds && bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
+    }
+  }, [bounds, map]);
+  
+  // Handle initial geocode center (when no bounds)
+  useEffect(() => {
+    if (!bounds && center[0] !== 0 && center[1] !== 0) {
       map.flyTo(center, 12);
     }
-  }, [center, map]);
+  }, [center, bounds, map]);
+  
+  // Pan to selected location with vertical offset so marker appears near top
+  useEffect(() => {
+    if (selectedLocation && selectedLocation[0] !== 0) {
+      map.flyTo(selectedLocation, map.getZoom(), { duration: 0.5 });
+      // After flying, pan down so marker appears in upper portion of map
+      setTimeout(() => {
+        const mapHeight = map.getSize().y;
+        map.panBy([0, -mapHeight * 0.25], { animate: true, duration: 0.3 });
+      }, 550);
+    }
+  }, [selectedLocation, map]);
+  
   return null;
 }
 
@@ -99,6 +127,7 @@ export default function LeadLoader() {
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [mapCenter, setMapCenter] = useState<[number, number]>([39.8283, -98.5795]);
+  const [selectedLocation, setSelectedLocation] = useState<[number, number] | null>(null);
 
   const [clientAdmins, setClientAdmins] = useState<SubContact[]>([{ id: "ca-1", name: "", role: "", email: "", phone: "" }]);
   const [providers, setProviders] = useState<SubContact[]>([{ id: "pv-1", name: "", role: "", email: "", phone: "" }]);
@@ -306,6 +335,15 @@ export default function LeadLoader() {
   };
 
   const geoResults = searchResults.filter(r => r.latitude && r.longitude);
+  
+  // Compute bounds from all geo results
+  const mapBounds = React.useMemo(() => {
+    if (geoResults.length === 0) return null;
+    const bounds = L.latLngBounds(
+      geoResults.map(r => [r.latitude, r.longitude] as L.LatLngTuple)
+    );
+    return bounds;
+  }, [geoResults]);
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
@@ -391,7 +429,7 @@ export default function LeadLoader() {
                                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                               />
-                              <MapUpdater center={mapCenter} />
+                              <MapUpdater center={mapCenter} bounds={mapBounds} selectedLocation={selectedLocation} />
                               
                               {geoResults.map((result) => {
                                 const isSelected = selectedIds.has(result.id);
@@ -403,7 +441,7 @@ export default function LeadLoader() {
                                     eventHandlers={{
                                       click: () => {
                                         toggleSelection(result.id);
-                                        setMapCenter([result.latitude - 0.15, result.longitude]);
+                                        setSelectedLocation([result.latitude, result.longitude]);
                                       },
                                     }}
                                   >
@@ -464,7 +502,9 @@ export default function LeadLoader() {
                                         key={result.id}
                                         onClick={() => {
                                           toggleSelection(result.id);
-                                          setMapCenter([result.latitude - 0.15, result.longitude]);
+                                          if (result.latitude && result.longitude) {
+                                            setSelectedLocation([result.latitude, result.longitude]);
+                                          }
                                         }}
                                         className={cn(
                                           "p-2 rounded-lg border cursor-pointer transition-all text-xs",
@@ -480,7 +520,9 @@ export default function LeadLoader() {
                                             onClick={(e) => e.stopPropagation()}
                                             onCheckedChange={() => {
                                               toggleSelection(result.id);
-                                              setMapCenter([result.latitude - 0.15, result.longitude]);
+                                              if (result.latitude && result.longitude) {
+                                                setSelectedLocation([result.latitude, result.longitude]);
+                                              }
                                             }}
                                             className="mt-0.5"
                                           />
