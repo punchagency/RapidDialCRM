@@ -23,6 +23,7 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}) {
   const [callDuration, setCallDuration] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [sdkLoaded, setSdkLoaded] = useState(false);
   
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const callStartTimeRef = useRef<number | null>(null);
@@ -31,29 +32,59 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}) {
   useEffect(() => {
     const loadTwilioSdk = async () => {
       if (window.Twilio?.Device) {
-        return; // Already loaded
+        console.log("Twilio SDK already loaded");
+        setSdkLoaded(true);
+        return;
       }
 
       return new Promise<void>((resolve, reject) => {
         const script = document.createElement("script");
         script.src = "https://sdk.twilio.com/js/client/v1.14/twilio.min.js";
         script.async = true;
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error("Failed to load Twilio SDK"));
+        script.onload = () => {
+          console.log("✓ Twilio SDK loaded successfully");
+          setSdkLoaded(true);
+          resolve();
+        };
+        script.onerror = () => {
+          const err = new Error("Failed to load Twilio SDK");
+          console.error(err);
+          reject(err);
+        };
         document.head.appendChild(script);
       });
     };
 
     loadTwilioSdk()
-      .then(() => console.log("Twilio SDK loaded"))
-      .catch((err) => setError(err.message));
+      .catch((err) => {
+        console.error("SDK load error:", err);
+        setError(err.message);
+      });
   }, []);
 
   // Initialize device with token
   const initializeDevice = useCallback(async () => {
+    if (!sdkLoaded) {
+      console.warn("SDK not yet loaded, waiting...");
+      // Wait for SDK to load
+      let attempts = 0;
+      while (!window.Twilio?.Device && attempts < 50) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+      }
+      
+      if (!window.Twilio?.Device) {
+        const msg = "Twilio SDK failed to load after timeout";
+        setError(msg);
+        console.error(msg);
+        return;
+      }
+    }
+
     if (!window.Twilio?.Device) {
-      setError("Twilio SDK not loaded");
-      console.error("Twilio SDK not loaded");
+      const msg = "Twilio SDK not available";
+      setError(msg);
+      console.error(msg);
       return;
     }
 
