@@ -14,6 +14,22 @@ import { getCityData } from "@/lib/cityData";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
+interface Appointment {
+  id: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  durationMinutes: number;
+  status: string;
+  prospectId: string;
+  prospectName: string;
+  prospectPhone: string;
+  prospectAddress: string;
+  prospectCity: string;
+  fieldRepId: string;
+  fieldRepName: string;
+  territory: string;
+}
+
 // Fix Leaflet icon issue
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
@@ -43,6 +59,8 @@ export default function FieldSales() {
   const [selectedCity, setSelectedCity] = useState<string>("miami");
   const { toast } = useToast();
   const [gcalConnected, setGcalConnected] = useState(false);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const storedGcal = localStorage.getItem("gcal_connected");
@@ -50,6 +68,45 @@ export default function FieldSales() {
       setGcalConnected(true);
     }
   }, []);
+
+  // Fetch appointments from API
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      setIsLoading(true);
+      try {
+        const territoryMap: Record<string, string> = {
+          miami: "Miami",
+          washington_dc: "Washington DC",
+          los_angeles: "Los Angeles",
+          new_york: "New York",
+          chicago: "Chicago",
+          dallas: "Dallas",
+        };
+        const territory = territoryMap[selectedCity] || "Miami";
+        
+        const response = await fetch(`/api/appointments/today?territory=${encodeURIComponent(territory)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setAppointments(data);
+          // Auto-select first appointment
+          if (data.length > 0 && !selectedStop) {
+            setSelectedStop(data[0].id);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch appointments:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load appointments",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAppointments();
+  }, [selectedCity]);
 
   // Get city name mapping
   const getCityName = (cityId: string): string => {
@@ -64,36 +121,34 @@ export default function FieldSales() {
     return cityMap[cityId] || "Miami";
   };
 
-  // Filter contacts by city
-  const cityName = getCityName(selectedCity);
-  const cityContacts = MOCK_CONTACTS.filter(c => c.city === cityName || c.city?.includes(cityName));
-  
-  // Filter to only "Visit Scheduled" status and assign times/distances
-  const getRoutesForCity = () => {
-    const scheduled = cityContacts
-      .filter(c => c.status === "Visit Scheduled")
-      .slice(0, 5); // Limit to 5 per city
-    
-    // Split between today and tomorrow
-    const today = scheduled.slice(0, 2).map((c, idx) => ({
-      ...c,
-      time: idx === 0 ? "09:00 AM" : "04:15 PM",
-      type: "Visit Scheduled" as const,
-      distance: idx === 0 ? "1.2 mi" : "1.5 mi"
-    }));
-    
-    const tomorrow = scheduled.slice(2).map((c, idx) => ({
-      ...c,
-      time: idx === 0 ? "08:30 AM" : idx === 1 ? "01:30 PM" : "03:00 PM",
-      type: "Visit Scheduled" as const,
-      distance: idx === 0 ? "22.1 mi" : idx === 1 ? "8.1 mi" : "2.5 mi"
-    }));
-    
-    return { today, tomorrow };
+  // Format time from 24-hour to 12-hour format
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${minutes} ${ampm}`;
   };
 
-  const routes = getRoutesForCity();
-  const currentRoute = selectedDate === "today" ? routes.today : routes.tomorrow;
+  // Convert appointment to stop format for display
+  const appointmentsToStops = (appts: Appointment[]) => {
+    return appts.map((apt, idx) => ({
+      id: apt.id,
+      company: apt.prospectName,
+      address: apt.prospectAddress,
+      name: apt.fieldRepName,
+      title: `Territory: ${apt.territory}`,
+      time: formatTime(apt.scheduledTime),
+      distance: idx === 0 ? "1.2 mi" : `${(idx * 0.8 + 1.5).toFixed(1)} mi`,
+      type: "Visit Scheduled" as const,
+      location_lat: 25.7617 + (idx * 0.01), // Approximate Miami area coords
+      location_lng: -80.1918 + (idx * 0.01),
+      phone: apt.prospectPhone,
+      status: apt.status,
+    }));
+  };
+
+  const currentRoute = appointmentsToStops(appointments);
   const activeStop = currentRoute.find(s => s.id === selectedStop) || currentRoute[0];
   
   const cityData = getCityData(selectedCity);
@@ -185,7 +240,11 @@ export default function FieldSales() {
                 viewMode === "map" ? "translate-x-full md:translate-x-0 opacity-0 md:opacity-100" : "translate-x-0 opacity-100"
             )}>
                 <div className="p-4 space-y-4">
-                    {currentRoute.length > 0 ? (
+                    {isLoading ? (
+                        <div className="p-8 text-center flex items-center justify-center">
+                            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                        </div>
+                    ) : currentRoute.length > 0 ? (
                         currentRoute.map((stop, index) => (
                             <div 
                                key={stop.id}
@@ -195,6 +254,7 @@ export default function FieldSales() {
                                  activeStop?.id === stop.id ? "border-primary" : "border-muted-foreground/20",
                                  index === currentRoute.length - 1 && "pb-0"
                                )}
+                               data-testid={`appointment-card-${stop.id}`}
                             >
                                <div className={cn(
                                  "absolute -left-[9px] top-0 h-4 w-4 rounded-full border-2 bg-background transition-colors",
@@ -207,25 +267,25 @@ export default function FieldSales() {
                                )}>
                                   <CardContent className="p-4">
                                      <div className="flex justify-between items-start mb-2">
-                                        <Badge variant="secondary" className="font-normal">{stop.time}</Badge>
-                                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Badge variant="secondary" className="font-normal" data-testid={`badge-time-${stop.id}`}>{stop.time}</Badge>
+                                        <span className="text-xs text-muted-foreground flex items-center gap-1" data-testid={`text-distance-${stop.id}`}>
                                            <MapPin className="h-3 w-3" /> {stop.distance}
                                         </span>
                                      </div>
-                                     <h3 className="font-semibold text-foreground">{stop.company}</h3>
-                                     <p className="text-sm text-muted-foreground mb-3">{stop.address}</p>
+                                     <h3 className="font-semibold text-foreground" data-testid={`text-prospect-${stop.id}`}>{stop.company}</h3>
+                                     <p className="text-sm text-muted-foreground mb-3" data-testid={`text-address-${stop.id}`}>{stop.address}</p>
                                      <div className="flex items-center gap-2">
                                         <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
                                             {stop.name.charAt(0)}
                                         </div>
-                                        <span className="text-xs font-medium">{stop.name}</span>
+                                        <span className="text-xs font-medium" data-testid={`text-rep-${stop.id}`}>{stop.name}</span>
                                      </div>
                                   </CardContent>
                                </Card>
                             </div>
                         ))
                     ) : (
-                        <div className="p-8 text-center text-muted-foreground">
+                        <div className="p-8 text-center text-muted-foreground" data-testid="text-no-visits">
                             No visits scheduled for this day.
                         </div>
                     )}
