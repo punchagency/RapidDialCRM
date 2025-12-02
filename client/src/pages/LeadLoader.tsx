@@ -153,6 +153,22 @@ export default function LeadLoader() {
     }
   }, [searchResults]);
 
+  const geocodeLocation = async (location: string) => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`
+      );
+      const data = await response.json();
+      if (data.length > 0) {
+        const { lat, lon } = data[0];
+        return [parseFloat(lat), parseFloat(lon)] as [number, number];
+      }
+    } catch (error) {
+      console.error("Geocoding error:", error);
+    }
+    return null;
+  };
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
@@ -167,6 +183,12 @@ export default function LeadLoader() {
       
       if (specialty.endsWith("s")) {
         specialty = specialty.slice(0, -1);
+      }
+      
+      // Geocode the location to center the map
+      const locationCoords = await geocodeLocation(location);
+      if (locationCoords) {
+        setMapCenter(locationCoords);
       }
       
       const res = await fetch("/api/bulk-search", {
