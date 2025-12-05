@@ -8,6 +8,7 @@ import { seedDatabase } from "./seedData";
 import { seedAllMockData } from "./seedAllData";
 import { generateAccessToken, getTwiMLForBrowserCall, makeOutboundCall, phoneNumber as twilioPhoneNumber } from "./services/twilio";
 import { searchProfessionalsByLocation, type ProfessionalSearchResult } from "./services/geocoding";
+import { generateLiveKitToken, isLiveKitConfigured, getLiveKitUrl, generateCallRoomName } from "./services/livekit";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Seed database on startup
@@ -707,6 +708,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
       configured: !!(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN),
       phoneNumber: twilioPhoneNumber ? twilioPhoneNumber.replace(/(\d{3})\d{4}(\d{4})/, "$1****$2") : null,
     });
+  });
+
+  // ========== LiveKit Routes ==========
+
+  // GET /api/livekit/config - Get LiveKit configuration status
+  app.get("/api/livekit/config", async (req, res) => {
+    res.json({
+      configured: isLiveKitConfigured(),
+      url: getLiveKitUrl(),
+    });
+  });
+
+  // POST /api/livekit/token - Generate LiveKit access token for audio/video calls
+  app.post("/api/livekit/token", async (req, res) => {
+    try {
+      const { identity, roomName, name } = req.body;
+      if (!identity) {
+        return res.status(400).json({ error: "Identity is required" });
+      }
+
+      const room = roomName || `room_${identity}_${Date.now()}`;
+      const token = await generateLiveKitToken(identity, room, { name });
+
+      res.json({
+        token,
+        identity,
+        roomName: room,
+        url: getLiveKitUrl(),
+      });
+    } catch (error) {
+      console.error("LiveKit token error:", error);
+      res.status(500).json({ error: "Failed to generate LiveKit token" });
+    }
+  });
+
+  // POST /api/livekit/call - Create a call room and generate token for caller
+  app.post("/api/livekit/call", async (req, res) => {
+    try {
+      const { callerId, callerName, phoneNumber, prospectId } = req.body;
+      if (!callerId || !phoneNumber) {
+        return res.status(400).json({ error: "callerId and phoneNumber are required" });
+      }
+
+      const roomName = generateCallRoomName(callerId, phoneNumber);
+      const token = await generateLiveKitToken(callerId, roomName, { name: callerName });
+
+      // Log call attempt if prospectId provided
+      if (prospectId) {
+        await storage.recordCallOutcome(prospectId, callerId, "Call initiated", `LiveKit Room: ${roomName}`);
+      }
+
+      res.json({
+        success: true,
+        roomName,
+        token,
+        url: getLiveKitUrl(),
+        phoneNumber,
+      });
+    } catch (error) {
+      console.error("LiveKit call error:", error);
+      res.status(500).json({ error: "Failed to create call room" });
+    }
+  });
+
+  // POST /api/livekit/end-call - End a call and record outcome
+  app.post("/api/livekit/end-call", async (req, res) => {
+    try {
+      const { roomName, prospectId, callerId, outcome, notes, duration } = req.body;
+      
+      if (prospectId && callerId) {
+        const outcomeText = outcome || "Call ended";
+        const noteText = notes || `Duration: ${duration || 0}s, Room: ${roomName}`;
+        await storage.recordCallOutcome(prospectId, callerId, outcomeText, noteText);
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("LiveKit end call error:", error);
+      res.status(500).json({ error: "Failed to record call end" });
+    }
   });
 
   // POST /api/bulk-search - Search for professionals by location and specialty
