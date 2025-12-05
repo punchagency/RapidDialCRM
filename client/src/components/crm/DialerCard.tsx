@@ -10,7 +10,7 @@ import { Phone, MapPin, Building2, Stethoscope, History, Mail, Check, ArrowRight
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getSpecialtyColors } from "@/lib/specialtyColors";
-import { useTwilioDevice, CallStatus } from "@/hooks/useTwilioDevice";
+import { useLiveKitDevice, CallStatus } from "@/hooks/useLiveKitDevice";
 
 interface DialerCardProps {
   prospect: Prospect;
@@ -39,7 +39,7 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
     hangUp,
     toggleMute,
     sendDigits,
-  } = useTwilioDevice({ identity: "crm-dialer" });
+  } = useLiveKitDevice({ identity: "crm-dialer" });
 
   useEffect(() => {
     initializeDevice();
@@ -71,7 +71,10 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
     }
 
     try {
-      await makeCall(prospect.phoneNumber);
+      await makeCall(prospect.phoneNumber, {
+        prospectId: prospect.id,
+        callerName: "CRM Dialer",
+      });
       toast({
         title: "Calling...",
         description: `Dialing ${prospect.phoneNumber}`,
