@@ -366,7 +366,10 @@ export default function Dashboard() {
                   const colors = roleColors[user.role] || { bg: "bg-gray-200", text: "text-gray-700" };
                   return (
                      <Link key={user.id} href={`/users/${user.id}`}>
-                        <div data-testid={`leaderboard-user-${user.id}`} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer">
+                        <div data-testid={`leaderboard-user-${user.id}`} className={cn(
+                           "flex items-center justify-between p-4 rounded-lg transition-colors cursor-pointer",
+                           index % 2 === 0 ? "bg-gray-50 hover:bg-gray-100" : "bg-white hover:bg-gray-50 border border-gray-100"
+                        )}>
                            <div className="flex items-center gap-3">
                               <div className={cn("h-10 w-10 rounded-full flex items-center justify-center font-bold", colors.bg, colors.text)}>
                                  {getInitials(user.name)}
