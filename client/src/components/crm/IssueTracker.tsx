@@ -1,5 +1,4 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import domtoimage from "dom-to-image-more";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Bug, Camera, Pencil, Type, Highlighter, Undo, Check, X, ChevronRight, ChevronLeft, ExternalLink } from "lucide-react";
+import { Bug, Camera, Pencil, Type, Highlighter, Undo, Check, X, ChevronRight, ChevronLeft, ExternalLink, Upload, Clipboard } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -40,7 +39,7 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
   const [step, setStep] = useState<Step>("capture");
   const [screenshot, setScreenshot] = useState<string | null>(null);
   const [annotatedImage, setAnnotatedImage] = useState<string | null>(null);
-  const [isCapturing, setIsCapturing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [selectedTool, setSelectedTool] = useState<Tool>("pen");
   const [penColor, setPenColor] = useState("#ff0000");
   const [title, setTitle] = useState("");
@@ -49,6 +48,8 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
   const [status, setStatus] = useState("backlog");
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
   const isDrawing = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
   const drawHistory = useRef<ImageData[]>([]);
@@ -94,86 +95,98 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
     setDescription("");
     setPriority("2");
     setStatus("backlog");
+    setIsDragging(false);
     drawHistory.current = [];
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
-  const captureScreenshot = useCallback(async () => {
-    setIsCapturing(true);
-    
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    try {
-      const appRoot = document.getElementById("root");
-      if (!appRoot) throw new Error("App root not found");
-      
-      const dataUrl = await domtoimage.toPng(appRoot, {
-        quality: 0.95,
-        bgcolor: "#ffffff",
-        cacheBust: true,
-        skipFonts: true,
-        preferredFontFormat: null,
-        style: {
-          transform: "none",
-        },
-        filter: (node: Node) => {
-          if (node instanceof Element) {
-            const tagName = node.tagName?.toLowerCase();
-            if (tagName === 'link' && node.getAttribute('href')?.includes('fonts.googleapis')) {
-              return false;
-            }
-            if (tagName === 'style' && node.textContent?.includes('@font-face')) {
-              return false;
-            }
-            const role = node.getAttribute('role');
-            const hasDialogClass = node.classList?.contains('issue-tracker-dialog');
-            const isRadixPortal = node.hasAttribute('data-radix-portal');
-            const isToast = node.classList?.contains('toaster');
-            return !role?.includes('dialog') && !hasDialogClass && !isRadixPortal && !isToast;
-          }
-          return true;
-        }
-      });
-      
-      if (!dataUrl || dataUrl === "data:,") {
-        throw new Error("Empty screenshot captured");
-      }
-      
-      setScreenshot(dataUrl);
-      setStep("annotate");
-      setIsCapturing(false);
-    } catch (error) {
-      console.error("Screenshot capture failed:", error);
-      
-      // Fallback: Try capturing just the main content area
-      try {
-        const mainContent = document.querySelector('main') || document.getElementById("root");
-        if (mainContent) {
-          const fallbackDataUrl = await domtoimage.toPng(mainContent as HTMLElement, {
-            quality: 0.9,
-            bgcolor: "#ffffff",
-            cacheBust: true,
-            useCredentials: true,
-          });
-          
-          if (fallbackDataUrl && fallbackDataUrl !== "data:,") {
-            setScreenshot(fallbackDataUrl);
-            setStep("annotate");
-            setIsCapturing(false);
-            return;
-          }
-        }
-      } catch (fallbackError) {
-        console.error("Fallback capture also failed:", fallbackError);
-      }
-      
-      setIsCapturing(false);
+  const handleImageFile = useCallback((file: File) => {
+    if (!file.type.startsWith('image/')) {
       toast({
-        title: "Capture Failed",
-        description: "Could not capture screenshot. You can skip and continue without a screenshot.",
+        title: "Invalid File",
+        description: "Please upload an image file (PNG, JPG, etc.)",
         variant: "destructive",
       });
+      return;
     }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      if (dataUrl) {
+        setScreenshot(dataUrl);
+        setStep("annotate");
+      }
+    };
+    reader.onerror = () => {
+      toast({
+        title: "Error",
+        description: "Failed to read the image file",
+        variant: "destructive",
+      });
+    };
+    reader.readAsDataURL(file);
   }, [toast]);
+
+  const handlePaste = useCallback((e: ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.startsWith('image/')) {
+        const file = items[i].getAsFile();
+        if (file) {
+          e.preventDefault();
+          handleImageFile(file);
+          return;
+        }
+      }
+    }
+  }, [handleImageFile]);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      handleImageFile(files[0]);
+    }
+  }, [handleImageFile]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleImageFile(file);
+    }
+    if (e.target) {
+      e.target.value = '';
+    }
+  }, [handleImageFile]);
+
+  useEffect(() => {
+    if (isOpen && step === "capture") {
+      document.addEventListener('paste', handlePaste);
+      return () => {
+        document.removeEventListener('paste', handlePaste);
+      };
+    }
+  }, [isOpen, step, handlePaste]);
 
   useEffect(() => {
     if (step === "annotate" && screenshot && canvasRef.current) {
@@ -289,7 +302,7 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
   };
 
   return (
-    <Dialog open={isOpen && !isCapturing} onOpenChange={() => { resetForm(); onClose(); }}>
+    <Dialog open={isOpen} onOpenChange={() => { resetForm(); onClose(); }}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto issue-tracker-dialog">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -311,32 +324,63 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
 
         {step === "capture" && (
           <div className="space-y-6 py-4">
-            <div className="text-center space-y-4">
-              <div className="w-20 h-20 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
-                <Camera className="h-10 w-10 text-primary" />
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileSelect}
+              accept="image/*"
+              className="hidden"
+              data-testid="file-input"
+            />
+            
+            <div 
+              ref={dropZoneRef}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              className={`
+                border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer
+                ${isDragging 
+                  ? "border-primary bg-primary/10" 
+                  : "border-gray-300 hover:border-primary hover:bg-primary/5"
+                }
+              `}
+              onClick={() => fileInputRef.current?.click()}
+              data-testid="drop-zone"
+            >
+              <div className="space-y-4">
+                <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+                  <Upload className="h-8 w-8 text-primary" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">Add Screenshot</h3>
+                  <p className="text-muted-foreground text-sm mt-2">
+                    <span className="font-medium">Drag & drop</span> an image here, or <span className="font-medium text-primary">click to browse</span>
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold">Capture Screenshot</h3>
-                <p className="text-muted-foreground text-sm mt-1">
-                  Click the button below to capture the current screen. 
-                  The dialog will close temporarily to take the screenshot.
-                </p>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="flex-1 border-t border-gray-200" />
+              <span className="text-sm text-muted-foreground">or</span>
+              <div className="flex-1 border-t border-gray-200" />
+            </div>
+
+            <div className="text-center space-y-3">
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Clipboard className="h-4 w-4" />
+                <span>Take a screenshot with your system tool, then <span className="font-medium">paste here</span> (Ctrl/Cmd+V)</span>
               </div>
-              <Button 
-                size="lg" 
-                onClick={captureScreenshot}
-                data-testid="capture-screenshot-button"
-              >
-                <Camera className="h-4 w-4 mr-2" />
-                Capture Screenshot
-              </Button>
+              <p className="text-xs text-muted-foreground">
+                Windows: Win+Shift+S | Mac: Cmd+Shift+4 | Then paste with Ctrl/Cmd+V
+              </p>
             </div>
             
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">or</p>
+            <div className="text-center pt-2">
               <Button 
-                variant="outline" 
-                className="mt-2"
+                variant="ghost" 
+                className="text-muted-foreground"
                 onClick={() => setStep("describe")}
               >
                 Skip Screenshot
