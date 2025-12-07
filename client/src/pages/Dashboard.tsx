@@ -358,7 +358,10 @@ export default function Dashboard() {
                <CardTitle>Leaderboard</CardTitle>
                <CardDescription>Team activity and performance</CardDescription>
             </CardHeader>
-            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+            <div className={cn(
+               "space-y-4",
+               leaderboardUsers.filter(u => u.isActive).length > 25 && "max-h-[600px] overflow-y-auto pr-2"
+            )}>
                {leaderboardUsers.filter(u => u.isActive).map((user, index) => {
                   const colors = roleColors[user.role] || { bg: "bg-gray-200", text: "text-gray-700" };
                   return (
