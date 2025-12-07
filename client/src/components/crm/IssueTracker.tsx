@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { domToPng } from "modern-screenshot";
+import domtoimage from "dom-to-image-more";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,29 +100,72 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
   const captureScreenshot = useCallback(async () => {
     setIsCapturing(true);
     
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, 500));
     
     try {
       const appRoot = document.getElementById("root");
       if (!appRoot) throw new Error("App root not found");
       
-      const dataUrl = await domToPng(appRoot, {
-        scale: 1,
-        backgroundColor: "#ffffff",
+      const dataUrl = await domtoimage.toPng(appRoot, {
+        quality: 0.95,
+        bgcolor: "#ffffff",
+        cacheBust: true,
+        skipFonts: true,
+        preferredFontFormat: null,
+        style: {
+          transform: "none",
+        },
         filter: (node: Node) => {
           if (node instanceof Element) {
-            return !node.getAttribute('role')?.includes('dialog') && 
-                   !node.classList?.contains('issue-tracker-dialog');
+            const tagName = node.tagName?.toLowerCase();
+            if (tagName === 'link' && node.getAttribute('href')?.includes('fonts.googleapis')) {
+              return false;
+            }
+            if (tagName === 'style' && node.textContent?.includes('@font-face')) {
+              return false;
+            }
+            const role = node.getAttribute('role');
+            const hasDialogClass = node.classList?.contains('issue-tracker-dialog');
+            const isRadixPortal = node.hasAttribute('data-radix-portal');
+            const isToast = node.classList?.contains('toaster');
+            return !role?.includes('dialog') && !hasDialogClass && !isRadixPortal && !isToast;
           }
           return true;
         }
       });
+      
+      if (!dataUrl || dataUrl === "data:,") {
+        throw new Error("Empty screenshot captured");
+      }
       
       setScreenshot(dataUrl);
       setStep("annotate");
       setIsCapturing(false);
     } catch (error) {
       console.error("Screenshot capture failed:", error);
+      
+      // Fallback: Try capturing just the main content area
+      try {
+        const mainContent = document.querySelector('main') || document.getElementById("root");
+        if (mainContent) {
+          const fallbackDataUrl = await domtoimage.toPng(mainContent as HTMLElement, {
+            quality: 0.9,
+            bgcolor: "#ffffff",
+            cacheBust: true,
+            useCredentials: true,
+          });
+          
+          if (fallbackDataUrl && fallbackDataUrl !== "data:,") {
+            setScreenshot(fallbackDataUrl);
+            setStep("annotate");
+            setIsCapturing(false);
+            return;
+          }
+        }
+      } catch (fallbackError) {
+        console.error("Fallback capture also failed:", fallbackError);
+      }
+      
       setIsCapturing(false);
       toast({
         title: "Capture Failed",
