@@ -1,4 +1,4 @@
-import { type Prospect, type InsertProspect, type FieldRep, type InsertFieldRep, type Appointment, type InsertAppointment, type Stakeholder, type InsertStakeholder, type User, type InsertUser, type SpecialtyColor, type InsertSpecialtyColor, type CallOutcome, type InsertCallOutcome, type UserTerritory, type InsertUserTerritory, type UserProfession, type InsertUserProfession, prospects, fieldReps, appointments, callHistory, stakeholders, users, specialtyColors, callOutcomes, userTerritories, userProfessions } from "@shared/schema";
+import { type Prospect, type InsertProspect, type FieldRep, type InsertFieldRep, type Appointment, type InsertAppointment, type Stakeholder, type InsertStakeholder, type User, type InsertUser, type SpecialtyColor, type InsertSpecialtyColor, type CallOutcome, type InsertCallOutcome, type UserTerritory, type InsertUserTerritory, type UserProfession, type InsertUserProfession, type Issue, type InsertIssue, prospects, fieldReps, appointments, callHistory, stakeholders, users, specialtyColors, callOutcomes, userTerritories, userProfessions, issues } from "@shared/schema";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { eq, and, desc, asc, isNull } from "drizzle-orm";
@@ -69,6 +69,13 @@ export interface IStorage {
   getUserProfessions(userId: string): Promise<UserProfession[]>;
   setUserProfessions(userId: string, professions: string[]): Promise<UserProfession[]>;
   listAllProfessions(): Promise<string[]>;
+
+  // Issues (project tracking)
+  getIssue(id: string): Promise<Issue | undefined>;
+  listIssues(status?: string): Promise<Issue[]>;
+  createIssue(issue: InsertIssue): Promise<Issue>;
+  updateIssue(id: string, issue: Partial<InsertIssue>): Promise<Issue | undefined>;
+  deleteIssue(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -358,6 +365,33 @@ export class DatabaseStorage implements IStorage {
 
   async listAllProfessions(): Promise<string[]> {
     return ["Dental", "Chiropractor", "Optometry", "Physical Therapy", "Orthodontics", "Legal", "Financial", "Real Estate"];
+  }
+
+  // Issues (project tracking)
+  async getIssue(id: string): Promise<Issue | undefined> {
+    const result = await db.select().from(issues).where(eq(issues.id, id)).limit(1);
+    return result[0];
+  }
+
+  async listIssues(status?: string): Promise<Issue[]> {
+    if (status) {
+      return await db.select().from(issues).where(eq(issues.status, status)).orderBy(desc(issues.createdAt));
+    }
+    return await db.select().from(issues).orderBy(desc(issues.createdAt));
+  }
+
+  async createIssue(issue: InsertIssue): Promise<Issue> {
+    const [result] = await db.insert(issues).values(issue).returning();
+    return result;
+  }
+
+  async updateIssue(id: string, issue: Partial<InsertIssue>): Promise<Issue | undefined> {
+    const [result] = await db.update(issues).set({ ...issue, updatedAt: new Date() }).where(eq(issues.id, id)).returning();
+    return result;
+  }
+
+  async deleteIssue(id: string): Promise<void> {
+    await db.delete(issues).where(eq(issues.id, id));
   }
 }
 

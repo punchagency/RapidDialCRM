@@ -1,7 +1,8 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertProspectSchema, insertFieldRepSchema, insertAppointmentSchema, insertStakeholderSchema, insertUserSchema, insertSpecialtyColorSchema, insertCallOutcomeSchema } from "@shared/schema";
+import { insertProspectSchema, insertFieldRepSchema, insertAppointmentSchema, insertStakeholderSchema, insertUserSchema, insertSpecialtyColorSchema, insertCallOutcomeSchema, insertIssueSchema } from "@shared/schema";
+import { createLinearIssue, getLinearIssues, getLinearTeams, getLinearLabels } from "./services/linear";
 import { generateSmartCallingList, calculatePriorityScore } from "./services/optimization";
 import { geocodeProspects, getFullAddressFromHere } from "./services/geocoding";
 import { seedDatabase } from "./seedData";
@@ -853,6 +854,122 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Bulk add error:", error);
       res.status(500).json({ error: "Failed to add contacts" });
+    }
+  });
+
+  // ==================== ISSUE TRACKING ENDPOINTS ====================
+
+  // GET /api/issues - List all issues
+  app.get("/api/issues", async (req, res) => {
+    try {
+      const status = req.query.status as string | undefined;
+      const issues = await storage.listIssues(status);
+      res.json(issues);
+    } catch (error) {
+      console.error("List issues error:", error);
+      res.status(500).json({ error: "Failed to fetch issues" });
+    }
+  });
+
+  // GET /api/issues/:id - Get single issue
+  app.get("/api/issues/:id", async (req, res) => {
+    try {
+      const issue = await storage.getIssue(req.params.id);
+      if (!issue) {
+        return res.status(404).json({ error: "Issue not found" });
+      }
+      res.json(issue);
+    } catch (error) {
+      console.error("Get issue error:", error);
+      res.status(500).json({ error: "Failed to fetch issue" });
+    }
+  });
+
+  // POST /api/issues - Create issue and optionally sync to Linear
+  app.post("/api/issues", async (req, res) => {
+    try {
+      const data = insertIssueSchema.parse(req.body);
+      const syncToLinear = req.body.syncToLinear !== false;
+      
+      let linearIssueId = null;
+      let linearIssueUrl = null;
+      
+      if (syncToLinear) {
+        try {
+          const linearResult = await createLinearIssue({
+            title: data.title,
+            description: data.description || undefined,
+            priority: data.priority || 2,
+          });
+          
+          if (linearResult.success && linearResult.issue) {
+            const linearIssue = await linearResult.issue;
+            linearIssueId = linearIssue.id;
+            linearIssueUrl = linearIssue.url;
+          }
+        } catch (linearError) {
+          console.warn("Failed to sync to Linear:", linearError);
+        }
+      }
+      
+      const issue = await storage.createIssue({
+        ...data,
+        linearIssueId,
+        linearIssueUrl,
+      });
+      
+      res.status(201).json(issue);
+    } catch (error) {
+      console.error("Create issue error:", error);
+      res.status(400).json({ error: "Invalid issue data" });
+    }
+  });
+
+  // PATCH /api/issues/:id - Update issue
+  app.patch("/api/issues/:id", async (req, res) => {
+    try {
+      const issue = await storage.updateIssue(req.params.id, req.body);
+      if (!issue) {
+        return res.status(404).json({ error: "Issue not found" });
+      }
+      res.json(issue);
+    } catch (error) {
+      console.error("Update issue error:", error);
+      res.status(500).json({ error: "Failed to update issue" });
+    }
+  });
+
+  // DELETE /api/issues/:id - Delete issue
+  app.delete("/api/issues/:id", async (req, res) => {
+    try {
+      await storage.deleteIssue(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete issue error:", error);
+      res.status(500).json({ error: "Failed to delete issue" });
+    }
+  });
+
+  // GET /api/linear/teams - Get Linear teams
+  app.get("/api/linear/teams", async (req, res) => {
+    try {
+      const teams = await getLinearTeams();
+      res.json(teams);
+    } catch (error) {
+      console.error("Get Linear teams error:", error);
+      res.status(500).json({ error: "Failed to fetch Linear teams" });
+    }
+  });
+
+  // GET /api/linear/issues - Get issues from Linear
+  app.get("/api/linear/issues", async (req, res) => {
+    try {
+      const teamId = req.query.teamId as string | undefined;
+      const issues = await getLinearIssues(teamId);
+      res.json(issues);
+    } catch (error) {
+      console.error("Get Linear issues error:", error);
+      res.status(500).json({ error: "Failed to fetch Linear issues" });
     }
   });
 
