@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { toPng } from "html-to-image";
+import { domToPng } from "modern-screenshot";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -99,34 +99,38 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
 
   const captureScreenshot = useCallback(async () => {
     setIsCapturing(true);
-    onClose();
     
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 300));
     
     try {
       const appRoot = document.getElementById("root");
       if (!appRoot) throw new Error("App root not found");
       
-      const dataUrl = await toPng(appRoot, {
-        quality: 0.95,
-        pixelRatio: 1,
-        skipFonts: true,
-        cacheBust: true,
+      const dataUrl = await domToPng(appRoot, {
+        scale: 1,
+        backgroundColor: "#ffffff",
+        filter: (node: Node) => {
+          if (node instanceof Element) {
+            return !node.getAttribute('role')?.includes('dialog') && 
+                   !node.classList?.contains('issue-tracker-dialog');
+          }
+          return true;
+        }
       });
       
       setScreenshot(dataUrl);
       setStep("annotate");
+      setIsCapturing(false);
     } catch (error) {
       console.error("Screenshot capture failed:", error);
+      setIsCapturing(false);
       toast({
         title: "Capture Failed",
-        description: "Could not capture screenshot. Try again.",
+        description: "Could not capture screenshot. You can skip and continue without a screenshot.",
         variant: "destructive",
       });
-    } finally {
-      setIsCapturing(false);
     }
-  }, [onClose, toast]);
+  }, [toast]);
 
   useEffect(() => {
     if (step === "annotate" && screenshot && canvasRef.current) {
@@ -241,13 +245,9 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
     });
   };
 
-  if (isCapturing) {
-    return null;
-  }
-
   return (
-    <Dialog open={isOpen} onOpenChange={() => { resetForm(); onClose(); }}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={isOpen && !isCapturing} onOpenChange={() => { resetForm(); onClose(); }}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto issue-tracker-dialog">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Bug className="h-5 w-5" />
