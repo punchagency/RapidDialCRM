@@ -133,7 +133,7 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
           {/* Business Name */}
           <div>
             <Label htmlFor="business-name" className="text-sm font-medium mb-2 block">
-              Business Name
+              Name
             </Label>
             <div className="relative">
               <Input
@@ -143,10 +143,24 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
                   setFormData(prev => ({ ...prev, businessName: e.target.value }));
                   handleAddressSearch(e.target.value);
                 }}
-                placeholder="Business name (searches HERE Maps)"
+                placeholder="Contact or business name"
                 data-testid="edit-name-input"
               />
             </div>
+          </div>
+
+          {/* Phone Number */}
+          <div>
+            <Label htmlFor="phone-number" className="text-sm font-medium mb-2 block">
+              Phone Number
+            </Label>
+            <Input
+              id="phone-number"
+              value={formData.phoneNumber}
+              onChange={(e) => setFormData(prev => ({ ...prev, phoneNumber: e.target.value }))}
+              placeholder="(555) 555-5555"
+              data-testid="edit-phone-input"
+            />
           </div>
 
           {/* Address Search */}
