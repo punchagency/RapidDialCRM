@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Phone, LayoutDashboard, Users, BarChart3, Settings, LogOut, Map, Plug, Headphones, Star, Briefcase, ShieldCheck, Network, UserCog, Database, Headset, FileText, Lock, Eye, X, ChevronDown, User as UserIcon } from "lucide-react";
+import { Phone, LayoutDashboard, Users, BarChart3, Settings, LogOut, Map, Plug, Headphones, Star, Briefcase, ShieldCheck, Network, UserCog, Database, Headset, FileText, Lock, Eye, X, ChevronDown, User as UserIcon, Bug } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import avatar from "@assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
 import managerAvatar from "@assets/generated_images/Professional_user_avatar_2_9f00e114.png";
@@ -81,6 +81,7 @@ export function Sidebar() {
       { icon: Map, label: "Territory", href: "/map", permission: "territories_view" as const },
       { icon: BarChart3, label: "Analytics", href: "/analytics", permission: "analytics_view" as const },
       { icon: FileText, label: "Scripts", href: "/scripts", permission: "scripts_view" as const },
+      { icon: Bug, label: "Issues", href: "/issues", permission: "dashboard_view" as const },
     ];
     return baseItems.filter(item => canAccess(item.permission));
   };

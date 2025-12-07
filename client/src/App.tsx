@@ -19,7 +19,9 @@ import HipaaCompliance from "@/pages/HipaaCompliance";
 import ScriptsManagement from "@/pages/ScriptsManagement";
 import PermissionsSummary from "@/pages/PermissionsSummary";
 import UserProfile from "@/pages/UserProfile";
+import Issues from "@/pages/Issues";
 import { UserRoleProvider } from "@/lib/UserRoleContext";
+import { IssueTrackerButton } from "@/components/crm/IssueTracker";
 
 function Router() {
   return (
@@ -42,6 +44,7 @@ function Router() {
       <Route path="/scripts" component={ScriptsManagement} />
       <Route path="/permissions" component={PermissionsSummary} />
       <Route path="/users/:id" component={UserProfile} />
+      <Route path="/issues" component={Issues} />
       
       <Route component={NotFound} />
     </Switch>
@@ -55,6 +58,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
+          <IssueTrackerButton />
         </TooltipProvider>
       </UserRoleProvider>
     </QueryClientProvider>
