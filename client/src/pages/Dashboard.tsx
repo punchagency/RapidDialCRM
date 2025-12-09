@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { GamificationWidget } from "@/components/crm/GamificationWidget";
 import { getStatuses } from "@/lib/statusUtils";
-import { Prospect, User } from "@shared/schema";
+import { Prospect, User } from "@/lib/types";
 import { fetchProspects } from "@/lib/apiClient";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -534,3 +534,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

@@ -69,3 +69,4 @@ export function getCityData(cityId: string): City {
 export function getAllCities(): City[] {
   return Object.values(CITIES);
 }
+

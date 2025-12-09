@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Prospect } from "@shared/schema";
+import { Prospect } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -395,3 +395,4 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
     </div>
   );
 }
+

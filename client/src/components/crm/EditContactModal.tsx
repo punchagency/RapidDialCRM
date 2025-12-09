@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
-import { Prospect } from "@shared/schema";
+import { Prospect } from "@/lib/types";
 import { geocodeAddress } from "@/lib/geocoding";
 import { Search, MapPin } from "lucide-react";
 
@@ -257,3 +257,4 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
     </Dialog>
   );
 }
+

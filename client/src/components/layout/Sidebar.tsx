@@ -9,7 +9,7 @@ import { getRoleLabel, getRoleColor, UserRole } from "@/lib/permissions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { User } from "@shared/schema";
+import { User } from "@/lib/types";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -341,3 +341,4 @@ export function Sidebar() {
     </div>
   );
 }
+

@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { User, Phone, Mail, MapPin, Briefcase, Calendar, ArrowLeft, Eye, Edit2, Save, X, Shield, ChevronRight } from "lucide-react";
-import { User as UserType } from "@shared/schema";
+import { User as UserType } from "@/lib/types";
 import { useUserRole } from "@/lib/UserRoleContext";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -365,3 +365,4 @@ export default function UserProfile() {
     </div>
   );
 }
+

@@ -161,3 +161,4 @@ export function getRoleColor(role: UserRole): string {
   };
   return colors[role];
 }
+

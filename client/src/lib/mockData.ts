@@ -57598,3 +57598,4 @@ export const MOCK_CALLS: RecordedCall[] = [
         transcript: "Alex: Hi Sarah, just checking on the inventory needs.\n\nSarah: We're still assessing. Can you give us another week?\n\nAlex: Absolutely. I'll mark my calendar for next Friday."
     }
 ];
+

@@ -1,4 +1,4 @@
-import { Prospect, FieldRep, Appointment } from "@shared/schema";
+import { Prospect, FieldRep, Appointment } from "@/lib/types";
 
 const API_BASE = "";
 
@@ -56,3 +56,4 @@ export async function listAppointments(fieldRepId: string, date: string): Promis
   if (!response.ok) throw new Error("Failed to fetch appointments");
   return response.json();
 }
+

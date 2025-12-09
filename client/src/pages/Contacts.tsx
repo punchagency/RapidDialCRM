@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { Prospect } from "@shared/schema";
+import { Prospect } from "@/lib/types";
 import { getStatuses } from "@/lib/statusUtils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -161,3 +161,4 @@ export default function Contacts() {
     </div>
   );
 }
+

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { DialerCard } from "@/components/crm/DialerCard";
-import { Prospect } from "@shared/schema";
+import { Prospect } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit } from "lucide-react";
 import { Link, useLocation } from "wouter";
@@ -206,3 +206,4 @@ export default function Dialer() {
     </div>
   );
 }
+

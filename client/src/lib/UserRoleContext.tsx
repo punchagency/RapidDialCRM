@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { UserRole, canAccess as checkPermission, PermissionMatrix } from "./permissions";
-import { User } from "@shared/schema";
+import { User } from "@/lib/types";
 
 interface ImpersonationState {
   isActive: boolean;
@@ -116,3 +116,4 @@ export function mapLegacyRole(legacyRole: string): UserRole {
   };
   return mapping[legacyRole] || "sales_rep";
 }
+

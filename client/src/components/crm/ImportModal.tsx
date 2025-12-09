@@ -92,3 +92,4 @@ function MappingRow({ source, target }: { source: string, target: string }) {
     </div>
   );
 }
+

@@ -140,3 +140,4 @@ export function EmailComposer({ recipientEmail, recipientName, recipientCompany 
     </div>
   );
 }
+
