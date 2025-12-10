@@ -1,209 +1,211 @@
-# QuantumPunch
+# RapidDialCRM Client
 
-A HIPAA-compliant CRM system designed for healthcare sales teams managing high-volume sales calls (30-50 calls/day). Built with modern web technologies and security at its core.
+Frontend application for RapidDialCRM - a modern, responsive sales and appointment scheduling CRM system.
 
-## 🎯 Overview
+## Overview
 
-QuantumPunch is a comprehensive sales management platform specifically engineered for the healthcare industry. It provides four distinct user interfaces tailored to different roles—inside sales reps, field sales reps, managers, and lead loaders—each with customized dashboards, workflows, and features.
+This is the React/Vite frontend that provides:
 
-## 🔐 HIPAA Compliance
+- Intuitive UI for managing prospects,appointments, and field reps
+- Interactive maps for territory visualization
+- Real-time calling features with Twilio
+- LiveKit integration for communications
+- Responsive design with Tailwind CSS
+- Component library built with Radix UI
 
-QuantumPunch is built from the ground up to meet and exceed HIPAA standards for safeguarding Protected Health Information (PHI):
+## Prerequisites
 
-- **End-to-End Encryption**: TLS 1.3 in transit, AES-256 at rest
-- **Access Controls**: Role-Based Access Control (RBAC) with Multi-Factor Authentication (MFA)
-- **Audit Logging**: Immutable audit trails for all data access and modifications
-- **Business Associate Agreement**: Full BAA compliance for covered entities
-- **Physical Security**: SOC 2 Type II and ISO 27001 certified infrastructure
-- **Vulnerability Management**: Weekly security scans and annual penetration testing
+- Node.js 18+ and npm
+- Running RapidDialCRM server (see server README)
 
-Read more: [HIPAA Compliance & Security](/hipaa)
+## Installation
 
-## 👥 User Roles
+1. Install dependencies:
 
-### Inside Sales Reps
-- **Power Dialer Integration**: QuantumPunch API telephony for efficient cold calling
-- **Daily Call Goals**: Track calls made vs. targets
-- **Call Outcome Tracking**: Customizable call statuses with color coding and icons
-- **Contact Management**: Quick access to customer information during calls
-
-### Field Sales Reps
-- **Interactive Territory Mapping**: OpenStreetMap integration for route planning
-- **Visit Goals**: Track daily appointments and meeting targets
-- **Real-time Route Planning**: Optimize visit sequences and travel time
-- **Territory Management**: Monitor assigned accounts and prospects
-
-### Managers
-- **Performance Dashboards**: Real-time metrics for team productivity
-- **Multi-tab Analytics**:
-  - Call Review: Inside rep performance tracking
-  - Field Rep Metrics: Visit goals, route efficiency, territory coverage
-  - Inside Rep Metrics: Call volume, conversion rates, outcomes
-- **Team Org Chart**: Visual hierarchy and team structure
-- **Reporting & Insights**: Team-wide performance analytics
-
-### Lead Loaders
-- **Bulk Import**: Manage large-scale lead pipeline uploads
-- **Data Quality Metrics**: Track upload success rates and data accuracy
-- **Lead Pipeline Management**: Monitor lead status from upload to assignment
-- **Update Speed Visibility**: Performance metrics on data processing
-
-## ✨ Key Features
-
-### Core Functionality
-- **Email Tracking**: Integration with professional email templates
-- **Google Calendar Sync**: Automatic appointment scheduling and updates
-- **Gamification**: Points, leaderboards, and achievement badges to drive engagement
-- **Profession-Specific Templates**: Pre-built email and communication templates by industry
-- **Contact Management**: Comprehensive contact database with custom fields
-
-### Contacts & Stakeholders
-- **Client Admin Contacts**: Required contact point for account management
-- **Provider Contacts**: Medical/clinical decision makers
-- **Contact Cards**: Click-through to Power Dialer for seamless calling
-
-### Settings & Configuration
-- **Custom Call Statuses**: Define unlimited call outcome types with colors and icons
-- **Team Structure Management**: Build and manage organization hierarchies
-- **Security Settings**: Control access permissions and authentication
-- **Integration Settings**: Connect to external services (Google Calendar, Email, etc.)
-- **Professional Customization**: Configure profession types, templates, and notification rules
-
-## 🛠 Technology Stack
-
-### Frontend
-- **React 18** - UI framework
-- **TypeScript** - Type-safe development
-- **Vite** - Lightning-fast build tool
-- **Tailwind CSS** - Utility-first styling
-- **Radix UI** - Accessible component primitives
-- **Lucide React** - Beautiful icon library
-- **Wouter** - Lightweight routing
-- **React Query** - Server state management
-
-### Styling & Design
-- **Tailwind CSS** - Responsive design
-- **Tailwind Merge** - Class composition
-- **Radix UI** - Accessible components
-- **Framer Motion** - Animations and transitions
-
-### Maps & Location
-- **Leaflet** - Interactive map library
-- **React Leaflet** - React bindings for Leaflet
-
-### Forms & Validation
-- **React Hook Form** - Efficient form management
-- **Zod** - TypeScript-first schema validation
-- **Drizzle ORM** - Type-safe database queries
-
-### Notifications & UX
-- **Sonner** - Toast notifications
-- **React Day Picker** - Date selection components
-
-## 📁 Project Structure
-
-```
-client/
-├── src/
-│   ├── pages/              # Page components
-│   │   ├── Dashboard.tsx    # Role-specific dashboards
-│   │   ├── Dialer.tsx       # Power Dialer interface
-│   │   ├── Settings.tsx     # Settings management
-│   │   ├── Contacts.tsx     # Contact management
-│   │   ├── HipaaCompliance.tsx
-│   │   └── ...
-│   ├── components/          # Reusable React components
-│   │   ├── layout/          # Layout components (Sidebar, Header, etc.)
-│   │   ├── crm/             # CRM-specific components
-│   │   └── ui/              # UI components (buttons, forms, etc.)
-│   ├── lib/                 # Utilities and context
-│   │   ├── UserRoleContext.tsx
-│   │   ├── statusUtils.ts
-│   │   └── ...
-│   └── App.tsx              # Main app component
-├── index.html
-└── package.json
-```
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js 18+ 
-- npm or yarn
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd quantumpunch
-```
-
-2. Install dependencies:
 ```bash
 npm install
 ```
 
-3. Start the development server:
+2. Copy `.env.example` to `.env.local` and configure:
+
+```bash
+cp .env.example .env.local
+```
+
+3. Update `.env.local` with your values:
+
+```env
+VITE_API_URL=http://localhost:5000
+VITE_HERE_API_KEY=your_here_api_key
+```
+
+## Development
+
+Start the development server:
+
 ```bash
 npm run dev
 ```
 
-The application will be available at `http://localhost:5000`
+The app will be available at `http://localhost:5173` (Vite's default port)
 
-### Development Commands
+**Important**: Make sure the backend server is running at `http://localhost:5000` before starting the client.
 
-- `npm run dev` - Start development server
+## Environment Variables
+
+### Required Variables
+
+- `VITE_API_URL` - Backend API URL (default: `http://localhost:5000`)
+
+### Optional Variables
+
+- `VITE_HERE_API_KEY` - HERE Maps API key for map features (falls back to server-side geocoding if not set)
+
+## Scripts
+
+- `npm run dev` - Start development server with hot reload
 - `npm run build` - Build for production
 - `npm run preview` - Preview production build locally
-- `npm run type-check` - Run TypeScript type checking
+- `npm run check` - Type-check TypeScript
 
-## 🎨 Design System
+## Features
 
-The application uses a cohesive Miami-inspired aesthetic with:
-- **Color Palette**: Primary pink/magenta with emerald accents for security
-- **Typography**: Bold display fonts paired with clean body fonts
-- **Spacing**: Generous whitespace and considered layouts
-- **Depth**: Subtle shadows, gradients, and backdrop effects
-- **Interactions**: Smooth transitions and responsive hover states
+### Core Features
 
-## 📊 Data Management
+- **Prospect Management** - Create, view, and update business prospects
+- **Appointment Scheduling** - Schedule and manage field appointments
+- **Territory Management** - Visualize prospects on interactive maps
+- **Call Management** - Make calls directly from the app via Twilio
+- **Real-time Communication** - LiveKit integration for voice/video
+- **User Management** - Role-based access control (RBAC)
 
-- **Local State**: React hooks for component state
-- **Global State**: UserRoleContext for role management
-- **Server State**: React Query for API data
-- **Persistence**: LocalStorage for client-side preferences
+### UI Components
 
-## 🔒 Security Features
+- Built with React 19 and modern hooks
+- Shadcn/ui component library (Radix UI primitives)
+- Tailwind CSS for styling
+- Dark mode support
+- Responsive design for mobile and desktop
 
-- Role-based access control per user
-- Immutable audit logs for all actions
-- Encrypted data storage
-- Secure session management
-- HIPAA-compliant data handling
+## Project Structure
 
-## 📝 Testing
+```
+client-new/
+├── src/
+│   ├── components/          # Reusable UI components
+│   │   ├── ui/             # Base UI components (shadcn/ui)
+│   │   └── ...             # Feature-specific components
+│   ├── hooks/              # Custom React hooks
+│   ├── lib/                # Utilities and helpers
+│   │   ├── api.ts          # API client functions
+│   │   └── utils.ts        # General utilities
+│   ├── pages/              # Route pages/views
+│   ├── App.tsx             # Main app component with routing
+│   └── main.tsx            # Application entry point
+├── public/                 # Static assets
+├── index.html             # HTML entry point
+├── vite.config.ts         # Vite configuration
+├── tsconfig.json          # TypeScript configuration
+├── tailwind.config.js     # Tailwind CSS configuration
+├── components.json        # Shadcn/ui configuration
+└── package.json
+```
 
-Test IDs are added to all interactive elements and meaningful information displays following the pattern:
-- Interactive: `{action}-{target}` (e.g., `button-submit`)
-- Display: `{type}-{content}` (e.g., `text-username`)
-- Dynamic: `{type}-{description}-{id}` (e.g., `card-product-${id}`)
+## Building for Production
 
-## 🤝 Contributing
+Create a production build:
 
-1. Create a feature branch (`git checkout -b feature/amazing-feature`)
-2. Commit changes (`git commit -m 'Add amazing feature'`)
-3. Push to branch (`git push origin feature/amazing-feature`)
-4. Open a Pull Request
+```bash
+npm run build
+```
 
-## 📜 License
+This generates optimized static files in the `dist/` directory.
 
-This project is proprietary and confidential. All rights reserved.
+Preview the production build locally:
 
-## 📞 Support
+```bash
+npm run preview
+```
 
-For issues, feature requests, or questions about HIPAA compliance, please contact the development team.
+## Deployment
 
----
+The built `dist/` folder can be deployed to any static hosting service:
 
-Built with ❤️ for healthcare sales teams.
+- **Vercel**: `vercel deploy`
+- **Netlify**: `netlify deploy`
+- **AWS S3 + CloudFront**: Upload `dist/` to S3 bucket
+- **GitHub Pages**: Deploy `dist/` folder
+
+**Important**: Update `VITE_API_URL` to point to your production API server.
+
+## API Integration
+
+The client communicates with the backend via REST API. All API calls go through `/api/*` endpoints.
+
+During development, Vite proxies these requests to the backend server (configured in `vite.config.ts`).
+
+In production, ensure your deployment handles API routing correctly or update `VITE_API_URL` to the full backend URL.
+
+## Common Development Tasks
+
+### Adding a New Page
+
+1. Create component in `src/pages/`
+2. Add route in `src/App.tsx`
+3. Add navigation link in relevant component
+
+### Adding a New UI Component
+
+1. For shadcn/ui components: Use the CLI or copy from shadcn/ui docs
+2. Place in `src/components/ui/`
+3. Import and use in your pages/components
+
+### Making API Calls
+
+1. Define API function in `src/lib/api.ts`
+2. Use React Query hooks in components for data fetching
+3. Handle loading and error states
+
+## Troubleshooting
+
+### Cannot connect to API
+
+- Verify backend server is running on port 5000
+- Check `VITE_API_URL` in `.env.local`
+- Check browser console for CORS errors
+
+### Maps not loading
+
+- Verify `VITE_HERE_API_KEY` is set
+- Check browser console for API key errors
+- Ensure key has correct permissions
+
+### Build errors
+
+- Clear node_modules and reinstall: `rm -rf node_modules && npm install`
+- Clear Vite cache: `rm -rf .vite`
+- Check TypeScript errors: `npm run check`
+
+### Hot reload not working
+
+- Check Vite dev server is running
+- Try restarting the dev server
+- Clear browser cache
+
+## Tech Stack
+
+- **Framework**: React 19
+- **Build Tool**: Vite 7
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS 4
+- **UI Components**: Radix UI
+- **State Management**: React Query (TanStack Query)
+- **Routing**: Wouter
+- **Forms**: React Hook Form + Zod
+- **Maps**: Leaflet + React Leaflet
+- **Charts**: Recharts
+- **Icons**: Lucide React
+
+## License
+
+MIT
