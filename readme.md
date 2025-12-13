@@ -1,427 +1,211 @@
-# RapidDial CRM Client
+# RapidDialCRM Client
 
-A modern, responsive React frontend for the RapidDial CRM system, built with TypeScript, Vite, and React Query.
+Frontend application for RapidDialCRM - a modern, responsive sales and appointment scheduling CRM system.
 
-## 🚀 Features
+## Overview
 
-- **Modern React**: Built with React 19 and latest hooks
-- **TypeScript**: Full type safety throughout the application
-- **React Query**: Powerful data fetching and caching with TanStack Query
-- **Custom API Integration**: Centralized API client with automatic error handling
-- **Real-time Communication**: LiveKit integration for voice/video calls
-- **Interactive Maps**: Leaflet maps for territory visualization
-- **Responsive Design**: Mobile-first design with Tailwind CSS
-- **Component Library**: Radix UI primitives with shadcn/ui
-- **Role-Based Access**: Permission-based UI rendering
-- **Issue Tracking**: Integrated issue reporting with Linear sync
+This is the React/Vite frontend that provides:
 
-## 📋 Prerequisites
+- Intuitive UI for managing prospects,appointments, and field reps
+- Interactive maps for territory visualization
+- Real-time calling features with Twilio
+- LiveKit integration for communications
+- Responsive design with Tailwind CSS
+- Component library built with Radix UI
 
-- Node.js 18+ and yarn
-- Running CRM backend server (see `crm-backend/README.md`)
-- (Optional) HERE Maps API key for geocoding features
-- (Optional) Twilio/LiveKit credentials for calling features
+## Prerequisites
 
-## 🛠️ Installation
+- Node.js 18+ and npm
+- Running RapidDialCRM server (see server README)
 
-1. **Navigate to the client directory:**
-   ```bash
-   cd web-crm-client
-   ```
+## Installation
 
-2. **Install dependencies:**
-   ```bash
-   yarn install
-   ```
+1. Install dependencies:
 
-3. **Set up environment variables:**
-   ```bash
-   cp .env.example .env.local
-   ```
-
-4. **Configure your `.env.local` file:**
-   ```env
-   # Backend API URL
-   VITE_CUSTOM_SERVER_URL=http://localhost:3001
-
-   # Optional: HERE Maps API Key
-   VITE_HERE_API_KEY=your_here_api_key
-   ```
-
-## 🏃 Running the Application
-
-### Development Mode
 ```bash
-yarn dev
+npm install
 ```
 
-The application will be available at `http://localhost:5173` (Vite's default port).
+2. Copy `.env.example` to `.env.local` and configure:
 
-**Important**: Ensure the backend server is running at the URL specified in `VITE_CUSTOM_SERVER_URL`.
-
-### Production Build
 ```bash
-yarn build
+cp .env.example .env.local
 ```
 
-This creates an optimized production build in the `dist/` directory.
+3. Update `.env.local` with your values:
 
-### Preview Production Build
+```env
+VITE_API_URL=http://localhost:5000
+VITE_HERE_API_KEY=your_here_api_key
+```
+
+## Development
+
+Start the development server:
+
 ```bash
-yarn preview
+npm run dev
 ```
 
-### Type Checking
-```bash
-yarn check
-```
+The app will be available at `http://localhost:5173` (Vite's default port)
 
-## 📁 Project Structure
+**Important**: Make sure the backend server is running at `http://localhost:5000` before starting the client.
 
-```
-web-crm-client/
-├── src/
-│   ├── App.tsx                    # Main app component with routing
-│   ├── main.tsx                   # Application entry point
-│   ├── index.css                  # Global styles
-│   │
-│   ├── components/
-│   │   ├── ui/                    # Base UI components (shadcn/ui)
-│   │   │   ├── button.tsx
-│   │   │   ├── card.tsx
-│   │   │   ├── dialog.tsx
-│   │   │   └── ...                # 40+ UI components
-│   │   │
-│   │   ├── crm/                   # CRM-specific components
-│   │   │   ├── DialerCard.tsx     # Call dialer interface
-│   │   │   ├── ProspectCard.tsx  # Prospect display card
-│   │   │   ├── IssueTracker.tsx   # Issue reporting
-│   │   │   ├── GamificationWidget.tsx
-│   │   │   └── ...
-│   │   │
-│   │   └── layout/
-│   │       └── Sidebar.tsx        # Main navigation sidebar
-│   │
-│   ├── pages/                     # Route pages/views
-│   │   ├── Dashboard.tsx          # Main dashboard
-│   │   ├── Contacts.tsx           # Prospect management
-│   │   ├── Dialer.tsx             # Calling interface
-│   │   ├── FieldReps.tsx         # Field rep management
-│   │   ├── FieldSales.tsx        # Field sales view
-│   │   ├── Settings.tsx          # Application settings
-│   │   ├── Issues.tsx            # Issue management
-│   │   └── ...
-│   │
-│   ├── hooks/                     # Custom React hooks
-│   │   ├── useProspects.ts       # Prospect data hooks
-│   │   ├── useUsers.ts          # User data hooks
-│   │   ├── useFieldReps.ts      # Field rep hooks
-│   │   ├── useAppointments.ts   # Appointment hooks
-│   │   ├── useCallOutcomes.ts   # Call outcome hooks
-│   │   ├── useIssues.ts         # Issue hooks
-│   │   ├── useLiveKitDevice.ts  # LiveKit integration
-│   │   └── ...
-│   │
-│   ├── integrations/
-│   │   └── custom-server/       # Backend API integration
-│   │       ├── api.ts           # CustomServerApi class
-│   │       ├── client.ts        # HTTP client wrapper
-│   │       ├── config.ts        # API configuration
-│   │       └── endpoints.ts     # API endpoint definitions
-│   │
-│   ├── lib/                      # Utilities and helpers
-│   │   ├── types.ts             # TypeScript type definitions
-│   │   ├── utils.ts             # General utilities
-│   │   ├── queryClient.ts       # React Query configuration
-│   │   ├── permissions.ts       # Permission utilities
-│   │   ├── UserRoleContext.tsx  # User role context
-│   │   └── ...
-│   │
-│   └── services/                 # Service layer (legacy)
-│       └── ...
-│
-├── public/                       # Static assets
-├── index.html                    # HTML entry point
-├── vite.config.ts               # Vite configuration
-├── tsconfig.json                # TypeScript configuration
-├── tailwind.config.js           # Tailwind CSS configuration
-├── components.json              # Shadcn/ui configuration
-└── package.json
-```
+## Environment Variables
 
-## 🏗️ Architecture
+### Required Variables
 
-### API Integration
+- `VITE_API_URL` - Backend API URL (default: `http://localhost:5000`)
 
-The application uses a centralized API client (`CustomServerApi`) that:
-- Handles all HTTP requests to the backend
-- Automatically extracts data from backend response format
-- Manages authentication tokens
-- Provides type-safe API methods
-- Handles errors consistently
+### Optional Variables
 
-### React Query Hooks
+- `VITE_HERE_API_KEY` - HERE Maps API key for map features (falls back to server-side geocoding if not set)
 
-Custom hooks built on React Query provide:
-- Automatic caching and refetching
-- Loading and error states
-- Optimistic updates
-- Query invalidation
-- Type-safe data fetching
+## Scripts
 
-Example:
-```typescript
-import { useProspects } from '@/hooks/useProspects';
+- `npm run dev` - Start development server with hot reload
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build locally
+- `npm run check` - Type-check TypeScript
 
-function MyComponent() {
-  const { data: prospects, isLoading, error } = useProspects();
-  
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
-  
-  return <div>{prospects.map(p => <div key={p.id}>{p.name}</div>)}</div>;
-}
-```
-
-### Component Structure
-
-- **UI Components**: Reusable base components from shadcn/ui
-- **CRM Components**: Business logic components for CRM features
-- **Pages**: Full-page components that represent routes
-- **Layout**: Shared layout components (Sidebar, etc.)
-
-## 📡 API Integration
-
-### Custom Server API
-
-All API calls go through `CustomServerApi` class located in `src/integrations/custom-server/api.ts`.
-
-**Available API Methods:**
-- `getProspects()` - Fetch prospects
-- `getUsers()` - Fetch users
-- `getFieldReps()` - Fetch field reps
-- `createAppointment()` - Create appointment
-- `recordCallOutcome()` - Record call outcome
-- And many more...
-
-### Using API Hooks
-
-Instead of calling `CustomServerApi` directly, use the provided hooks:
-
-```typescript
-// ✅ Good: Use hooks
-import { useProspects } from '@/hooks/useProspects';
-const { data } = useProspects();
-
-// ❌ Avoid: Direct API calls in components
-import { CustomServerApi } from '@/integrations/custom-server/api';
-const data = await CustomServerApi.getProspects();
-```
-
-### Available Hooks
-
-- **Prospects**: `useProspects()`, `useProspect(id)`, `useCreateProspect()`, `useUpdateProspect()`
-- **Users**: `useUsers()`, `useUser(id)`, `useCreateUser()`, `useUpdateUser()`
-- **Field Reps**: `useFieldReps()`, `useCreateFieldRep()`, `useUpdateFieldRep()`
-- **Appointments**: `useTodayAppointments()`, `useCreateAppointment()`, `useUpdateAppointment()`
-- **Call Outcomes**: `useCallOutcomes()`, `useCreateCallOutcome()`, `useRecordCallOutcome()`
-- **Issues**: `useIssues()`, `useCreateIssue()`, `useUpdateIssue()`, `useDeleteIssue()`
-- **Specialty Colors**: `useSpecialtyColors()`, `useUpdateSpecialtyColor()`
-
-## 🎨 Styling
-
-### Tailwind CSS
-
-The application uses Tailwind CSS 4 for styling:
-- Utility-first CSS framework
-- Responsive design utilities
-- Dark mode support (via `next-themes`)
-- Custom theme configuration in `tailwind.config.js`
-
-### Component Styling
-
-Components use:
-- **Tailwind utilities**: For layout and spacing
-- **CSS variables**: For theming
-- **cn() utility**: For conditional class names (from `lib/utils.ts`)
-
-## 🔐 Authentication & Permissions
-
-### User Roles
-
-The application supports role-based access control:
-- `admin` - Full access
-- `manager` - Management access
-- `inside_sales_rep` - Inside sales access
-- `field_sales_rep` - Field sales access
-- `data_loader` - Data loading access
-
-### Permission Guards
-
-Use `PermissionGuard` component to protect routes:
-```typescript
-<PermissionGuard requiredRole="manager">
-  <AdminPanel />
-</PermissionGuard>
-```
-
-## 🗺️ Features
+## Features
 
 ### Core Features
 
-- **Prospect Management**: Create, view, update, and manage business prospects
-- **Appointment Scheduling**: Schedule and manage field appointments
-- **Territory Management**: Visualize prospects on interactive maps
-- **Call Management**: Make calls directly from the app via Twilio/LiveKit
-- **Real-time Communication**: LiveKit integration for voice/video
-- **User Management**: Role-based access control and user assignments
-- **Issue Tracking**: Report and track issues with Linear integration
-- **Bulk Operations**: Import contacts, geocode addresses, bulk search
+- **Prospect Management** - Create, view, and update business prospects
+- **Appointment Scheduling** - Schedule and manage field appointments
+- **Territory Management** - Visualize prospects on interactive maps
+- **Call Management** - Make calls directly from the app via Twilio
+- **Real-time Communication** - LiveKit integration for voice/video
+- **User Management** - Role-based access control (RBAC)
 
-### UI Features
+### UI Components
 
-- **Responsive Design**: Works on mobile, tablet, and desktop
-- **Dark Mode**: System-aware dark mode support
-- **Interactive Maps**: Leaflet maps for territory visualization
-- **Data Tables**: Sortable, filterable tables
-- **Forms**: React Hook Form with Zod validation
-- **Modals & Dialogs**: Accessible modal components
-- **Toast Notifications**: User feedback via toast messages
+- Built with React 19 and modern hooks
+- Shadcn/ui component library (Radix UI primitives)
+- Tailwind CSS for styling
+- Dark mode support
+- Responsive design for mobile and desktop
 
-## 🧪 Development
+## Project Structure
 
-### Adding a New Page
-
-1. Create component in `src/pages/`
-2. Add route in `src/App.tsx`:
-   ```typescript
-   import NewPage from './pages/NewPage';
-   
-   <Route path="/new-page" component={NewPage} />
-   ```
-3. Add navigation link in `src/components/layout/Sidebar.tsx`
-
-### Adding a New API Hook
-
-1. Create hook file in `src/hooks/`
-2. Use `CustomServerApi` methods
-3. Set up React Query with proper query keys
-4. Export hook for use in components
-
-Example:
-```typescript
-import { useQuery } from '@tanstack/react-query';
-import { CustomServerApi } from '@/integrations/custom-server/api';
-
-export function useMyData() {
-  return useQuery({
-    queryKey: ['myData'],
-    queryFn: async () => {
-      const { data, error } = await CustomServerApi.getMyData();
-      if (error) throw new Error(error);
-      return data || [];
-    },
-  });
-}
+```
+client-new/
+├── src/
+│   ├── components/          # Reusable UI components
+│   │   ├── ui/             # Base UI components (shadcn/ui)
+│   │   └── ...             # Feature-specific components
+│   ├── hooks/              # Custom React hooks
+│   ├── lib/                # Utilities and helpers
+│   │   ├── api.ts          # API client functions
+│   │   └── utils.ts        # General utilities
+│   ├── pages/              # Route pages/views
+│   ├── App.tsx             # Main app component with routing
+│   └── main.tsx            # Application entry point
+├── public/                 # Static assets
+├── index.html             # HTML entry point
+├── vite.config.ts         # Vite configuration
+├── tsconfig.json          # TypeScript configuration
+├── tailwind.config.js     # Tailwind CSS configuration
+├── components.json        # Shadcn/ui configuration
+└── package.json
 ```
 
-### Adding a New UI Component
+## Building for Production
 
-1. For shadcn/ui components:
-   ```bash
-   npx shadcn@latest add [component-name]
-   ```
-
-2. For custom components:
-   - Place in `src/components/ui/` or `src/components/crm/`
-   - Follow existing component patterns
-   - Use TypeScript for props
-
-## 🐛 Troubleshooting
-
-### Cannot Connect to Backend
-
-- Verify backend server is running
-- Check `VITE_CUSTOM_SERVER_URL` in `.env.local`
-- Check browser console for CORS errors
-- Verify backend is accessible at the configured URL
-
-### Build Errors
-
-- Clear node_modules: `rm -rf node_modules && yarn install`
-- Clear Vite cache: `rm -rf .vite`
-- Check TypeScript errors: `yarn check`
-- Verify all environment variables are set
-
-### Hot Reload Not Working
-
-- Restart the dev server
-- Clear browser cache
-- Check for syntax errors in console
-- Verify file watchers are working
-
-### Type Errors
-
-- Run `yarn check` to see all TypeScript errors
-- Ensure all imports are correct
-- Check that types are properly exported
-- Verify `tsconfig.json` configuration
-
-## 📦 Key Dependencies
-
-### Core
-- **react**: ^19.2.0
-- **react-dom**: ^19.2.0
-- **typescript**: 5.6.3
-- **vite**: ^7.1.9
-
-### UI & Styling
-- **@radix-ui/react-***: Radix UI primitives
-- **tailwindcss**: ^4.1.14
-- **lucide-react**: Icons
-- **framer-motion**: Animations
-
-### Data & State
-- **@tanstack/react-query**: ^5.60.5 - Data fetching and caching
-- **wouter**: ^3.3.5 - Routing
-
-### Forms & Validation
-- **react-hook-form**: ^7.66.0
-- **zod**: ^3.25.76
-
-### Maps & Visualization
-- **leaflet**: ^1.9.4
-- **react-leaflet**: ^5.0.0
-- **recharts**: ^2.15.4
-
-### Communication
-- **livekit-client**: ^2.16.0
-
-## 🚀 Deployment
-
-### Build for Production
+Create a production build:
 
 ```bash
-yarn build
+npm run build
 ```
 
 This generates optimized static files in the `dist/` directory.
 
-### Deployment Options
+Preview the production build locally:
+
+```bash
+npm run preview
+```
+
+## Deployment
+
+The built `dist/` folder can be deployed to any static hosting service:
 
 - **Vercel**: `vercel deploy`
 - **Netlify**: `netlify deploy`
 - **AWS S3 + CloudFront**: Upload `dist/` to S3 bucket
 - **GitHub Pages**: Deploy `dist/` folder
 
-**Important**: Update `VITE_CUSTOM_SERVER_URL` to point to your production API server.
+**Important**: Update `VITE_API_URL` to point to your production API server.
 
-### Environment Variables in Production
+## API Integration
 
-Set environment variables in your hosting platform:
-- `VITE_CUSTOM_SERVER_URL` - Production API URL
-- `VITE_HERE_API_KEY` - (Optional) HERE Maps API key
+The client communicates with the backend via REST API. All API calls go through `/api/*` endpoints.
 
-## 📄 License
+During development, Vite proxies these requests to the backend server (configured in `vite.config.ts`).
+
+In production, ensure your deployment handles API routing correctly or update `VITE_API_URL` to the full backend URL.
+
+## Common Development Tasks
+
+### Adding a New Page
+
+1. Create component in `src/pages/`
+2. Add route in `src/App.tsx`
+3. Add navigation link in relevant component
+
+### Adding a New UI Component
+
+1. For shadcn/ui components: Use the CLI or copy from shadcn/ui docs
+2. Place in `src/components/ui/`
+3. Import and use in your pages/components
+
+### Making API Calls
+
+1. Define API function in `src/lib/api.ts`
+2. Use React Query hooks in components for data fetching
+3. Handle loading and error states
+
+## Troubleshooting
+
+### Cannot connect to API
+
+- Verify backend server is running on port 5000
+- Check `VITE_API_URL` in `.env.local`
+- Check browser console for CORS errors
+
+### Maps not loading
+
+- Verify `VITE_HERE_API_KEY` is set
+- Check browser console for API key errors
+- Ensure key has correct permissions
+
+### Build errors
+
+- Clear node_modules and reinstall: `rm -rf node_modules && npm install`
+- Clear Vite cache: `rm -rf .vite`
+- Check TypeScript errors: `npm run check`
+
+### Hot reload not working
+
+- Check Vite dev server is running
+- Try restarting the dev server
+- Clear browser cache
+
+## Tech Stack
+
+- **Framework**: React 19
+- **Build Tool**: Vite 7
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS 4
+- **UI Components**: Radix UI
+- **State Management**: React Query (TanStack Query)
+- **Routing**: Wouter
+- **Forms**: React Hook Form + Zod
+- **Maps**: Leaflet + React Leaflet
+- **Charts**: Recharts
+- **Icons**: Lucide React
+
+## License
 
 MIT
