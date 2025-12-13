@@ -8,8 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Bug, Camera, Pencil, Type, Highlighter, Undo, Check, X, ChevronRight, ChevronLeft, ExternalLink, Upload, Clipboard } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useCreateIssue } from "@/hooks/useIssues";
 
 interface IssueTrackerProps {
   isOpen: boolean;
@@ -46,48 +46,18 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState("2");
   const [status, setStatus] = useState("backlog");
-  
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const isDrawing = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
   const drawHistory = useRef<ImageData[]>([]);
-  
+
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const createIssueMutation = useCreateIssue();
 
-  const createIssueMutation = useMutation({
-    mutationFn: async (issueData: any) => {
-      const response = await fetch("/api/issues", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(issueData),
-      });
-      if (!response.ok) throw new Error("Failed to create issue");
-      return response.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/issues"] });
-      toast({
-        title: "Issue Created",
-        description: data.linearIssueUrl 
-          ? "Issue created and synced to Linear!" 
-          : "Issue created successfully!",
-      });
-      resetForm();
-      onClose();
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to create issue",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setStep("capture");
     setScreenshot(null);
     setAnnotatedImage(null);
@@ -100,7 +70,33 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  };
+  }, []);
+
+  // Handle mutation success/error
+  useEffect(() => {
+    if (createIssueMutation.isSuccess && createIssueMutation.data) {
+      toast({
+        title: "Issue Created",
+        description: createIssueMutation.data.linearIssueUrl
+          ? "Issue created and synced to Linear!"
+          : "Issue created successfully!",
+      });
+      resetForm();
+      onClose();
+    }
+  }, [createIssueMutation.isSuccess, createIssueMutation.data, toast, onClose, resetForm]);
+
+  useEffect(() => {
+    if (createIssueMutation.isError) {
+      toast({
+        title: "Error",
+        description: createIssueMutation.error instanceof Error
+          ? createIssueMutation.error.message
+          : "Failed to create issue",
+        variant: "destructive",
+      });
+    }
+  }, [createIssueMutation.isError, createIssueMutation.error, toast]);
 
   const handleImageFile = useCallback((file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -225,16 +221,16 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (!isDrawing.current || !canvasRef.current) return;
-    
+
     const ctx = canvasRef.current.getContext("2d");
     if (!ctx) return;
-    
+
     const pos = getCanvasCoordinates(e);
-    
+
     ctx.beginPath();
     ctx.moveTo(lastPos.current.x, lastPos.current.y);
     ctx.lineTo(pos.x, pos.y);
-    
+
     if (selectedTool === "pen") {
       ctx.strokeStyle = penColor;
       ctx.lineWidth = 3;
@@ -246,7 +242,7 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
       ctx.lineCap = "round";
       ctx.globalAlpha = 0.3;
     }
-    
+
     ctx.stroke();
     ctx.globalAlpha = 1;
     lastPos.current = pos;
@@ -294,8 +290,8 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
     createIssueMutation.mutate({
       title,
       description,
-      priority: parseInt(priority),
-      status,
+      priority: parseInt(priority) as 0 | 1 | 2 | 3 | 4,
+      status: status as any,
       screenshotData: annotatedImage || screenshot,
       pagePath: window.location.pathname,
     });
@@ -310,8 +306,8 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
             Report Issue
             <div className="flex gap-1 ml-4">
               {["capture", "annotate", "describe"].map((s, i) => (
-                <Badge 
-                  key={s} 
+                <Badge
+                  key={s}
                   variant={step === s ? "default" : "outline"}
                   className="text-xs"
                 >
@@ -332,16 +328,16 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
               className="hidden"
               data-testid="file-input"
             />
-            
-            <div 
+
+            <div
               ref={dropZoneRef}
               onDrop={handleDrop}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               className={`
                 border-2 border-dashed rounded-lg p-8 text-center transition-all cursor-pointer
-                ${isDragging 
-                  ? "border-primary bg-primary/10" 
+                ${isDragging
+                  ? "border-primary bg-primary/10"
                   : "border-gray-300 hover:border-primary hover:bg-primary/5"
                 }
               `}
@@ -376,10 +372,10 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
                 Windows: Win+Shift+S | Mac: Cmd+Shift+4 | Then paste with Ctrl/Cmd+V
               </p>
             </div>
-            
+
             <div className="text-center pt-2">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="text-muted-foreground"
                 onClick={() => setStep("describe")}
               >
@@ -408,7 +404,7 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
                 <Highlighter className="h-4 w-4 mr-1" />
                 Highlight
               </Button>
-              
+
               {selectedTool === "pen" && (
                 <div className="flex gap-1 ml-2">
                   {["#ff0000", "#00ff00", "#0000ff", "#ffff00", "#000000"].map(color => (
@@ -421,7 +417,7 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
                   ))}
                 </div>
               )}
-              
+
               <div className="ml-auto flex gap-2">
                 <Button size="sm" variant="outline" onClick={undo}>
                   <Undo className="h-4 w-4 mr-1" />
@@ -429,7 +425,7 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
                 </Button>
               </div>
             </div>
-            
+
             <div className="border rounded-lg overflow-hidden bg-muted/20">
               <canvas
                 ref={canvasRef}
@@ -458,14 +454,14 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
           <div className="space-y-4 py-4">
             {(annotatedImage || screenshot) && (
               <div className="border rounded-lg overflow-hidden bg-muted/20">
-                <img 
-                  src={annotatedImage || screenshot || ""} 
-                  alt="Screenshot" 
+                <img
+                  src={annotatedImage || screenshot || ""}
+                  alt="Screenshot"
                   className="max-w-full max-h-48 object-contain mx-auto"
                 />
               </div>
             )}
-            
+
             <div className="space-y-4">
               <div>
                 <Label htmlFor="issue-title">Title *</Label>
@@ -477,7 +473,7 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
                   data-testid="issue-title-input"
                 />
               </div>
-              
+
               <div>
                 <Label htmlFor="issue-description">Description</Label>
                 <Textarea
@@ -489,7 +485,7 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
                   data-testid="issue-description-input"
                 />
               </div>
-              
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Priority</Label>
@@ -509,7 +505,7 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div>
                   <Label>Status</Label>
                   <Select value={status} onValueChange={setStatus}>
@@ -529,14 +525,14 @@ export function IssueTracker({ isOpen, onClose }: IssueTrackerProps) {
             </div>
 
             <div className="flex justify-between pt-4">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setStep(screenshot ? "annotate" : "capture")}
               >
                 <ChevronLeft className="h-4 w-4 mr-1" />
                 Back
               </Button>
-              <Button 
+              <Button
                 onClick={handleSubmit}
                 disabled={createIssueMutation.isPending}
                 data-testid="submit-issue-button"

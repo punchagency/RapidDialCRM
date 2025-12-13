@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Prospect } from "@/lib/types";
 import { getStatuses } from "@/lib/statusUtils";
@@ -11,38 +11,22 @@ import { cn } from "@/lib/utils";
 import { Link } from "wouter";
 import { useUserRole } from "@/lib/UserRoleContext";
 import { EditContactModal } from "@/components/crm/EditContactModal";
-import { fetchProspects, updateProspect } from "@/lib/apiClient";
 import { useToast } from "@/hooks/use-toast";
 import { ProspectCard } from "@/components/crm/ProspectCard";
+import { useProspects, useUpdateProspect } from "@/hooks/useProspects";
 
 export default function Contacts() {
-  const [prospects, setProspects] = useState<Prospect[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const { userRole, canAccess } = useUserRole();
+  const { canAccess } = useUserRole();
   const { toast } = useToast();
   const statuses = getStatuses();
 
   const canEdit = canAccess("contacts_edit");
 
-  useEffect(() => {
-    async function loadProspects() {
-      try {
-        const data = await fetchProspects();
-        setProspects(data);
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load contacts",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    loadProspects();
-  }, [toast]);
+  // Use React Query hook for data fetching
+  const { data: prospects = [], isLoading, error } = useProspects();
+  const updateProspectMutation = useUpdateProspect();
 
   const getStatusColor = (statusValue: string) => {
     const status = statuses.find(s => s.value === statusValue);
@@ -63,13 +47,10 @@ export default function Contacts() {
 
   const handleSaveContact = async (updatedProspect: Prospect) => {
     try {
-      await updateProspect(updatedProspect.id, updatedProspect);
-      const index = prospects.findIndex(c => c.id === updatedProspect.id);
-      if (index >= 0) {
-        const updated = [...prospects];
-        updated[index] = updatedProspect;
-        setProspects(updated);
-      }
+      await updateProspectMutation.mutateAsync({
+        id: updatedProspect.id,
+        data: updatedProspect,
+      });
       setSelectedProspect(null);
       toast({
         title: "Success",
@@ -78,13 +59,14 @@ export default function Contacts() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to update contact",
+        description: error instanceof Error ? error.message : "Failed to update contact",
         variant: "destructive",
       });
     }
   };
 
   if (isLoading) return <div className="flex h-screen items-center justify-center">Loading contacts...</div>;
+  if (error) return <div className="flex h-screen items-center justify-center">Error loading contacts: {error instanceof Error ? error.message : 'Unknown error'}</div>;
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
