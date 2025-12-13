@@ -7,9 +7,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Users, Map, Briefcase, Save, Check, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
+import { useUsers, useAllTerritories, useAllProfessions, useUserAssignments, useSetUserAssignments } from "@/hooks/useUsers";
 
 type User = {
   id: string;
@@ -40,44 +40,15 @@ export function UserAssignmentsTab() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedTerritories, setSelectedTerritories] = useState<string[]>([]);
   const [selectedProfessions, setSelectedProfessions] = useState<string[]>([]);
-  const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
-    queryKey: ["/api/users"],
-    queryFn: async () => {
-      const res = await fetch("/api/users");
-      return res.json();
-    },
-  });
-
-  const { data: territories = [] } = useQuery<string[]>({
-    queryKey: ["/api/territories"],
-    queryFn: async () => {
-      const res = await fetch("/api/territories");
-      return res.json();
-    },
-  });
-
-  const { data: professions = [] } = useQuery<string[]>({
-    queryKey: ["/api/professions"],
-    queryFn: async () => {
-      const res = await fetch("/api/professions");
-      return res.json();
-    },
-  });
-
-  const { data: userAssignments, refetch: refetchAssignments } = useQuery({
-    queryKey: ["/api/users", selectedUserId, "assignments"],
-    queryFn: async () => {
-      if (!selectedUserId) return null;
-      const res = await fetch(`/api/users/${selectedUserId}/assignments`);
-      return res.json();
-    },
-    enabled: !!selectedUserId,
-  });
+  // Use React Query hooks
+  const { data: users = [], isLoading: usersLoading } = useUsers();
+  const { data: territories = [] } = useAllTerritories();
+  const { data: professions = [] } = useAllProfessions();
+  const { data: userAssignments } = useUserAssignments(selectedUserId || '');
+  const setUserAssignmentsMutation = useSetUserAssignments();
 
   useEffect(() => {
     if (userAssignments) {
@@ -116,18 +87,14 @@ export function UserAssignmentsTab() {
   const saveAssignments = async () => {
     if (!selectedUserId) return;
     
-    setIsSaving(true);
     try {
-      const res = await fetch(`/api/users/${selectedUserId}/assignments`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      await setUserAssignmentsMutation.mutateAsync({
+        userId: selectedUserId,
+        assignments: {
           territories: selectedTerritories,
           professions: selectedProfessions,
-        }),
+        },
       });
-      
-      if (!res.ok) throw new Error("Failed to save");
       
       toast({
         title: "Assignments saved",
@@ -135,15 +102,12 @@ export function UserAssignmentsTab() {
       });
       
       setHasChanges(false);
-      refetchAssignments();
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to save assignments. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to save assignments. Please try again.",
         variant: "destructive",
       });
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -346,11 +310,11 @@ export function UserAssignmentsTab() {
           <Button
             data-testid="button-save-assignments"
             onClick={saveAssignments}
-            disabled={!hasChanges || isSaving}
+            disabled={!hasChanges || setUserAssignmentsMutation.isPending}
             className="gap-2"
           >
             <Save className="h-4 w-4" />
-            {isSaving ? "Saving..." : "Save Assignments"}
+            {setUserAssignmentsMutation.isPending ? "Saving..." : "Save Assignments"}
           </Button>
         </CardContent>
       </Card>

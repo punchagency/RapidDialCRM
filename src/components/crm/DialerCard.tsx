@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getSpecialtyColors } from "@/lib/specialtyColors";
 import { useLiveKitDevice, CallStatus } from "@/hooks/useLiveKitDevice";
+import { useCallOutcomes } from "@/hooks/useCallOutcomes";
 
 interface DialerCardProps {
   prospect: Prospect;
@@ -45,20 +46,14 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
     initializeDevice();
   }, [initializeDevice]);
 
+  // Load call outcomes using hook
+  const { data: outcomesData = [] } = useCallOutcomes();
+  
   useEffect(() => {
-    async function loadOutcomes() {
-      try {
-        const response = await fetch("/api/call-outcomes");
-        if (response.ok) {
-          const data = await response.json();
-          setOutcomes(data);
-        }
-      } catch (error) {
-        console.error("Failed to load call outcomes:", error);
-      }
+    if (outcomesData) {
+      setOutcomes(outcomesData);
     }
-    loadOutcomes();
-  }, []);
+  }, [outcomesData]);
 
   const handleCallClick = async () => {
     if (!isReady) {

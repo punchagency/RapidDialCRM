@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +13,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { IssueTracker } from "@/components/crm/IssueTracker";
 import { format } from "date-fns";
+import { useIssues, useUpdateIssue, useDeleteIssue } from "@/hooks/useIssues";
+import { Sidebar } from "@/components/layout/Sidebar";
 
 interface Issue {
   id: string;
@@ -55,48 +56,11 @@ export default function Issues() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
-  const { data: issues, isLoading, error } = useQuery<Issue[]>({
-    queryKey: ["/api/issues", filterStatus],
-    queryFn: async () => {
-      const url = filterStatus === "all" 
-        ? "/api/issues" 
-        : `/api/issues?status=${filterStatus}`;
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("Failed to fetch issues");
-      return response.json();
-    },
-  });
-
-  const updateStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const response = await fetch(`/api/issues/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status }),
-      });
-      if (!response.ok) throw new Error("Failed to update issue");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/issues"] });
-      toast({ title: "Issue Updated", description: "Status changed successfully" });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`/api/issues/${id}`, { method: "DELETE" });
-      if (!response.ok) throw new Error("Failed to delete issue");
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/issues"] });
-      setSelectedIssue(null);
-      toast({ title: "Issue Deleted", description: "Issue removed successfully" });
-    },
-  });
+  // Use React Query hooks
+  const { data: issues = [], isLoading, error } = useIssues(filterStatus === "all" ? undefined : filterStatus);
+  const updateIssueMutation = useUpdateIssue();
+  const deleteIssueMutation = useDeleteIssue();
 
   const groupedIssues = React.useMemo(() => {
     if (!issues) return {};
@@ -133,7 +97,48 @@ export default function Issues() {
     );
   }
 
+  const handleUpdateStatus = (status: string) => {
+    if (selectedIssue) {
+      updateIssueMutation.mutate(
+        { id: selectedIssue.id, data: { status } },
+        {
+          onSuccess: () => {
+            toast({ title: "Issue Updated", description: "Status changed successfully" });
+          },
+          onError: (error) => {
+            toast({
+              title: "Error",
+              description: error instanceof Error ? error.message : "Failed to update issue",
+              variant: "destructive",
+            });
+          },
+        }
+      );
+    }
+  };
+
+  const handleDelete = () => {
+    if (selectedIssue) {
+      deleteIssueMutation.mutate(selectedIssue.id, {
+        onSuccess: () => {
+          setSelectedIssue(null);
+          toast({ title: "Issue Deleted", description: "Issue removed successfully" });
+        },
+        onError: (error) => {
+          toast({
+            title: "Error",
+            description: error instanceof Error ? error.message : "Failed to delete issue",
+            variant: "destructive",
+          });
+        },
+      });
+    }
+  };
+
   return (
+    <div className="flex h-screen bg-background overflow-hidden">
+      <Sidebar />
+      <main className="flex-1 flex flex-col overflow-hidden relative bg-muted/30">
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -219,19 +224,13 @@ export default function Issues() {
       <IssueDetailDialog 
         issue={selectedIssue}
         onClose={() => setSelectedIssue(null)}
-        onUpdateStatus={(status) => {
-          if (selectedIssue) {
-            updateStatusMutation.mutate({ id: selectedIssue.id, status });
-          }
-        }}
-        onDelete={() => {
-          if (selectedIssue) {
-            deleteMutation.mutate(selectedIssue.id);
-          }
-        }}
+        onUpdateStatus={handleUpdateStatus}
+        onDelete={handleDelete}
       />
 
       <IssueTracker isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
+        </div>
+      </main>
     </div>
   );
 }

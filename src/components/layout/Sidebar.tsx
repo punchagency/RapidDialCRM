@@ -148,8 +148,7 @@ export function Sidebar() {
 
       <div className="flex-1 px-4 space-y-1 overflow-y-auto">
         {getRoleItems().map((item) => (
-          <Link key={item.href} href={item.href}>
-            <a
+          <Link key={item.href} href={item.href} 
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group mb-1",
                 isLinkActive(item.href)
@@ -164,8 +163,7 @@ export function Sidebar() {
                 )}
               />
               {item.label}
-            </a>
-          </Link>
+            </Link>
         ))}
 
         {userRole === "manager" && (
@@ -176,9 +174,7 @@ export function Sidebar() {
             {managerItems.map((item) => {
               const active = isLinkActive(item.href);
               return (
-                <Link key={item.href} href={item.href}>
-                  <a
-                    className={cn(
+                <Link key={item.href} href={item.href} className={cn(
                       "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group mb-1",
                       active
                         ? "bg-accent text-accent-foreground font-semibold"
@@ -194,8 +190,7 @@ export function Sidebar() {
                       )}
                     />
                     {item.label}
-                  </a>
-                </Link>
+                  </Link>
               );
             })}
           </>

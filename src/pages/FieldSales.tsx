@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import { CitySelector } from "@/components/crm/CitySelector";
 import { getCityData } from "@/lib/cityData";
+import { useTodayAppointments } from "@/hooks/useAppointments";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -59,8 +60,6 @@ export default function FieldSales() {
   const [selectedCity, setSelectedCity] = useState<string>("miami");
   const { toast } = useToast();
   const [gcalConnected, setGcalConnected] = useState(false);
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const storedGcal = localStorage.getItem("gcal_connected");
@@ -69,44 +68,45 @@ export default function FieldSales() {
     }
   }, []);
 
-  // Fetch appointments from API
-  useEffect(() => {
-    const fetchAppointments = async () => {
-      setIsLoading(true);
-      try {
-        const territoryMap: Record<string, string> = {
-          miami: "Miami",
-          washington_dc: "Washington DC",
-          los_angeles: "Los Angeles",
-          new_york: "New York",
-          chicago: "Chicago",
-          dallas: "Dallas",
-        };
-        const territory = territoryMap[selectedCity] || "Miami";
-        
-        const response = await fetch(`/api/appointments/today?territory=${encodeURIComponent(territory)}`);
-        if (response.ok) {
-          const data = await response.json();
-          setAppointments(data);
-          // Auto-select first appointment
-          if (data.length > 0 && !selectedStop) {
-            setSelectedStop(data[0].id);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to fetch appointments:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load appointments",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
-      }
+  // Get territory from selected city
+  const territory = (() => {
+    const territoryMap: Record<string, string> = {
+      miami: "Miami",
+      washington_dc: "Washington DC",
+      los_angeles: "Los Angeles",
+      new_york: "New York",
+      chicago: "Chicago",
+      dallas: "Dallas",
     };
+    return territoryMap[selectedCity] || "Miami";
+  })();
 
-    fetchAppointments();
-  }, [selectedCity]);
+  // Fetch appointments from API using hook
+  const { data: appointmentsData, isLoading } = useTodayAppointments(territory);
+  
+  // Transform appointments data to match expected format
+  const appointments = (appointmentsData || []).map((apt: any) => ({
+    id: apt.id,
+    scheduledDate: apt.scheduledDate || apt.scheduled_date,
+    scheduledTime: apt.scheduledTime || apt.scheduled_time,
+    durationMinutes: apt.durationMinutes || apt.duration_minutes || 30,
+    status: apt.status || 'scheduled',
+    prospectId: apt.prospectId || apt.prospect_id,
+    prospectName: apt.prospectName || apt.prospect?.businessName || 'Unknown',
+    prospectPhone: apt.prospectPhone || apt.prospect?.phoneNumber || '',
+    prospectAddress: apt.prospectAddress || apt.prospect?.addressStreet || '',
+    prospectCity: apt.prospectCity || apt.prospect?.addressCity || '',
+    fieldRepId: apt.fieldRepId || apt.field_rep_id,
+    fieldRepName: apt.fieldRepName || apt.fieldRep?.name || 'Unknown',
+    territory: apt.territory || territory,
+  }));
+
+  // Auto-select first appointment
+  useEffect(() => {
+    if (appointments.length > 0 && !selectedStop) {
+      setSelectedStop(appointments[0].id);
+    }
+  }, [appointments, selectedStop]);
 
   // Get city name mapping
   const getCityName = (cityId: string): string => {
