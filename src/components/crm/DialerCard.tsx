@@ -6,11 +6,29 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Phone, MapPin, Building2, Stethoscope, History, Mail, Check, ArrowRight, Loader2, Users, Edit, PhoneOff, Mic, MicOff, Volume2, VolumeX, Hash } from "lucide-react";
+import {
+  Phone,
+  MapPin,
+  Building2,
+  Stethoscope,
+  History,
+  Mail,
+  Check,
+  ArrowRight,
+  Loader2,
+  Users,
+  Edit,
+  PhoneOff,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+  Hash,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getSpecialtyColors } from "@/lib/specialtyColors";
-import { useLiveKitDevice, CallStatus } from "@/hooks/useLiveKitDevice";
+import { useTwilioDevice, CallStatus } from "@/hooks/useTwilioDevice";
 
 interface DialerCardProps {
   prospect: Prospect;
@@ -19,7 +37,12 @@ interface DialerCardProps {
   onEditClick?: () => void;
 }
 
-export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: DialerCardProps) {
+export function DialerCard({
+  prospect,
+  onComplete,
+  canEdit,
+  onEditClick,
+}: DialerCardProps) {
   if (!prospect) return null;
 
   const [notes, setNotes] = useState("");
@@ -39,7 +62,7 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
     hangUp,
     toggleMute,
     sendDigits,
-  } = useLiveKitDevice({ identity: "crm-dialer" });
+  } = useTwilioDevice({ identity: "crm-dialer" });
 
   useEffect(() => {
     initializeDevice();
@@ -115,13 +138,19 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
   const getCallStatusDisplay = (): { text: string; color: string } => {
     switch (callStatus) {
       case "idle":
-        return { text: isReady ? "Ready" : "Initializing...", color: isReady ? "text-green-600" : "text-yellow-600" };
+        return {
+          text: isReady ? "Ready" : "Initializing...",
+          color: isReady ? "text-green-600" : "text-yellow-600",
+        };
       case "connecting":
         return { text: "Connecting...", color: "text-yellow-600" };
       case "ringing":
         return { text: "Ringing...", color: "text-blue-600" };
       case "connected":
-        return { text: `Connected - ${formattedDuration}`, color: "text-green-600" };
+        return {
+          text: `Connected - ${formattedDuration}`,
+          color: "text-green-600",
+        };
       case "disconnected":
         return { text: "Call Ended", color: "text-gray-600" };
       case "error":
@@ -163,12 +192,19 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
               )}
             </div>
             <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <h2 className="text-lg font-bold text-foreground" data-testid="prospect-name">
+              <h2
+                className="text-lg font-bold text-foreground"
+                data-testid="prospect-name"
+              >
                 {prospect.businessName}
               </h2>
-              <Badge 
-                variant="secondary" 
-                className={cn("text-xs px-2 py-0.5 border-none font-semibold", getSpecialtyColors(prospect.specialty).bgColor, getSpecialtyColors(prospect.specialty).textColor)}
+              <Badge
+                variant="secondary"
+                className={cn(
+                  "text-xs px-2 py-0.5 border-none font-semibold",
+                  getSpecialtyColors(prospect.specialty).bgColor,
+                  getSpecialtyColors(prospect.specialty).textColor
+                )}
                 data-testid="specialty-badge-dialer"
               >
                 {prospect.specialty}
@@ -185,7 +221,12 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
                 <div className="text-2xl font-mono font-bold text-foreground">
                   {prospect.phoneNumber}
                 </div>
-                <div className={cn("text-xs font-medium mt-1", statusDisplay.color)}>
+                <div
+                  className={cn(
+                    "text-xs font-medium mt-1",
+                    statusDisplay.color
+                  )}
+                >
                   {statusDisplay.text}
                 </div>
               </div>
@@ -212,7 +253,11 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
                     onClick={toggleMute}
                     data-testid="mute-button"
                   >
-                    {isMuted ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                    {isMuted ? (
+                      <MicOff className="h-5 w-5" />
+                    ) : (
+                      <Mic className="h-5 w-5" />
+                    )}
                   </Button>
                   <Button
                     size="lg"
@@ -275,15 +320,28 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
               <div className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-xs text-muted-foreground font-medium">Address</p>
-                  <p className="text-foreground">{[prospect.addressStreet, prospect.addressCity, prospect.addressState, prospect.addressZip].filter(Boolean).join(", ") || "N/A"}</p>
+                  <p className="text-xs text-muted-foreground font-medium">
+                    Address
+                  </p>
+                  <p className="text-foreground">
+                    {[
+                      prospect.addressStreet,
+                      prospect.addressCity,
+                      prospect.addressState,
+                      prospect.addressZip,
+                    ]
+                      .filter(Boolean)
+                      .join(", ") || "N/A"}
+                  </p>
                 </div>
               </div>
 
               <div className="flex items-start gap-2">
                 <Stethoscope className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-xs text-muted-foreground font-medium">Specialty</p>
+                  <p className="text-xs text-muted-foreground font-medium">
+                    Specialty
+                  </p>
                   <p className="text-foreground">{prospect.specialty}</p>
                 </div>
               </div>
@@ -294,7 +352,9 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
               <p className="text-xs font-semibold text-muted-foreground uppercase mb-2 flex items-center gap-1">
                 <Users className="h-3 w-3" /> Key Stakeholders
               </p>
-              <p className="text-xs text-muted-foreground">No stakeholders listed</p>
+              <p className="text-xs text-muted-foreground">
+                No stakeholders listed
+              </p>
             </div>
 
             {/* Last Interaction */}
@@ -313,7 +373,11 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
         {/* Tabs */}
         <Card className="border-none shadow-md flex-1 overflow-hidden flex flex-col">
           <CardContent className="p-0 flex-1 flex flex-col overflow-hidden">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex flex-col flex-1 overflow-hidden h-full">
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full flex flex-col flex-1 overflow-hidden h-full"
+            >
               <TabsList className="w-full bg-muted/50 border-b border-border/50 rounded-none flex-shrink-0 h-12">
                 <TabsTrigger value="notes" className="flex-1 text-base py-3">
                   Call Notes
@@ -326,10 +390,15 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="notes" className="p-6 m-0 flex-1 overflow-y-auto">
+              <TabsContent
+                value="notes"
+                className="p-6 m-0 flex-1 overflow-y-auto"
+              >
                 <div className="space-y-4">
                   <div>
-                    <label className="text-base font-semibold text-foreground mb-3 block">Log Call Details</label>
+                    <label className="text-base font-semibold text-foreground mb-3 block">
+                      Log Call Details
+                    </label>
                     <Textarea
                       placeholder="Type notes while you talk... (Supports markdown shortcuts)"
                       value={notes}
@@ -342,18 +411,28 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
                 </div>
               </TabsContent>
 
-              <TabsContent value="scripts" className="p-6 m-0 flex-1 overflow-y-auto">
+              <TabsContent
+                value="scripts"
+                className="p-6 m-0 flex-1 overflow-y-auto"
+              >
                 <div className="space-y-6">
                   <div className="p-4 bg-muted/30 rounded-lg border border-border/50">
-                    <p className="text-sm font-semibold text-muted-foreground mb-3 uppercase">Opening</p>
+                    <p className="text-sm font-semibold text-muted-foreground mb-3 uppercase">
+                      Opening
+                    </p>
                     <p className="leading-relaxed text-foreground text-base">
-                      "Hi {prospect.businessName}, this is Alex from QuantumPunch. Do you have a quick minute?"
+                      "Hi {prospect.businessName}, this is Alex from
+                      QuantumPunch. Do you have a quick minute?"
                     </p>
                   </div>
                   <div className="p-4 bg-muted/30 rounded-lg border border-border/50">
-                    <p className="text-sm font-semibold text-muted-foreground mb-3 uppercase">Pain Point</p>
+                    <p className="text-sm font-semibold text-muted-foreground mb-3 uppercase">
+                      Pain Point
+                    </p>
                     <p className="leading-relaxed text-foreground text-base">
-                      "Many {prospect.specialty} practices tell us they're struggling with scheduling. Are you facing similar challenges?"
+                      "Many {prospect.specialty} practices tell us they're
+                      struggling with scheduling. Are you facing similar
+                      challenges?"
                     </p>
                   </div>
                 </div>
@@ -372,27 +451,36 @@ export function DialerCard({ prospect, onComplete, canEdit, onEditClick }: Diale
         <Card className="border-none shadow-md flex-1 overflow-hidden flex flex-col">
           <CardContent className="p-6 flex-1 overflow-y-auto">
             <div className="mb-4">
-              <p className="text-base font-semibold text-foreground mb-2">Select Outcome</p>
-              <p className="text-sm text-muted-foreground">Press appropriate shortcut key</p>
+              <p className="text-base font-semibold text-foreground mb-2">
+                Select Outcome
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Press appropriate shortcut key
+              </p>
             </div>
             <div className="grid grid-cols-3 gap-3 auto-rows-max">
-            {outcomes.map((outcome) => (
-              <Button
-                key={outcome.id}
-                variant="outline"
-                size="sm"
-                className={cn("h-auto py-2 px-2 flex flex-col items-center justify-center border text-xs font-medium", outcome.bgColor, outcome.textColor, outcome.borderColor, outcome.hoverColor)}
-                onClick={() => handleComplete(outcome.label)}
-                data-testid={`outcome-${outcome.label}`}
-              >
-                <span className="text-center">{outcome.label}</span>
-              </Button>
-            ))}
-          </div>
+              {outcomes.map((outcome) => (
+                <Button
+                  key={outcome.id}
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "h-auto py-2 px-2 flex flex-col items-center justify-center border text-xs font-medium",
+                    outcome.bgColor,
+                    outcome.textColor,
+                    outcome.borderColor,
+                    outcome.hoverColor
+                  )}
+                  onClick={() => handleComplete(outcome.label)}
+                  data-testid={`outcome-${outcome.label}`}
+                >
+                  <span className="text-center">{outcome.label}</span>
+                </Button>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
     </div>
   );
 }
-

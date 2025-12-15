@@ -1,213 +1,253 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { Device, Call } from "@twilio/voice-sdk";
+import {
+  getTwilioToken,
+  getTwilioConfig,
+  logTwilioCall,
+} from "@/services/TwilioServices";
 
-declare global {
-  interface Window {
-    Twilio: any;
-  }
-}
-
-export type CallStatus = "idle" | "connecting" | "ringing" | "connected" | "disconnected" | "error";
+export type CallStatus =
+  | "idle"
+  | "connecting"
+  | "ringing"
+  | "connected"
+  | "disconnected"
+  | "error";
 
 interface UseTwilioDeviceOptions {
   identity?: string;
-  onIncomingCall?: (call: any) => void;
+  onIncomingCall?: (call: Call) => void;
+  onCallStatusChange?: (status: CallStatus) => void;
+}
+
+interface CallInfo {
+  callSid: string;
+  phoneNumber: string;
+  prospectId?: string;
 }
 
 export function useTwilioDevice(options: UseTwilioDeviceOptions = {}) {
-  const { identity = "crm-user", onIncomingCall } = options;
-  
-  const [device, setDevice] = useState<any>(null);
-  const [activeCall, setActiveCall] = useState<any>(null);
+  const { identity = "crm-user", onIncomingCall, onCallStatusChange } = options;
+
+  const [device, setDevice] = useState<Device | null>(null);
+  const [activeCall, setActiveCall] = useState<Call | null>(null);
   const [callStatus, setCallStatus] = useState<CallStatus>("idle");
   const [isMuted, setIsMuted] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isReady, setIsReady] = useState(false);
-  const [sdkLoaded, setSdkLoaded] = useState(false);
-  
+  const [currentCallInfo, setCurrentCallInfo] = useState<CallInfo | null>(null);
+
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const callStartTimeRef = useRef<number | null>(null);
 
-  // Load Twilio SDK
-  useEffect(() => {
-    const loadTwilioSdk = async () => {
-      if (window.Twilio?.Device) {
-        console.log("Twilio SDK already loaded");
-        setSdkLoaded(true);
-        return;
-      }
+  // Update call status and notify callback
+  const updateCallStatus = useCallback(
+    (status: CallStatus) => {
+      setCallStatus(status);
+      onCallStatusChange?.(status);
+    },
+    [onCallStatusChange]
+  );
 
-      return new Promise<void>((resolve, reject) => {
-        const script = document.createElement("script");
-        script.src = "https://sdk.twilio.com/js/client/v1.14/twilio.min.js";
-        script.async = true;
-        script.onload = () => {
-          console.log("✓ Twilio SDK loaded successfully");
-          setSdkLoaded(true);
-          resolve();
-        };
-        script.onerror = () => {
-          const err = new Error("Failed to load Twilio SDK");
-          console.error(err);
-          reject(err);
-        };
-        document.head.appendChild(script);
-      });
+  // Check Twilio configuration on mount
+  useEffect(() => {
+    const checkConfig = async () => {
+      try {
+        const config = await getTwilioConfig();
+        if (config.voiceConfigured) {
+          console.log("✓ Twilio Voice configured and ready");
+        } else {
+          setError(
+            "Twilio Voice not configured. Please set TWILIO_TWIML_APP_SID."
+          );
+          console.error("✗ Twilio Voice not configured");
+        }
+      } catch (err) {
+        console.error("Failed to check Twilio config:", err);
+        setError("Failed to check Twilio configuration");
+      }
     };
 
-    loadTwilioSdk()
-      .catch((err) => {
-        console.error("SDK load error:", err);
-        setError(err.message);
-      });
+    checkConfig();
   }, []);
 
   // Initialize device with token
   const initializeDevice = useCallback(async () => {
-    if (!sdkLoaded) {
-      console.warn("SDK not yet loaded, waiting...");
-      // Wait for SDK to load
-      let attempts = 0;
-      while (!window.Twilio?.Device && attempts < 50) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-        attempts++;
-      }
-      
-      if (!window.Twilio?.Device) {
-        const msg = "Twilio SDK failed to load after timeout";
-        setError(msg);
-        console.error(msg);
-        return;
-      }
-    }
-
-    if (!window.Twilio?.Device) {
-      const msg = "Twilio SDK not available";
-      setError(msg);
-      console.error(msg);
-      return;
-    }
-
     try {
       console.log("Fetching Twilio token...");
-      const response = await fetch("/api/twilio/token", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identity }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to get Twilio token: ${response.status} ${errorText}`);
-      }
-
-      const { token } = await response.json();
+      const { token } = await getTwilioToken(identity);
       console.log("Token received, creating device...");
-      
-      const twilioDevice = new window.Twilio.Device(token, {
-        codecPreferences: ["opus", "pcmu"],
-        fakeLocalDTMF: true,
-        enableRingingState: true,
-        debug: true,
+
+      const twilioDevice = new Device(token, {
+        codecPreferences: [Call.Codec.Opus, Call.Codec.PCMU],
+        logLevel: "error",
       });
 
-      twilioDevice.on("ready", () => {
+      // Device events
+      twilioDevice.on("registered", () => {
         console.log("✓ Twilio Device ready");
         setIsReady(true);
         setError(null);
       });
 
-      twilioDevice.on("error", (err: any) => {
+      twilioDevice.on("error", (err) => {
         console.error("✗ Twilio Device error:", err);
         setError(err.message || "Device error");
-        setCallStatus("error");
+        updateCallStatus("error");
       });
 
-      twilioDevice.on("connect", (conn: any) => {
-        console.log("Call connected");
-        setActiveCall(conn);
-        setCallStatus("connected");
-        callStartTimeRef.current = Date.now();
-        
-        // Start duration timer
-        durationIntervalRef.current = setInterval(() => {
-          if (callStartTimeRef.current) {
-            setCallDuration(Math.floor((Date.now() - callStartTimeRef.current) / 1000));
-          }
-        }, 1000);
+      twilioDevice.on("incoming", (call: Call) => {
+        console.log("Incoming call from:", call.parameters.From);
+        setActiveCall(call);
+        updateCallStatus("ringing");
+        onIncomingCall?.(call);
+
+        // Set up call events for incoming call
+        setupCallEvents(call);
       });
 
-      twilioDevice.on("disconnect", () => {
-        console.log("Call disconnected");
-        setActiveCall(null);
-        setCallStatus("disconnected");
-        setIsMuted(false);
-        
-        // Clear duration timer
-        if (durationIntervalRef.current) {
-          clearInterval(durationIntervalRef.current);
-          durationIntervalRef.current = null;
-        }
-        callStartTimeRef.current = null;
-        
-        // Reset to idle after a moment
-        setTimeout(() => setCallStatus("idle"), 2000);
-      });
-
-      twilioDevice.on("incoming", (conn: any) => {
-        console.log("Incoming call from:", conn.parameters.From);
-        setActiveCall(conn);
-        setCallStatus("ringing");
-        onIncomingCall?.(conn);
-      });
-
-      twilioDevice.on("cancel", () => {
-        console.log("Call cancelled");
-        setActiveCall(null);
-        setCallStatus("idle");
-      });
-
-      twilioDevice.on("offline", () => {
-        console.log("Twilio Device offline");
+      twilioDevice.on("unregistered", () => {
+        console.log("Twilio Device unregistered");
         setIsReady(false);
       });
 
+      await twilioDevice.register();
       setDevice(twilioDevice);
     } catch (err) {
       console.error("Failed to initialize Twilio device:", err);
       setError(err instanceof Error ? err.message : "Failed to initialize");
     }
-  }, [identity, onIncomingCall]);
+  }, [identity, onIncomingCall, updateCallStatus]);
+
+  // Set up call event handlers
+  const setupCallEvents = useCallback(
+    (call: Call) => {
+      call.on("accept", () => {
+        console.log("Call connected");
+        setActiveCall(call);
+        updateCallStatus("connected");
+        callStartTimeRef.current = Date.now();
+
+        // Start duration timer
+        if (durationIntervalRef.current) {
+          clearInterval(durationIntervalRef.current);
+        }
+        durationIntervalRef.current = setInterval(() => {
+          if (callStartTimeRef.current) {
+            setCallDuration(
+              Math.floor((Date.now() - callStartTimeRef.current) / 1000)
+            );
+          }
+        }, 1000);
+      });
+
+      call.on("disconnect", () => {
+        console.log("Call disconnected");
+        handleCallEnd();
+      });
+
+      call.on("cancel", () => {
+        console.log("Call cancelled");
+        setActiveCall(null);
+        updateCallStatus("idle");
+      });
+
+      call.on("reject", () => {
+        console.log("Call rejected");
+        setActiveCall(null);
+        updateCallStatus("idle");
+      });
+
+      call.on("error", (err) => {
+        console.error("Call error:", err);
+        setError(err.message || "Call error");
+        updateCallStatus("error");
+      });
+
+      call.on("ringing", () => {
+        console.log("Call ringing...");
+        updateCallStatus("ringing");
+      });
+    },
+    [updateCallStatus]
+  );
+
+  // Handle call end
+  const handleCallEnd = useCallback(() => {
+    const duration = callStartTimeRef.current
+      ? Math.floor((Date.now() - callStartTimeRef.current) / 1000)
+      : 0;
+
+    // Log call if we have call info
+    if (currentCallInfo) {
+      logTwilioCall({
+        prospectId: currentCallInfo.prospectId || "unknown",
+        callerId: identity,
+        callSid: currentCallInfo.callSid,
+        phoneNumber: currentCallInfo.phoneNumber,
+        duration,
+        outcome: "Call completed",
+      }).catch((err) => {
+        console.error("Failed to log call:", err);
+      });
+    }
+
+    setActiveCall(null);
+    updateCallStatus("disconnected");
+    setIsMuted(false);
+
+    // Clear duration timer
+    if (durationIntervalRef.current) {
+      clearInterval(durationIntervalRef.current);
+      durationIntervalRef.current = null;
+    }
+    callStartTimeRef.current = null;
+    setCurrentCallInfo(null);
+
+    // Reset to idle after a moment
+    setTimeout(() => updateCallStatus("idle"), 2000);
+  }, [currentCallInfo, identity, updateCallStatus]);
 
   // Make outbound call
-  const makeCall = useCallback(async (phoneNumber: string, params: Record<string, string> = {}) => {
-    if (!device) {
-      setError("Device not ready");
-      return;
-    }
+  const makeCall = useCallback(
+    async (
+      phoneNumber: string,
+      params: { prospectId?: string; callerName?: string } = {}
+    ) => {
+      if (!device) {
+        setError("Device not ready");
+        return;
+      }
 
-    try {
-      setCallStatus("connecting");
-      setError(null);
-      setCallDuration(0);
+      try {
+        updateCallStatus("connecting");
+        setError(null);
+        setCallDuration(0);
 
-      const connection = device.connect({
-        To: phoneNumber,
-        ...params,
-      });
+        const connection = await device.connect({
+          params: {
+            To: phoneNumber,
+            ...params,
+          },
+        });
 
-      connection.on("ringing", () => {
-        console.log("Call ringing...");
-        setCallStatus("ringing");
-      });
+        setCurrentCallInfo({
+          callSid: connection.parameters.CallSid || "",
+          phoneNumber,
+          prospectId: params.prospectId,
+        });
 
-      setActiveCall(connection);
-    } catch (err) {
-      console.error("Failed to make call:", err);
-      setError(err instanceof Error ? err.message : "Failed to make call");
-      setCallStatus("error");
-    }
-  }, [device]);
+        setActiveCall(connection);
+        setupCallEvents(connection);
+      } catch (err) {
+        console.error("Failed to make call:", err);
+        setError(err instanceof Error ? err.message : "Failed to make call");
+        updateCallStatus("error");
+      }
+    },
+    [device, setupCallEvents, updateCallStatus]
+  );
 
   // Hang up active call
   const hangUp = useCallback(() => {
@@ -217,7 +257,6 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}) {
     if (device) {
       device.disconnectAll();
     }
-    setCallStatus("disconnected");
   }, [activeCall, device]);
 
   // Accept incoming call
@@ -231,28 +270,33 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}) {
   const rejectCall = useCallback(() => {
     if (activeCall && callStatus === "ringing") {
       activeCall.reject();
-      setActiveCall(null);
-      setCallStatus("idle");
     }
   }, [activeCall, callStatus]);
 
   // Toggle mute
   const toggleMute = useCallback(() => {
     if (activeCall) {
-      activeCall.mute(!isMuted);
-      setIsMuted(!isMuted);
+      const newMuteState = !isMuted;
+      activeCall.mute(newMuteState);
+      setIsMuted(newMuteState);
     }
   }, [activeCall, isMuted]);
 
   // Send DTMF digits
-  const sendDigits = useCallback((digits: string) => {
-    if (activeCall) {
-      activeCall.sendDigits(digits);
-    }
-  }, [activeCall]);
+  const sendDigits = useCallback(
+    (digits: string) => {
+      if (activeCall) {
+        activeCall.sendDigits(digits);
+        console.log("Sent DTMF:", digits);
+      }
+    },
+    [activeCall]
+  );
 
   // Format duration as MM:SS
-  const formattedDuration = `${Math.floor(callDuration / 60).toString().padStart(2, "0")}:${(callDuration % 60).toString().padStart(2, "0")}`;
+  const formattedDuration = `${Math.floor(callDuration / 60)
+    .toString()
+    .padStart(2, "0")}:${(callDuration % 60).toString().padStart(2, "0")}`;
 
   // Cleanup on unmount
   useEffect(() => {
@@ -275,6 +319,7 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}) {
     formattedDuration,
     error,
     isReady,
+    currentCallInfo,
     initializeDevice,
     makeCall,
     hangUp,
@@ -284,4 +329,3 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}) {
     sendDigits,
   };
 }
-

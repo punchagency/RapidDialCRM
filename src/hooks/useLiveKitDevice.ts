@@ -11,7 +11,13 @@ import {
   DisconnectReason,
 } from "livekit-client";
 
-export type CallStatus = "idle" | "connecting" | "ringing" | "connected" | "disconnected" | "error";
+export type CallStatus =
+  | "idle"
+  | "connecting"
+  | "ringing"
+  | "connected"
+  | "disconnected"
+  | "error";
 
 interface UseLiveKitDeviceOptions {
   identity?: string;
@@ -40,10 +46,13 @@ export function useLiveKitDevice(options: UseLiveKitDeviceOptions = {}) {
   const callStartTimeRef = useRef<number | null>(null);
   const audioElementsRef = useRef<HTMLAudioElement[]>([]);
 
-  const updateCallStatus = useCallback((status: CallStatus) => {
-    setCallStatus(status);
-    onCallStatusChange?.(status);
-  }, [onCallStatusChange]);
+  const updateCallStatus = useCallback(
+    (status: CallStatus) => {
+      setCallStatus(status);
+      onCallStatusChange?.(status);
+    },
+    [onCallStatusChange]
+  );
 
   useEffect(() => {
     const checkConfig = async () => {
@@ -56,7 +65,9 @@ export function useLiveKitDevice(options: UseLiveKitDeviceOptions = {}) {
             setIsReady(true);
             setError(null);
           } else {
-            setError("LiveKit not configured. Please set LIVEKIT_API_KEY and LIVEKIT_API_SECRET.");
+            setError(
+              "LiveKit not configured. Please set LIVEKIT_API_KEY and LIVEKIT_API_SECRET."
+            );
             setIsReady(false);
           }
         }
@@ -122,49 +133,61 @@ export function useLiveKitDevice(options: UseLiveKitDeviceOptions = {}) {
     []
   );
 
-  const handleDisconnect = useCallback((reason?: DisconnectReason) => {
-    console.log("Disconnected from room:", reason);
-    updateCallStatus("disconnected");
-    setIsMuted(false);
+  const handleDisconnect = useCallback(
+    (reason?: DisconnectReason) => {
+      console.log("Disconnected from room:", reason);
+      updateCallStatus("disconnected");
+      setIsMuted(false);
 
-    if (durationIntervalRef.current) {
-      clearInterval(durationIntervalRef.current);
-      durationIntervalRef.current = null;
-    }
-    callStartTimeRef.current = null;
+      if (durationIntervalRef.current) {
+        clearInterval(durationIntervalRef.current);
+        durationIntervalRef.current = null;
+      }
+      callStartTimeRef.current = null;
 
-    audioElementsRef.current.forEach((el) => el.remove());
-    audioElementsRef.current = [];
+      audioElementsRef.current.forEach((el) => el.remove());
+      audioElementsRef.current = [];
 
-    setTimeout(() => updateCallStatus("idle"), 2000);
-  }, [updateCallStatus]);
+      setTimeout(() => updateCallStatus("idle"), 2000);
+    },
+    [updateCallStatus]
+  );
 
-  const handleConnectionStateChange = useCallback((state: ConnectionState) => {
-    console.log("Connection state changed:", state);
-    
-    switch (state) {
-      case ConnectionState.Connecting:
-        updateCallStatus("connecting");
-        break;
-      case ConnectionState.Connected:
-        updateCallStatus("connected");
-        callStartTimeRef.current = Date.now();
-        durationIntervalRef.current = setInterval(() => {
-          if (callStartTimeRef.current) {
-            setCallDuration(
-              Math.floor((Date.now() - callStartTimeRef.current) / 1000)
-            );
+  const handleConnectionStateChange = useCallback(
+    (state: ConnectionState) => {
+      console.log("Connection state changed:", state);
+
+      switch (state) {
+        case ConnectionState.Connecting:
+          updateCallStatus("connecting");
+          break;
+        case ConnectionState.Connected:
+          updateCallStatus("connected");
+
+          // Clear any existing interval before starting a new one
+          if (durationIntervalRef.current) {
+            clearInterval(durationIntervalRef.current);
           }
-        }, 1000);
-        break;
-      case ConnectionState.Disconnected:
-        handleDisconnect();
-        break;
-      case ConnectionState.Reconnecting:
-        console.log("Reconnecting...");
-        break;
-    }
-  }, [updateCallStatus, handleDisconnect]);
+
+          callStartTimeRef.current = Date.now();
+          durationIntervalRef.current = setInterval(() => {
+            if (callStartTimeRef.current) {
+              setCallDuration(
+                Math.floor((Date.now() - callStartTimeRef.current) / 1000)
+              );
+            }
+          }, 1000);
+          break;
+        case ConnectionState.Disconnected:
+          handleDisconnect();
+          break;
+        case ConnectionState.Reconnecting:
+          console.log("Reconnecting...");
+          break;
+      }
+    },
+    [updateCallStatus, handleDisconnect]
+  );
 
   const makeCall = useCallback(
     async (
@@ -338,4 +361,3 @@ export function useLiveKitDevice(options: UseLiveKitDeviceOptions = {}) {
     startAudio,
   };
 }
-
