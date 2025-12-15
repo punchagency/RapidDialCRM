@@ -1,14 +1,10 @@
 import axios from "axios";
 
-const https =
-  process.env.NODE_ENV === "production"
-    ? axios.create({
-        baseURL: "",
-        withCredentials: true,
-      })
-    : axios.create({
-        baseURL: "http://localhost:5000/api/",
-        withCredentials: true,
-      });
+const apiBaseUrl = import.meta.env.VITE_API_URL || "";
+
+const https = axios.create({
+  baseURL: apiBaseUrl,
+  withCredentials: true,
+});
 
 export default https;
