@@ -149,9 +149,9 @@ export function Sidebar() {
       <div className="flex-1 px-4 space-y-1 overflow-y-auto">
         {getRoleItems().map((item) => (
           <Link key={item.href} href={item.href}>
-            <a
+            <div
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group mb-1",
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group mb-1 cursor-pointer",
                 isLinkActive(item.href)
                   ? "bg-primary/10 text-primary font-semibold"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -164,7 +164,7 @@ export function Sidebar() {
                 )}
               />
               {item.label}
-            </a>
+            </div>
           </Link>
         ))}
 
@@ -177,9 +177,9 @@ export function Sidebar() {
               const active = isLinkActive(item.href);
               return (
                 <Link key={item.href} href={item.href}>
-                  <a
+                  <div
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group mb-1",
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group mb-1 cursor-pointer",
                       active
                         ? "bg-accent text-accent-foreground font-semibold"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -194,7 +194,7 @@ export function Sidebar() {
                       )}
                     />
                     {item.label}
-                  </a>
+                  </div>
                 </Link>
               );
             })}
