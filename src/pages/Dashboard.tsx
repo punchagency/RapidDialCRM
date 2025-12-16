@@ -612,12 +612,10 @@ export default function Dashboard() {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-8 pb-8 relative">
-          <ErrorBoundary>
-            {userRole === "sales_rep" && <InsideRepDashboard />}
-            {userRole === "manager" && <ManagerDashboard />}
-            {userRole === "loader" && <LoaderDashboard />}
-            {userRole === "admin" && <ManagerDashboard />}
-          </ErrorBoundary>
+          {userRole === "sales_rep" && <InsideRepDashboard />}
+          {userRole === "manager" && <ManagerDashboard />}
+          {userRole === "loader" && <LoaderDashboard />}
+          {userRole === "admin" && <ManagerDashboard />}
         </div>
       </main>
 
