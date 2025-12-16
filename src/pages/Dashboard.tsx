@@ -100,7 +100,10 @@ export default function Dashboard() {
     }
 
     try {
-      const { data, error } = await CustomServerApi.bulkSearch(bulkSearchSpecialty, bulkSearchLocation);
+      const { data, error } = await CustomServerApi.bulkSearch(
+        bulkSearchSpecialty,
+        bulkSearchLocation
+      );
 
       if (error) {
         toast({
@@ -128,7 +131,10 @@ export default function Dashboard() {
     } catch (error) {
       toast({
         title: "Search Failed",
-        description: error instanceof Error ? error.message : "Unable to search professionals",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Unable to search professionals",
         variant: "destructive",
       });
     }
@@ -416,7 +422,7 @@ export default function Dashboard() {
             className={cn(
               "space-y-4",
               leaderboardUsers.filter((u) => u.isActive).length > 25 &&
-              "max-h-[600px] overflow-y-auto pr-2"
+                "max-h-[600px] overflow-y-auto pr-2"
             )}
           >
             {leaderboardUsers
@@ -592,10 +598,10 @@ export default function Dashboard() {
             {userRole === "manager"
               ? "Manager Overview"
               : userRole === "loader"
-                ? "Data Management"
-                : userRole === "sales_rep"
-                  ? "Sales Dashboard"
-                  : "Dashboard"}
+              ? "Data Management"
+              : userRole === "sales_rep"
+              ? "Sales Dashboard"
+              : "Dashboard"}
           </h1>
           <div className="flex items-center gap-3">
             <Badge variant="outline" className="capitalize bg-white px-3 py-1">
