@@ -4,6 +4,7 @@ import { GamificationWidget } from "@/components/crm/GamificationWidget";
 import { getStatuses } from "@/lib/statusUtils";
 import { Prospect, User } from "@/lib/types";
 import { fetchProspects } from "@/lib/apiClient";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import {
   Card,
   CardContent,
@@ -143,7 +144,7 @@ export default function Dashboard() {
   };
 
   // Filter prospects - show all for now (database doesn't have status field yet)
-  const upNextProspects = prospects.slice(0, 20);
+  const upNextProspects = Array.isArray(prospects) ? prospects.slice(0, 20) : [];
 
   // --- Role Specific Content Components ---
 
@@ -619,10 +620,12 @@ export default function Dashboard() {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-8 pb-8 relative">
-          {userRole === "sales_rep" && <InsideRepDashboard />}
-          {userRole === "manager" && <ManagerDashboard />}
-          {userRole === "loader" && <LoaderDashboard />}
-          {userRole === "admin" && <ManagerDashboard />}
+          <ErrorBoundary>
+            {userRole === "sales_rep" && <InsideRepDashboard />}
+            {userRole === "manager" && <ManagerDashboard />}
+            {userRole === "loader" && <LoaderDashboard />}
+            {userRole === "admin" && <ManagerDashboard />}
+          </ErrorBoundary>
         </div>
       </main>
 

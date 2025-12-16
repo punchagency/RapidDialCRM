@@ -11,30 +11,50 @@ export async function fetchProspects(
   limit: number = 100,
   offset: number = 0
 ): Promise<Prospect[]> {
-  const response = await ProspectServices.fetchProspects(
-    territory,
-    limit,
-    offset
-  );
-  return response.data.data || response.data;
+  try {
+    const response = await ProspectServices.fetchProspects(
+      territory,
+      limit,
+      offset
+    );
+    return response.data.data || response.data || [];
+  } catch (error) {
+    console.error("Failed to fetch prospects:", error);
+    return [];
+  }
 }
 
-export async function getProspect(id: string): Promise<Prospect> {
-  const response = await ProspectServices.getProspect(id);
-  return response.data;
+export async function getProspect(id: string): Promise<Prospect | null> {
+  try {
+    const response = await ProspectServices.getProspect(id);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to get prospect:", error);
+    return null;
+  }
 }
 
 export async function updateProspect(
   id: string,
   data: Partial<Prospect>
-): Promise<Prospect> {
-  const response = await ProspectServices.updateProspect(id, data);
-  return response.data;
+): Promise<Prospect | null> {
+  try {
+    const response = await ProspectServices.updateProspect(id, data);
+    return response.data;
+  } catch (error) {
+    console.error("Failed to update prospect:", error);
+    return null;
+  }
 }
 
 export async function getCallingList(fieldRepId: string): Promise<Prospect[]> {
-  const response = await ProspectServices.getCallingList(fieldRepId);
-  return response.data.prospects || [];
+  try {
+    const response = await ProspectServices.getCallingList(fieldRepId);
+    return response.data.prospects || [];
+  } catch (error) {
+    console.error("Failed to get calling list:", error);
+    return [];
+  }
 }
 
 export async function recordCallOutcome(
@@ -42,18 +62,32 @@ export async function recordCallOutcome(
   outcome: string,
   notes?: string
 ): Promise<void> {
-  await CallServices.recordCallOutcome(prospectId, outcome, notes);
+  try {
+    await CallServices.recordCallOutcome(prospectId, outcome, notes);
+  } catch (error) {
+    console.error("Failed to record call outcome:", error);
+  }
 }
 
 export async function listFieldReps(): Promise<FieldRep[]> {
-  const response = await FieldRepServices.listFieldReps();
-  return response.data;
+  try {
+    const response = await FieldRepServices.listFieldReps();
+    return response.data || [];
+  } catch (error) {
+    console.error("Failed to list field reps:", error);
+    return [];
+  }
 }
 
 export async function listAppointments(
   fieldRepId: string,
   date: string
 ): Promise<Appointment[]> {
-  const response = await AppointmentServices.listAppointments(fieldRepId, date);
-  return response.data;
+  try {
+    const response = await AppointmentServices.listAppointments(fieldRepId, date);
+    return response.data || [];
+  } catch (error) {
+    console.error("Failed to list appointments:", error);
+    return [];
+  }
 }
