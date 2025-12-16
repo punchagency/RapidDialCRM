@@ -9,82 +9,58 @@ import { useToast } from "@/hooks/use-toast";
 import { AnimatePresence, motion } from "framer-motion";
 import { useUserRole } from "@/lib/UserRoleContext";
 import { EditContactModal } from "@/components/crm/EditContactModal";
-import { fetchProspects, getProspect, recordCallOutcome } from "@/lib/apiClient";
+import { useProspects, useProspect, useUpdateProspect } from "@/hooks/useProspects";
+import { useRecordCallOutcome } from "@/hooks/useCallOutcomes";
 
 export default function Dialer() {
   const [location] = useLocation();
-  const [prospects, setProspects] = useState<Prospect[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [selectedContactForEdit, setSelectedContactForEdit] = useState<Prospect | null>(null);
   const { toast } = useToast();
-  const { userRole, canAccess } = useUserRole();
+  const { canAccess } = useUserRole();
 
   const canEdit = canAccess("contacts_edit");
 
-  useEffect(() => {
-    async function loadProspects() {
-      try {
+  // Get prospectId from URL
         const params = new URLSearchParams(window.location.search);
         const prospectId = params.get("prospectId");
         
-        // If opening with a specific prospect ID, load just that prospect + batch of prospects around it
-        if (prospectId) {
-          try {
-            const prospect = await getProspect(prospectId);
-            // Load a batch of prospects starting from a reasonable offset
-            const allProspects = await fetchProspects(undefined, 100, 0);
-            setProspects(allProspects);
-            
-            const idx = allProspects.findIndex(p => p.id === prospectId);
-            if (idx >= 0) setCurrentIndex(idx);
-          } catch (err) {
-            // Fallback to loading all if single fetch fails
-            const data = await fetchProspects();
-            setProspects(data);
-          }
-        } else {
-          // Load all prospects if no specific ID
-          const data = await fetchProspects();
-          setProspects(data);
-        }
-        setIsLoading(false);
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load prospects",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-      }
-    }
-    loadProspects();
-  }, [toast]);
+  // Use React Query hooks
+  const { data: prospects = [], isLoading } = useProspects({ limit: 100, offset: 0 });
+  const { data: initialProspect } = useProspect(prospectId || '');
+  const updateProspectMutation = useUpdateProspect();
+  const recordCallOutcomeMutation = useRecordCallOutcome();
 
+  // Set initial index when prospectId is provided
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const prospectId = params.get("prospectId");
-    if (prospectId) {
+    if (prospectId && prospects.length > 0) {
       const idx = prospects.findIndex(c => c.id === prospectId);
       if (idx >= 0) setCurrentIndex(idx);
     }
-  }, [location, prospects]);
+  }, [prospectId, prospects]);
 
   const handleSaveContact = async (updatedProspect: Prospect) => {
     try {
-      await recordCallOutcome(updatedProspect.id, "contacted", "Contact updated");
-      const index = prospects.findIndex(c => c.id === updatedProspect.id);
-      if (index >= 0) {
-        const updated = [...prospects];
-        updated[index] = updatedProspect;
-        setProspects(updated);
-      }
+      await updateProspectMutation.mutateAsync({
+        id: updatedProspect.id,
+        data: updatedProspect,
+      });
+      await recordCallOutcomeMutation.mutateAsync({
+        prospectId: updatedProspect.id,
+        callerId: 'current-user',
+        outcome: "contacted",
+        notes: "Contact updated",
+      });
       setSelectedContactForEdit(null);
+      toast({
+        title: "Success",
+        description: "Contact updated successfully",
+      });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to save contact",
+        description: error instanceof Error ? error.message : "Failed to save contact",
         variant: "destructive",
       });
     }
@@ -92,7 +68,12 @@ export default function Dialer() {
 
   const handleComplete = async (status: string, notes: string) => {
     try {
-      await recordCallOutcome(prospects[currentIndex].id, status, notes);
+      await recordCallOutcomeMutation.mutateAsync({
+        prospectId: prospects[currentIndex].id,
+        callerId: 'current-user',
+        outcome: status,
+        notes,
+      });
       setIsTransitioning(true);
       
       toast({
@@ -115,7 +96,7 @@ export default function Dialer() {
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to log call",
+        description: error instanceof Error ? error.message : "Failed to log call",
         variant: "destructive",
       });
       setIsTransitioning(false);
@@ -124,6 +105,11 @@ export default function Dialer() {
 
   if (isLoading) return <div className="flex h-screen items-center justify-center">Loading...</div>;
   if (prospects.length === 0) return <div className="flex h-screen items-center justify-center">No prospects found</div>;
+  
+  if (currentIndex >= prospects.length) {
+    setCurrentIndex(0);
+    return null;
+  }
 
   const currentContact = prospects[currentIndex];
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import avatar1 from "@/assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
 import { cn } from "@/lib/utils";
 import { useLocation } from "wouter";
+import { useFieldReps } from "@/hooks/useFieldReps";
+import { useUsers } from "@/hooks/useUsers";
+import type { FieldRep } from "@/lib/types";
 
-// Mock Data for Field Reps
+// Helper to transform FieldRep to display format
+const transformFieldRep = (rep: FieldRep) => ({
+  id: rep.id,
+  name: rep.name,
+  status: "active" as const, // TODO: Add status field to backend
+  territory: rep.territory,
+  visitsToday: 0, // TODO: Calculate from appointments
+  visitsTarget: 10, // TODO: Get from work schedule
+  lastCheckIn: "N/A", // TODO: Add last check-in tracking
+  performance: 85, // TODO: Calculate performance
+  avatar: null,
+});
+
+// Mock Data for Field Reps (fallback)
 const mockFieldReps = [
   {
     id: "fr1",
@@ -116,6 +132,32 @@ export default function FieldReps() {
   const [activeTab, setActiveTab] = useState("field");
   const [location] = useLocation();
 
+  // Fetch data from API
+  const { data: fieldRepsData = [], isLoading: fieldRepsLoading } = useFieldReps();
+  const { data: usersData = [], isLoading: usersLoading } = useUsers();
+
+  // Transform field reps data
+  const fieldReps = useMemo(() => {
+    return fieldRepsData.map(transformFieldRep);
+  }, [fieldRepsData]);
+
+  // Filter inside sales reps from users (role: inside_sales_rep)
+  const insideReps = useMemo(() => {
+    return usersData
+      .filter(user => user.role === 'inside_sales_rep' || user.role === 'manager')
+      .map(user => ({
+        id: user.id,
+        name: user.name,
+        status: user.isActive ? "active" as const : "offline" as const,
+        role: user.role === 'manager' ? 'Inside Sales Lead' : 'Inside Sales',
+        callsToday: 0, // TODO: Calculate from call history
+        callsTarget: 60, // TODO: Get from settings
+        avgCallTime: "0m 0s", // TODO: Calculate from call history
+        performance: 85, // TODO: Calculate performance
+        avatar: null,
+      }));
+  }, [usersData]);
+
   // Sync active tab with URL query parameter instantly
   useEffect(() => {
     const checkTab = () => {
@@ -155,17 +197,21 @@ export default function FieldReps() {
     };
   }, []);
 
-  const filteredFieldReps = mockFieldReps.filter(rep => {
-    const matchesSearch = rep.name.toLowerCase().includes(searchTerm.toLowerCase()) || rep.territory.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || rep.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredFieldReps = useMemo(() => {
+    return fieldReps.filter(rep => {
+      const matchesSearch = rep.name.toLowerCase().includes(searchTerm.toLowerCase()) || rep.territory.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === "all" || rep.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [fieldReps, searchTerm, statusFilter]);
 
-  const filteredInsideReps = mockInsideReps.filter(rep => {
-    const matchesSearch = rep.name.toLowerCase().includes(searchTerm.toLowerCase()) || rep.role.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || rep.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredInsideReps = useMemo(() => {
+    return insideReps.filter(rep => {
+      const matchesSearch = rep.name.toLowerCase().includes(searchTerm.toLowerCase()) || rep.role.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === "all" || rep.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [insideReps, searchTerm, statusFilter]);
 
   // Update URL when tab changes
   const handleTabChange = (value: string) => {
@@ -204,7 +250,7 @@ export default function FieldReps() {
                           {activeTab === 'field' ? 'Total Field Reps' : 'Total Inside Reps'}
                       </p>
                       <p className="text-2xl font-bold">
-                          {activeTab === 'field' ? mockFieldReps.length : mockInsideReps.length}
+                          {activeTab === 'field' ? fieldReps.length : insideReps.length}
                       </p>
                    </div>
                 </CardContent>
@@ -218,8 +264,8 @@ export default function FieldReps() {
                       <p className="text-xs text-muted-foreground font-medium uppercase">Active Now</p>
                       <p className="text-2xl font-bold">
                         {activeTab === 'field' 
-                            ? mockFieldReps.filter(r => r.status === 'active').length 
-                            : mockInsideReps.filter(r => r.status === 'active').length}
+                            ? fieldReps.filter(r => r.status === 'active').length 
+                            : insideReps.filter(r => r.status === 'active').length}
                       </p>
                    </div>
                 </CardContent>

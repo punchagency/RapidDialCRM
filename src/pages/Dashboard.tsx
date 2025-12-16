@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { GamificationWidget } from "@/components/crm/GamificationWidget";
 import { getStatuses } from "@/lib/statusUtils";
 import { Prospect, User } from "@/lib/types";
-import { fetchProspects } from "@/lib/apiClient";
-import ErrorBoundary from "@/components/ErrorBoundary";
+import { useProspects } from "@/hooks/useProspects";
+import { useUsers } from "@/hooks/useUsers";
+import { CustomServerApi } from "@/integrations/custom-server/api";
 import {
   Card,
   CardContent,
@@ -48,7 +49,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { useQuery } from "@tanstack/react-query";
 
 export default function Dashboard() {
   const { userRole } = useUserRole();
@@ -58,20 +58,10 @@ export default function Dashboard() {
   const [bulkSearchSpecialty, setBulkSearchSpecialty] = useState("");
   const [bulkSearchLocation, setBulkSearchLocation] = useState("");
   const [bulkSearchTerritory, setBulkSearchTerritory] = useState("");
-  const [prospects, setProspects] = useState<Prospect[]>([]);
   const { toast } = useToast();
 
-  useEffect(() => {
-    async function loadProspects() {
-      try {
-        const data = await fetchProspects();
-        setProspects(data);
-      } catch (error) {
-        console.error("Failed to load prospects:", error);
-      }
-    }
-    loadProspects();
-  }, []);
+  // Use React Query hook for data fetching
+  const { data: prospects = [] } = useProspects({ limit: 20 });
 
   const handleFileUpload = async (file: File) => {
     // Parse CSV file
@@ -110,17 +100,21 @@ export default function Dashboard() {
     }
 
     try {
-      const res = await fetch("/api/bulk-search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          specialty: bulkSearchSpecialty,
-          location: bulkSearchLocation,
-        }),
-      });
-      const data = await res.json();
+      const { data, error } = await CustomServerApi.bulkSearch(
+        bulkSearchSpecialty,
+        bulkSearchLocation
+      );
 
-      if (data.results?.length > 0) {
+      if (error) {
+        toast({
+          title: "Search Failed",
+          description: error,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (data?.results?.length > 0) {
         // Redirect to lead loader with bulk import tab
         window.location.href = "/lead-loader";
         toast({
@@ -137,14 +131,17 @@ export default function Dashboard() {
     } catch (error) {
       toast({
         title: "Search Failed",
-        description: "Unable to search professionals",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Unable to search professionals",
         variant: "destructive",
       });
     }
   };
 
   // Filter prospects - show all for now (database doesn't have status field yet)
-  const upNextProspects = Array.isArray(prospects) ? prospects.slice(0, 20) : [];
+  const upNextProspects = prospects?.slice(0, 20) || [];
 
   // --- Role Specific Content Components ---
 
@@ -165,8 +162,8 @@ export default function Dashboard() {
             </Link>
           </div>
           <div className="space-y-3 overflow-y-auto pr-2 pb-4">
-            {upNextProspects.length > 0 ? (
-              upNextProspects.map((prospect) => (
+            {upNextProspects?.length > 0 ? (
+              upNextProspects?.map((prospect) => (
                 <div key={prospect.id} className="mb-3">
                   <ProspectCard prospect={prospect} />
                 </div>
@@ -330,13 +327,8 @@ export default function Dashboard() {
     </div>
   );
 
-  const { data: leaderboardUsers = [] } = useQuery<User[]>({
-    queryKey: ["/api/users"],
-    queryFn: async () => {
-      const res = await fetch("/api/users");
-      return res.json();
-    },
-  });
+  // Fetch users for leaderboard using the custom hook
+  const { data: leaderboardUsers = [], isLoading: isLoadingUsers } = useUsers();
 
   const roleLabels: Record<string, string> = {
     admin: "Admin",

@@ -1,10 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Device, Call } from "@twilio/voice-sdk";
-import {
-  getTwilioToken,
-  getTwilioConfig,
-  logTwilioCall,
-} from "@/services/TwilioServices";
+import { CustomServerApi } from "@/integrations/custom-server/api";
 
 export type CallStatus =
   | "idle"
@@ -54,8 +50,8 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}) {
   useEffect(() => {
     const checkConfig = async () => {
       try {
-        const config = await getTwilioConfig();
-        if (config.voiceConfigured) {
+        const { data } = await CustomServerApi.getTwilioConfig();
+        if (data?.configured) {
           console.log("✓ Twilio Voice configured and ready");
         } else {
           setError(
@@ -76,10 +72,10 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}) {
   const initializeDevice = useCallback(async () => {
     try {
       console.log("Fetching Twilio token...");
-      const { token } = await getTwilioToken(identity);
+      const { data } = await CustomServerApi.generateTwilioToken(identity);
       console.log("Token received, creating device...");
 
-      const twilioDevice = new Device(token, {
+      const twilioDevice = new Device(data?.token!, {
         codecPreferences: [Call.Codec.Opus, Call.Codec.PCMU],
         logLevel: "error",
       });
@@ -181,14 +177,12 @@ export function useTwilioDevice(options: UseTwilioDeviceOptions = {}) {
 
     // Log call if we have call info
     if (currentCallInfo) {
-      logTwilioCall({
-        prospectId: currentCallInfo.prospectId || "unknown",
-        callerId: identity,
-        callSid: currentCallInfo.callSid,
-        phoneNumber: currentCallInfo.phoneNumber,
-        duration,
-        outcome: "Call completed",
-      }).catch((err) => {
+      CustomServerApi.recordCallOutcome(
+        currentCallInfo.prospectId || "unknown",
+        identity,
+        "Call completed",
+        `Duration: ${duration}s, CallSid: ${currentCallInfo.callSid}, Phone: ${currentCallInfo.phoneNumber}`
+      ).catch((err) => {
         console.error("Failed to log call:", err);
       });
     }

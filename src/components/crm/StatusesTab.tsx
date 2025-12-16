@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useCallOutcomes, useUpdateCallOutcome, useDeleteCallOutcome } from "@/hooks/useCallOutcomes";
 
 interface CallOutcome {
   id: string;
@@ -149,80 +150,58 @@ function ColorPicker({
 
 export function StatusesTab() {
   const { toast } = useToast();
-  const [outcomes, setOutcomes] = useState<CallOutcome[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
 
-  const loadOutcomes = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/call-outcomes?t=${Date.now()}`, {
-        cache: "no-store",
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          "Pragma": "no-cache",
-        },
-      });
-      if (!response.ok) throw new Error("Failed to load outcomes");
-      const data = await response.json();
-      setOutcomes(Array.isArray(data) ? data : []);
-      setIsDirty(false);
-    } catch (error) {
-      console.error("Load outcomes error:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load call outcomes",
-        variant: "destructive",
-      });
-      setOutcomes([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Use React Query hooks
+  const { data: outcomes = [], isLoading } = useCallOutcomes();
+  const updateCallOutcomeMutation = useUpdateCallOutcome();
+  const deleteCallOutcomeMutation = useDeleteCallOutcome();
+  
+  const [localOutcomes, setLocalOutcomes] = useState<CallOutcome[]>([]);
 
+  // Sync local state with fetched data
   useEffect(() => {
-    loadOutcomes();
-  }, []);
+    if (outcomes.length > 0 && !isDirty) {
+      setLocalOutcomes(outcomes);
+    }
+  }, [outcomes, isDirty]);
 
   const handleSave = async () => {
-    setIsSaving(true);
     try {
-      for (const outcome of outcomes) {
-        const response = await fetch(`/api/call-outcomes/${outcome.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+      // Update all modified outcomes
+      const updatePromises = localOutcomes.map(outcome => 
+        updateCallOutcomeMutation.mutateAsync({
+          id: outcome.id,
+          data: {
             label: outcome.label,
             bgColor: outcome.bgColor,
             textColor: outcome.textColor,
             borderColor: outcome.borderColor,
             hoverColor: outcome.hoverColor,
             sortOrder: outcome.sortOrder,
-          }),
-        });
-        if (!response.ok) throw new Error(`Failed to update outcome ${outcome.id}`);
-      }
+          },
+        })
+      );
+      
+      await Promise.all(updatePromises);
+      
       toast({
         title: "Statuses Saved",
         description: "Your custom call outcome statuses have been updated.",
       });
       setIsDirty(false);
-      await loadOutcomes();
     } catch (error) {
-      console.error("Save error:", error);
       toast({
         title: "Error",
-        description: "Failed to save call outcomes",
+        description: error instanceof Error ? error.message : "Failed to save call outcomes",
         variant: "destructive",
       });
-    } finally {
-      setIsSaving(false);
     }
   };
 
-  const handleReset = async () => {
-    await loadOutcomes();
+  const handleReset = () => {
+    setLocalOutcomes(outcomes);
+    setIsDirty(false);
     toast({
       title: "Reset Complete",
       description: "Changes discarded",
@@ -230,7 +209,7 @@ export function StatusesTab() {
   };
 
   const updateOutcome = (id: string, field: keyof CallOutcome, value: string | number) => {
-    setOutcomes(outcomes.map(o => 
+    setLocalOutcomes(localOutcomes.map(o => 
       o.id === id ? { ...o, [field]: value } : o
     ));
     setIsDirty(true);
@@ -240,20 +219,16 @@ export function StatusesTab() {
     if (!confirm("Are you sure you want to delete this status?")) return;
     
     try {
-      const response = await fetch(`/api/call-outcomes/${id}`, {
-        method: "DELETE",
-      });
-      if (!response.ok) throw new Error("Failed to delete outcome");
-      setOutcomes(outcomes.filter(o => o.id !== id));
+      await deleteCallOutcomeMutation.mutateAsync(id);
+      setLocalOutcomes(localOutcomes.filter(o => o.id !== id));
       toast({
         title: "Status Deleted",
         description: "Call outcome removed successfully",
       });
     } catch (error) {
-      console.error("Delete error:", error);
       toast({
         title: "Error",
-        description: "Failed to delete call outcome",
+        description: error instanceof Error ? error.message : "Failed to delete call outcome",
         variant: "destructive",
       });
     }
@@ -290,16 +265,16 @@ export function StatusesTab() {
           <Button 
             size="sm" 
             onClick={handleSave} 
-            disabled={isSaving || !isDirty}
+            disabled={updateCallOutcomeMutation.isPending || !isDirty}
             className="bg-pink-500 hover:bg-pink-600 text-white border-none shadow-sm"
           >
-            <Save className="h-4 w-4 mr-2" /> {isSaving ? "Saving..." : "Save Changes"}
+            <Save className="h-4 w-4 mr-2" /> {updateCallOutcomeMutation.isPending ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </div>
 
       <Card className="border shadow-sm bg-white overflow-hidden">
-        {outcomes.length === 0 ? (
+        {localOutcomes.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-muted-foreground">No call outcomes configured</p>
           </div>
@@ -316,7 +291,7 @@ export function StatusesTab() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {outcomes.map((outcome) => (
+              {localOutcomes.map((outcome) => (
                 <TableRow key={outcome.id} className="group hover:bg-muted/5">
                   <TableCell className="py-2">
                     <div className="cursor-grab active:cursor-grabbing text-muted-foreground/40 hover:text-muted-foreground flex justify-center">
@@ -374,7 +349,7 @@ export function StatusesTab() {
       </Card>
       
       <p className="text-xs text-muted-foreground">
-        Total: {outcomes.length} {outcomes.length === 1 ? "outcome" : "outcomes"}
+        Total: {localOutcomes.length} {localOutcomes.length === 1 ? "outcome" : "outcomes"}
       </p>
     </div>
   );
