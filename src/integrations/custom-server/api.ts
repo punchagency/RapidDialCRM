@@ -187,6 +187,10 @@ export class CustomServerApi {
     return this.makeRequest<Prospect>(API_ENDPOINTS.prospects.update, data, { params: { id } });
   }
 
+  static async deleteProspect(id: string) {
+    return this.makeRequest(API_ENDPOINTS.prospects.delete, undefined, { params: { id } });
+  }
+
   static async getProspectsByTerritory(territory: string) {
     return this.makeRequest<Prospect[]>(API_ENDPOINTS.prospects.findByTerritory, undefined, { params: { territory } });
   }

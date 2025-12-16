@@ -76,6 +76,7 @@ export type Stakeholder = {
   email: string | null;
   phoneNumber: string | null;
   isPrimary: boolean | null;
+  contactType?: "client-admin" | "provider";
   createdAt: Date;
   updatedAt: Date;
 };

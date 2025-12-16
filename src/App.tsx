@@ -13,6 +13,7 @@ import FieldSales from "@/pages/FieldSales";
 import FieldReps from "@/pages/FieldReps";
 import OrgChart from "@/pages/OrgChart";
 import LeadLoader from "@/pages/LeadLoader";
+import LeadLoaderWithGoogleMap from "@/pages/LeadLoaderWithGoogleMap";
 import DataImporter from "@/pages/DataImporter";
 import Login from "@/pages/Login";
 import HipaaCompliance from "@/pages/HipaaCompliance";
@@ -38,6 +39,7 @@ function Router() {
       <Route path="/field-reps" component={FieldReps} />
       <Route path="/org-chart" component={OrgChart} />
       <Route path="/lead-loader" component={LeadLoader} />
+      <Route path="/lead-loader-with-google-map" component={LeadLoaderWithGoogleMap} />
       <Route path="/data-import" component={DataImporter} />
       <Route path="/analytics" component={Dashboard} />
       <Route path="/hipaa" component={HipaaCompliance} />

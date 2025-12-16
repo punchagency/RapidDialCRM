@@ -34,6 +34,7 @@ export interface SubContact {
   email: string;
   phone: string;
   isPrimary?: boolean;
+  contactType?: "client-admin" | "provider";
 }
 
 export interface Contact {

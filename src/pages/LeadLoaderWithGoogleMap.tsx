@@ -16,30 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { SubContact } from "@/lib/mockData";
 import { CustomServerApi } from "@/integrations/custom-server/api";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
+import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from "@react-google-maps/api";
 import type { Prospect } from "@/lib/types";
-
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
-
-let DefaultIcon = L.icon({
-  iconUrl: icon,
-  shadowUrl: iconShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41]
-});
-
-const SelectedIcon = L.icon({
-  iconUrl: icon,
-  shadowUrl: iconShadow,
-  iconSize: [30, 48],
-  iconAnchor: [15, 48],
-  className: 'selected-marker'
-});
-
-L.Marker.prototype.options.icon = DefaultIcon;
 
 // Territory options will be fetched from backend
 const DEFAULT_TERRITORY_OPTIONS = [
@@ -69,65 +47,19 @@ interface SearchResult {
   status?: string;
 }
 
-interface MapUpdaterProps {
-  geocodeBounds: L.LatLngBounds | null;
-  resultsBounds: L.LatLngBounds | null;
-  selectedLocation: [number, number] | null;
-}
+// Google Maps configuration
+const mapContainerStyle = {
+  width: "100%",
+  height: "100%",
+};
 
-function MapUpdater({ geocodeBounds, resultsBounds, selectedLocation }: MapUpdaterProps) {
-  const map = useMap();
-  const moveendHandlerRef = React.useRef<(() => void) | null>(null);
+const defaultCenter = {
+  lat: 39.8283,
+  lng: -98.5795,
+};
 
-  // Priority 1: Fit to geocode bounds when location is searched (centers on town)
-  useEffect(() => {
-    if (geocodeBounds && geocodeBounds.isValid() && !resultsBounds) {
-      map.fitBounds(geocodeBounds, { padding: [48, 48], maxZoom: 13 });
-    }
-  }, [geocodeBounds, resultsBounds, map]);
-
-  // Priority 2: Fit to results bounds when results load (shows all markers)
-  useEffect(() => {
-    if (resultsBounds && resultsBounds.isValid()) {
-      map.fitBounds(resultsBounds, { padding: [40, 40], maxZoom: 14 });
-    }
-  }, [resultsBounds, map]);
-
-  // Priority 3: Pan to selected location with vertical offset
-  useEffect(() => {
-    // Clean up any existing moveend handler before setting a new one
-    if (moveendHandlerRef.current) {
-      map.off('moveend', moveendHandlerRef.current);
-      moveendHandlerRef.current = null;
-    }
-
-    if (selectedLocation && selectedLocation[0] !== 0) {
-      // Fly to the location
-      map.flyTo(selectedLocation, Math.max(map.getZoom(), 14), { duration: 0.4 });
-
-      // Create handler for after flight completes
-      const handleMoveEnd = () => {
-        const mapHeight = map.getSize().y;
-        map.panBy([0, -mapHeight * 0.3], { animate: true, duration: 0.25 });
-        // Clean up this handler after it runs
-        map.off('moveend', handleMoveEnd);
-        moveendHandlerRef.current = null;
-      };
-
-      moveendHandlerRef.current = handleMoveEnd;
-      map.once('moveend', handleMoveEnd);
-    }
-
-    // Cleanup on unmount
-    return () => {
-      if (moveendHandlerRef.current) {
-        map.off('moveend', moveendHandlerRef.current);
-      }
-    };
-  }, [selectedLocation, map]);
-
-  return null;
-}
+// Libraries needed for Google Maps
+const libraries: ("places" | "drawing" | "geometry" | "visualization")[] = ["places"];
 
 interface PoolItem {
   id: string;
@@ -138,7 +70,7 @@ interface PoolItem {
   date: string;
 }
 
-export default function LeadLoader() {
+export default function LeadLoaderWithGoogleMap() {
   const { toast } = useToast();
   const [searchQuery, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -164,9 +96,17 @@ export default function LeadLoader() {
   const [isSavingManual, setIsSavingManual] = useState(false);
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [mapCenter, setMapCenter] = useState<[number, number]>([39.8283, -98.5795]);
-  const [selectedLocation, setSelectedLocation] = useState<[number, number] | null>(null);
-  const [geocodeBounds, setGeocodeBounds] = useState<L.LatLngBounds | null>(null);
+  const [mapCenter, setMapCenter] = useState<{ lat: number; lng: number }>(defaultCenter);
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [infoWindowOpen, setInfoWindowOpen] = useState<string | null>(null);
+
+  // Load Google Maps API
+  const { isLoaded, loadError } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
+    libraries,
+  });
 
   const [clientAdmins, setClientAdmins] = useState<SubContact[]>([{ id: "ca-1", name: "", role: "", email: "", phone: "", contactType: "client-admin" }]);
   const [providers, setProviders] = useState<SubContact[]>([{ id: "pv-1", name: "", role: "", email: "", phone: "", contactType: "provider" }]);
@@ -274,44 +214,41 @@ export default function LeadLoader() {
   // Reset selected location when search results change
   useEffect(() => {
     setSelectedLocation(null);
+    setInfoWindowOpen(null);
   }, [searchResults]);
 
-  // // Geocode location and return bounding box for proper map centering
-  // const geocodeLocation = async (location: string): Promise<L.LatLngBounds | null> => {
-  //   try {
-  //     const response = await fetch(
-  //       `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`
-  //     );
-  //     const data = await response.json();
-  //     if (data.length > 0) {
-  //       const result = data[0];
-  //       // Nominatim returns boundingbox as [south, north, west, east]
-  //       if (result.boundingbox) {
-  //         const [south, north, west, east] = result.boundingbox.map(parseFloat);
-  //         return L.latLngBounds(
-  //           [south, west], // southwest corner
-  //           [north, east]  // northeast corner
-  //         );
-  //       }
-  //       // Fallback to center point if no bounding box
-  //       const { lat, lon } = result;
-  //       const center: L.LatLngTuple = [parseFloat(lat), parseFloat(lon)];
-  //       // Create a small bounds around the center (roughly 5km)
-  //       return L.latLngBounds(
-  //         [center[0] - 0.05, center[1] - 0.05],
-  //         [center[0] + 0.05, center[1] + 0.05]
-  //       );
-  //     }
-  //   } catch (error) {
-  //     console.error("Geocoding error:", error);
-  //   }
-  //   return null;
-  // };
+  // Handle map bounds updates
+  useEffect(() => {
+    if (!map) return;
+
+    const geoResults = searchResults.filter(r => r.latitude && r.longitude);
+    if (geoResults.length === 0) return;
+
+    const bounds = new google.maps.LatLngBounds();
+    geoResults.forEach(result => {
+      bounds.extend(new google.maps.LatLng(result.latitude, result.longitude));
+    });
+
+    map.fitBounds(bounds, {
+      top: 40,
+      right: 40,
+      bottom: 40,
+      left: 40,
+    });
+  }, [searchResults, map]);
+
+  // Handle selected location change
+  useEffect(() => {
+    if (!map || !selectedLocation) return;
+
+    map.panTo(selectedLocation);
+    map.setZoom(14);
+  }, [selectedLocation, map]);
+
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
-    console.log("Search query:", searchQuery);
 
     setIsSearching(true);
     setSelectedIds(new Set());
@@ -324,12 +261,6 @@ export default function LeadLoader() {
       if (specialty.endsWith("s")) {
         specialty = specialty.slice(0, -1);
       }
-
-      // // Geocode the location to center the map on the town
-      // const locationBounds = await geocodeLocation(location);
-      // if (locationBounds) {
-      //   setGeocodeBounds(locationBounds);
-      // }
 
       const { data, error } = await CustomServerApi.bulkSearch(specialty, location);
 
@@ -565,15 +496,6 @@ export default function LeadLoader() {
 
   const geoResults = searchResults.filter(r => r.latitude && r.longitude);
 
-  // Compute bounds from all geo results
-  const mapBounds = React.useMemo(() => {
-    if (geoResults.length === 0) return null;
-    const bounds = L.latLngBounds(
-      geoResults.map(r => [r.latitude, r.longitude] as L.LatLngTuple)
-    );
-    return bounds;
-  }, [geoResults]);
-
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar />
@@ -639,7 +561,20 @@ export default function LeadLoader() {
                     {searchResults.length > 0 && (
                       <div className="grid grid-cols-12 gap-4 h-[520px] overflow-hidden">
                         <div className="col-span-8 rounded-lg overflow-hidden border bg-card h-full">
-                          {geoResults.length === 0 ? (
+                          {loadError ? (
+                            <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-8">
+                              <MapIcon className="h-16 w-16 mb-4 opacity-30" />
+                              <h3 className="text-lg font-semibold mb-2">Map Error</h3>
+                              <p className="text-sm text-center max-w-md">
+                                Failed to load Google Maps. Please check your API key configuration.
+                              </p>
+                            </div>
+                          ) : !isLoaded ? (
+                            <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-8">
+                              <Loader2 className="h-16 w-16 mb-4 opacity-30 animate-spin" />
+                              <h3 className="text-lg font-semibold mb-2">Loading Map...</h3>
+                            </div>
+                          ) : geoResults.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center text-muted-foreground p-8">
                               <MapIcon className="h-16 w-16 mb-4 opacity-30" />
                               <h3 className="text-lg font-semibold mb-2">No Locations</h3>
@@ -648,43 +583,52 @@ export default function LeadLoader() {
                               </p>
                             </div>
                           ) : (
-                            <MapContainer
+                            <GoogleMap
+                              mapContainerStyle={mapContainerStyle}
                               center={mapCenter}
-                              zoom={22}
-                              style={{ height: "100%", width: "100%" }}
-                              zoomControl={true}
+                              zoom={12}
+                              onLoad={(map) => setMap(map)}
+                              options={{
+                                zoomControl: true,
+                                streetViewControl: false,
+                                mapTypeControl: false,
+                                fullscreenControl: true,
+                              }}
                             >
-                              <TileLayer
-                                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                              />
-                              <MapUpdater geocodeBounds={geocodeBounds} resultsBounds={mapBounds} selectedLocation={selectedLocation} />
-
                               {geoResults.map((result) => {
                                 const isSelected = selectedIds.has(result.id);
                                 return (
-                                  <Marker
-                                    key={result.id}
-                                    position={[result.latitude, result.longitude]}
-                                    icon={isSelected ? SelectedIcon : DefaultIcon}
-                                    eventHandlers={{
-                                      click: () => {
+                                  <React.Fragment key={result.id}>
+                                    <Marker
+                                      position={{ lat: result.latitude, lng: result.longitude }}
+                                      icon={{
+                                        url: isSelected
+                                          ? 'http://maps.google.com/mapfiles/ms/icons/red-dot.png'
+                                          : 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+                                        scaledSize: isSelected ? new google.maps.Size(40, 40) : new google.maps.Size(32, 32),
+                                      }}
+                                      onClick={() => {
                                         toggleSelection(result.id);
-                                        setSelectedLocation([result.latitude, result.longitude]);
-                                      },
-                                    }}
-                                  >
-                                    <Popup>
-                                      <div className="min-w-[200px]">
-                                        <div className="font-semibold text-sm">{result.name}</div>
-                                        <div className="text-xs text-gray-600 mt-1">{result.address}</div>
-                                        {result.phone && <div className="text-xs mt-1">📞 {result.phone}</div>}
-                                      </div>
-                                    </Popup>
-                                  </Marker>
+                                        setSelectedLocation({ lat: result.latitude, lng: result.longitude });
+                                        setInfoWindowOpen(result.id);
+                                      }}
+                                    />
+                                    {infoWindowOpen === result.id && (
+                                      <InfoWindow
+                                        position={{ lat: result.latitude, lng: result.longitude }}
+                                        onCloseClick={() => setInfoWindowOpen(null)}
+                                      >
+                                        <div className="min-w-[200px]">
+                                          <div className="font-semibold text-sm">{result.name}</div>
+                                          <div className="text-xs text-gray-600 mt-1">{result.address}</div>
+                                          {result.phone && <div className="text-xs mt-1">📞 {result.phone}</div>}
+                                        </div>
+                                      </InfoWindow>
+                                    )}
+                                  </React.Fragment>
                                 );
                               })}
-                            </MapContainer>
+                            </GoogleMap>
                           )}
                         </div>
 
@@ -732,7 +676,8 @@ export default function LeadLoader() {
                                         onClick={() => {
                                           toggleSelection(result.id);
                                           if (result.latitude && result.longitude) {
-                                            setSelectedLocation([result.latitude, result.longitude]);
+                                            setSelectedLocation({ lat: result.latitude, lng: result.longitude });
+                                            setInfoWindowOpen(result.id);
                                           }
                                         }}
                                         className={cn(
@@ -750,7 +695,8 @@ export default function LeadLoader() {
                                             onCheckedChange={() => {
                                               toggleSelection(result.id);
                                               if (result.latitude && result.longitude) {
-                                                setSelectedLocation([result.latitude, result.longitude]);
+                                                setSelectedLocation({ lat: result.latitude, lng: result.longitude });
+                                                setInfoWindowOpen(result.id);
                                               }
                                             }}
                                             className="mt-0.5"
@@ -1128,11 +1074,6 @@ export default function LeadLoader() {
           </div>
         </div>
       </main>
-      <style>{`
-        .selected-marker {
-          filter: hue-rotate(120deg) saturate(1.5);
-        }
-      `}</style>
     </div>
   );
 }

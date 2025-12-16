@@ -17,6 +17,7 @@ export const API_ENDPOINTS = {
     findOne: 'GET /api/v1/prospects/:id',
     create: 'POST /api/v1/prospects',
     update: 'PATCH /api/v1/prospects/:id',
+    delete: 'DELETE /api/v1/prospects/:id',
     findByTerritory: 'GET /api/v1/prospects/territory/:territory',
   },
 
