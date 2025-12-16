@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Device, Call } from "@twilio/voice-sdk";
 import { CustomServerApi } from "@/integrations/custom-server/api";
-import { logTwilioCall } from "@/services/TwilioServices";
 
 export type CallStatus =
   | "idle"
