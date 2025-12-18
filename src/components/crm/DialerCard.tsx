@@ -34,6 +34,7 @@ import { CustomServerApi } from "@/integrations/custom-server/api";
 interface DialerCardProps {
   prospect: Prospect;
   onComplete: (status: string, notes: string) => void;
+
   canEdit?: boolean;
   onEditClick?: () => void;
 }
@@ -41,6 +42,7 @@ interface DialerCardProps {
 export function DialerCard({
   prospect,
   onComplete,
+
   canEdit,
   onEditClick,
 }: DialerCardProps) {
