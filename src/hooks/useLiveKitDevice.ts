@@ -10,6 +10,7 @@ import {
   ConnectionState,
   DisconnectReason,
 } from "livekit-client";
+import { getAuthHeaders, resolveApiUrl } from "@/services/http";
 
 export type CallStatus =
   | "idle"
@@ -57,7 +58,10 @@ export function useLiveKitDevice(options: UseLiveKitDeviceOptions = {}) {
   useEffect(() => {
     const checkConfig = async () => {
       try {
-        const response = await fetch("/api/livekit/config");
+        const response = await fetch(resolveApiUrl("/api/livekit/config"), {
+          headers: getAuthHeaders(),
+          credentials: "include",
+        });
         if (response.ok) {
           const config = await response.json();
           if (config.configured) {
@@ -82,7 +86,10 @@ export function useLiveKitDevice(options: UseLiveKitDeviceOptions = {}) {
   }, []);
 
   const initializeDevice = useCallback(async () => {
-    const response = await fetch("/api/livekit/config");
+    const response = await fetch(resolveApiUrl("/api/livekit/config"), {
+      headers: getAuthHeaders(),
+      credentials: "include",
+    });
     if (response.ok) {
       const config = await response.json();
       if (config.configured) {
@@ -204,9 +211,10 @@ export function useLiveKitDevice(options: UseLiveKitDeviceOptions = {}) {
         setError(null);
         setCallDuration(0);
 
-        const response = await fetch("/api/livekit/call", {
+        const response = await fetch(resolveApiUrl("/api/livekit/call"), {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+          credentials: "include",
           body: JSON.stringify({
             callerId: identity,
             callerName: params.callerName || identity,
@@ -280,9 +288,10 @@ export function useLiveKitDevice(options: UseLiveKitDeviceOptions = {}) {
 
       if (currentCallInfo) {
         try {
-          await fetch("/api/livekit/end-call", {
+          await fetch(resolveApiUrl("/api/livekit/end-call"), {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+            credentials: "include",
             body: JSON.stringify({
               roomName: currentCallInfo.roomName,
               prospectId: currentCallInfo.prospectId,

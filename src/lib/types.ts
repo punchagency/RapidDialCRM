@@ -64,6 +64,7 @@ export type User = {
   role: string;
   territory: string | null;
   isActive: boolean | null;
+  inviteStatus?: string;
   createdAt: Date;
   updatedAt: Date;
 };
