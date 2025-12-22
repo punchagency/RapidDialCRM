@@ -303,7 +303,7 @@ export class CustomServerApi {
 
   static async getAllTerritories() {
     return ApiPrep.makeRequest<string[]>(
-      API_ENDPOINTS.userTerritories.getAllTerritories
+      API_ENDPOINTS.territories.findAll
     );
   }
 
@@ -557,6 +557,72 @@ export class CustomServerApi {
       API_ENDPOINTS.linear.getIssues,
       undefined,
       { queryParams }
+    );
+  }
+
+  // ==================== TERRITORIES ====================
+  static async getTerritories() {
+    return ApiPrep.makeRequest<any[]>(API_ENDPOINTS.territories.findAll);
+  }
+
+  static async getTerritory(id: string) {
+    return ApiPrep.makeRequest<any>(
+      API_ENDPOINTS.territories.findOne,
+      undefined,
+      { params: { id } }
+    );
+  }
+
+  static async createTerritory(data: { name: string; description?: string; isActive?: boolean }) {
+    return ApiPrep.makeRequest<any>(API_ENDPOINTS.territories.create, data);
+  }
+
+  static async updateTerritory(id: string, data: Partial<{ name: string; description?: string; isActive?: boolean }>) {
+    return ApiPrep.makeRequest<any>(
+      API_ENDPOINTS.territories.update,
+      data,
+      { params: { id } }
+    );
+  }
+
+  static async deleteTerritory(id: string) {
+    return ApiPrep.makeRequest(
+      API_ENDPOINTS.territories.delete,
+      undefined,
+      { params: { id } }
+    );
+  }
+
+  // ==================== PROFESSIONS ====================
+  static async getProfessions() {
+    return ApiPrep.makeRequest<any[]>(API_ENDPOINTS.professions.findAll);
+  }
+
+  static async getProfession(id: string) {
+    return ApiPrep.makeRequest<any>(
+      API_ENDPOINTS.professions.findOne,
+      undefined,
+      { params: { id } }
+    );
+  }
+
+  static async createProfession(data: { name: string; description?: string; isActive?: boolean }) {
+    return ApiPrep.makeRequest<any>(API_ENDPOINTS.professions.create, data);
+  }
+
+  static async updateProfession(id: string, data: Partial<{ name: string; description?: string; isActive?: boolean }>) {
+    return ApiPrep.makeRequest<any>(
+      API_ENDPOINTS.professions.update,
+      data,
+      { params: { id } }
+    );
+  }
+
+  static async deleteProfession(id: string) {
+    return ApiPrep.makeRequest(
+      API_ENDPOINTS.professions.delete,
+      undefined,
+      { params: { id } }
     );
   }
 }

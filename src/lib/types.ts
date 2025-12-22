@@ -14,6 +14,7 @@ export type Prospect = {
   addressLng: string | null;
   specialty: string;
   territory: string;
+  officeEmail: string | null;
   lastContactDate: Date | null;
   lastCallOutcome: string | null;
   appointmentStatus: {

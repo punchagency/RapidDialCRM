@@ -19,7 +19,6 @@ export function useProspects(params?: { territory?: string; limit?: number; offs
     queryKey: prospectKeys.list(params),
     queryFn: async () => {
       const { data, error } = await CustomServerApi.getProspects(params);
-      console.log("data", data);
       if (error) throw new Error(error);
       return data || [];
     },

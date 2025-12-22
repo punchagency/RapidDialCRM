@@ -209,14 +209,14 @@ export default function LeadLoader() {
   // Fetch territories from backend
   const fetchTerritories = async () => {
     try {
-      const { data, error } = await CustomServerApi.getAllTerritories();
-      if (error) {
-        console.warn("Failed to fetch territories:", error);
-        return; // Use default options
-      }
-      if (data && Array.isArray(data) && data.length > 0) {
-        setTerritoryOptions([...data, "Unassigned"]);
-      }
+      // const { data, error } = await CustomServerApi.getAllTerritories();
+      // if (error) {
+      //   console.warn("Failed to fetch territories:", error);
+      //   return; // Use default options
+      // }
+      // if (data && Array.isArray(data) && data.length > 0) {
+        setTerritoryOptions(["Miami", "Washington, DC", "Los Angeles", "New York", "Chicago", "Dallas", "Unassigned"]);
+      // }
     } catch (error) {
       console.warn("Error fetching territories:", error);
       // Use default options on error
@@ -613,8 +613,8 @@ export default function LeadLoader() {
                             <SelectValue placeholder="Select a territory or leave empty" />
                           </SelectTrigger>
                           <SelectContent>
-                            {territoryOptions.map((t) => (
-                              <SelectItem key={t} value={t}>{t}</SelectItem>
+                            {territoryOptions.map((t,i) => (
+                              <SelectItem key={i} value={t}>{t}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -877,8 +877,8 @@ export default function LeadLoader() {
                                 <SelectValue placeholder="Select a territory or leave empty" />
                               </SelectTrigger>
                               <SelectContent>
-                                {territoryOptions.map((t) => (
-                                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                                {territoryOptions.map((t,i) => (
+                                  <SelectItem key={i} value={t}>{t}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>

@@ -90,7 +90,9 @@ export default function LeadLoaderWithGoogleMap() {
     phone: "",
     address: "",
     city: "",
+    state: "",
     zip: "",
+    office_email: "",
     specialty: "Unknown",
   });
   const [isSavingManual, setIsSavingManual] = useState(false);
@@ -211,7 +213,7 @@ export default function LeadLoaderWithGoogleMap() {
           } else if (types.includes('locality')) {
             city = component.long_name;
           } else if (types.includes('administrative_area_level_1')) {
-            state = component.short_name;
+            state = component.long_name;
           } else if (types.includes('postal_code')) {
             zip = component.long_name;
           }
@@ -234,6 +236,7 @@ export default function LeadLoaderWithGoogleMap() {
           address: fullAddress,
           city: city || prev.city,
           zip: zip || prev.zip,
+          state: state || prev.state,
         }));
 
         setAddressSuggestions([]);
@@ -337,7 +340,8 @@ export default function LeadLoaderWithGoogleMap() {
         return; // Use default options
       }
       if (data && Array.isArray(data) && data.length > 0) {
-        setTerritoryOptions([...data, "Unassigned"]);
+        const territories = data.map((territory: any) => territory.name) || [];
+        setTerritoryOptions([...territories, "Unassigned"]);
       }
     } catch (error) {
       console.warn("Error fetching territories:", error);
@@ -438,7 +442,7 @@ export default function LeadLoaderWithGoogleMap() {
       const query = searchQuery.toLowerCase();
       const parts = query.split(" in ");
       let specialty = parts[0].trim();
-      let location = parts[1] ? parts[1].trim() : searchQuery.trim();
+      let location = territory ? territory : parts[1] ? parts[1].trim() : searchQuery.trim();
 
       if (specialty.endsWith("s")) {
         specialty = specialty.slice(0, -1);
@@ -464,7 +468,7 @@ export default function LeadLoaderWithGoogleMap() {
         longitude: result.longitude,
         type: result.profession || result.category || specialty,
         status: "new",
-      }));
+      })).filter(r => !!r.phone);
 
       setSearchResults(results);
       toast({
@@ -516,7 +520,8 @@ export default function LeadLoaderWithGoogleMap() {
       }
       if (data.skipped > 0) {
         if (message) message += ", ";
-        message += `Skipped ${data.skipped} (no phone or duplicate)`;
+        message += `Skipped ${data.skipped} (duplicate)`;
+        // message += `Skipped ${data.skipped} (no phone or duplicate)`;
       }
 
       toast({
@@ -568,6 +573,8 @@ export default function LeadLoaderWithGoogleMap() {
         addressZip: manualFormData.zip.trim() || undefined,
         specialty: manualFormData.specialty || "Unknown",
         territory: territory || "Unassigned",
+        officeEmail: manualFormData.office_email.trim() || undefined,
+        addressState: manualFormData.state.trim() || undefined,
       });
 
       if (prospectError || !prospect) {
@@ -618,8 +625,10 @@ export default function LeadLoaderWithGoogleMap() {
         phone: "",
         address: "",
         city: "",
+        state: "",
         zip: "",
         specialty: "Unknown",
+        office_email: "",
       });
       setClientAdmins([{ id: "ca-1", name: "", role: "", email: "", phone: "" }]);
       setProviders([{ id: "pv-1", name: "", role: "", email: "", phone: "" }]);
@@ -717,8 +726,8 @@ export default function LeadLoaderWithGoogleMap() {
                             <SelectValue placeholder="Select a territory or leave empty" />
                           </SelectTrigger>
                           <SelectContent>
-                            {territoryOptions.map((t) => (
-                              <SelectItem key={t} value={t}>{t}</SelectItem>
+                            {territoryOptions?.map((t, i) => (
+                              <SelectItem key={i} value={t}>{t}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -1051,6 +1060,22 @@ export default function LeadLoaderWithGoogleMap() {
                               onChange={(e) => setManualFormData({ ...manualFormData, zip: e.target.value })}
                             />
                           </div>
+                          <div className="space-y-2">
+                            <Label>State</Label>
+                            <Input
+                              placeholder="CA"
+                              value={manualFormData.state}
+                              onChange={(e) => setManualFormData({ ...manualFormData, state: e.target.value })}
+                            />  
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Office Email (optional)</Label>
+                            <Input
+                              placeholder="office@example.com"
+                              value={manualFormData.office_email}
+                              onChange={(e) => setManualFormData({ ...manualFormData, office_email: e.target.value })}
+                            />
+                          </div>
                           <div className="col-span-2 space-y-2">
                             <Label>Territory</Label>
                             <Select value={territory} onValueChange={setTerritory}>
@@ -1058,8 +1083,8 @@ export default function LeadLoaderWithGoogleMap() {
                                 <SelectValue placeholder="Select a territory or leave empty" />
                               </SelectTrigger>
                               <SelectContent>
-                                {territoryOptions.map((t) => (
-                                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                                {territoryOptions?.map((t,i) => (
+                                  <SelectItem key={i} value={t}>{t}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -1219,6 +1244,8 @@ export default function LeadLoaderWithGoogleMap() {
                             address: "",
                             city: "",
                             zip: "",
+                            state: "",
+                            office_email: "",
                             specialty: "Unknown",
                           });
                           setClientAdmins([{ id: "ca-1", name: "", role: "", email: "", phone: "" }]);
