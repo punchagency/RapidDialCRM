@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { getSpecialtyColors } from "@/lib/specialtyColors";
 import { useTwilioDevice, CallStatus } from "@/hooks/useTwilioDevice";
-import { CustomServerApi } from "@/integrations/custom-server/api";
+import { getAuthHeaders, resolveApiUrl } from "@/services/http";
 
 interface DialerCardProps {
   prospect: Prospect;
@@ -74,10 +74,13 @@ export function DialerCard({
   useEffect(() => {
     async function loadOutcomes() {
       try {
-        const response = await CustomServerApi.getCallOutcomes();
-        if (!response.error) {
-          const data = response.data;
-          setOutcomes(!data ? [] : data);
+        const response = await fetch(resolveApiUrl("/api/call-outcomes"), {
+          headers: getAuthHeaders(),
+          credentials: "include",
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setOutcomes(data);
         }
       } catch (error) {
         console.error("Failed to load call outcomes:", error);

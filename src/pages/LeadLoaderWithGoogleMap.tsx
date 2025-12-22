@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -108,8 +108,190 @@ export default function LeadLoaderWithGoogleMap() {
     libraries,
   });
 
+  // Initialize Google Places services when API is loaded
+  useEffect(() => {
+    if (isLoaded && window.google) {
+      autocompleteServiceRef.current = new google.maps.places.AutocompleteService();
+      // Create a dummy div for PlacesService (it needs a map or div element)
+      const dummyDiv = document.createElement('div');
+      placesServiceRef.current = new google.maps.places.PlacesService(dummyDiv);
+    }
+  }, [isLoaded]);
+
   const [clientAdmins, setClientAdmins] = useState<SubContact[]>([{ id: "ca-1", name: "", role: "", email: "", phone: "", contactType: "client-admin" }]);
   const [providers, setProviders] = useState<SubContact[]>([{ id: "pv-1", name: "", role: "", email: "", phone: "", contactType: "provider" }]);
+
+  // Address autocomplete state
+  const [addressSuggestions, setAddressSuggestions] = useState<google.maps.places.AutocompletePrediction[]>([]);
+  const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+  const addressInputRef = useRef<HTMLInputElement>(null);
+  const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
+  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  // Handle address autocomplete - supports name, zip, city, state, street, street number
+  const handleAddressInputChange = useCallback((value: string) => {
+    setManualFormData((prev) => ({ ...prev, address: value }));
+
+    if (!isLoaded || !autocompleteServiceRef.current || value.length < 2) {
+      setAddressSuggestions([]);
+      setShowAddressSuggestions(false);
+      return;
+    }
+
+    // Use a more flexible request that can find:
+    // - Places by name (establishment)
+    // - Addresses by street number and name (geocode)
+    // - Cities, states, ZIP codes (geocode)
+    const request: google.maps.places.AutocompletionRequest = {
+      input: value,
+      // Include multiple types to support various search criteria:
+      // 'geocode' - finds addresses, cities, states, ZIP codes
+      // 'establishment' - finds places by name (businesses, landmarks, etc.)
+      types: ['geocode', 'establishment'],
+      // componentRestrictions: { country: 'us' }, // Restrict to US
+    };
+
+    autocompleteServiceRef.current.getPlacePredictions(request, (predictions, status) => {
+      if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+        setAddressSuggestions(predictions);
+        setShowAddressSuggestions(true);
+        setSelectedSuggestionIndex(-1);
+      } else {
+        setAddressSuggestions([]);
+        setShowAddressSuggestions(false);
+      }
+    });
+  }, [isLoaded]);
+
+  // Handle address selection from autocomplete
+  // Supports: place name, zip/post code, city, state, street, street number
+  const handleAddressSelect = useCallback((placeId: string) => {
+    if (!isLoaded || !placesServiceRef.current) return;
+
+    const request: google.maps.places.PlaceDetailsRequest = {
+      placeId: placeId,
+      fields: [
+        'formatted_address',
+        'address_components',
+        'geometry',
+        'name', // For place names
+        'types' // To determine if it's a place or address
+      ],
+    };
+
+    placesServiceRef.current.getDetails(request, (place, status) => {
+      if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+        // Extract address components
+        let streetNumber = '';
+        let route = '';
+        let city = '';
+        let state = '';
+        let zip = '';
+        let placeName = place.name || '';
+
+        // Check if this is a place (establishment) or an address
+        const isPlace = place.types?.some(type =>
+          type === 'establishment' ||
+          type === 'point_of_interest' ||
+          type === 'store' ||
+          type === 'restaurant' ||
+          type === 'hospital' ||
+          type === 'doctor' ||
+          type === 'pharmacy'
+        ) || false;
+
+        place.address_components?.forEach((component) => {
+          const types = component.types;
+          if (types.includes('street_number')) {
+            streetNumber = component.long_name;
+          } else if (types.includes('route')) {
+            route = component.long_name;
+          } else if (types.includes('locality')) {
+            city = component.long_name;
+          } else if (types.includes('administrative_area_level_1')) {
+            state = component.short_name;
+          } else if (types.includes('postal_code')) {
+            zip = component.long_name;
+          }
+        });
+
+        // Build address string
+        // If it's a place, use the place name, otherwise use street address
+        let fullAddress = '';
+        if (isPlace && placeName) {
+          // For places, use: "Place Name, Street Address" or just "Place Name"
+          const streetAddress = `${streetNumber} ${route}`.trim();
+          fullAddress = streetAddress ? `${placeName}, ${streetAddress}` : placeName;
+        } else {
+          // For addresses, use street number + route
+          fullAddress = `${streetNumber} ${route}`.trim() || place.formatted_address || '';
+        }
+
+        setManualFormData((prev) => ({
+          ...prev,
+          address: fullAddress,
+          city: city || prev.city,
+          zip: zip || prev.zip,
+        }));
+
+        setAddressSuggestions([]);
+        setShowAddressSuggestions(false);
+
+        // Update map center if geometry is available
+        if (place.geometry?.location) {
+          const location = {
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(),
+          };
+          setMapCenter(location);
+          setSelectedLocation(location);
+        }
+      }
+    });
+  }, [isLoaded]);
+
+  // Handle keyboard navigation in suggestions
+  const handleAddressKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showAddressSuggestions || addressSuggestions.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedSuggestionIndex((prev) =>
+        prev < addressSuggestions.length - 1 ? prev + 1 : prev
+      );
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : -1));
+    } else if (e.key === 'Enter' && selectedSuggestionIndex >= 0) {
+      e.preventDefault();
+      const selected = addressSuggestions[selectedSuggestionIndex];
+      if (selected.place_id) {
+        handleAddressSelect(selected.place_id);
+      }
+    } else if (e.key === 'Escape') {
+      setShowAddressSuggestions(false);
+      setSelectedSuggestionIndex(-1);
+    }
+  }, [showAddressSuggestions, addressSuggestions, selectedSuggestionIndex, handleAddressSelect]);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node) &&
+        addressInputRef.current &&
+        !addressInputRef.current.contains(event.target as Node)
+      ) {
+        setShowAddressSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Fetch pool data from backend (prospects with territory "Unassigned" or empty)
   const fetchPool = async () => {
@@ -792,13 +974,66 @@ export default function LeadLoaderWithGoogleMap() {
                               required
                             />
                           </div>
-                          <div className="col-span-2 space-y-2">
+                          <div className="col-span-2 space-y-2 relative">
                             <Label>Address</Label>
-                            <Input
-                              placeholder="123 Medical Way"
-                              value={manualFormData.address}
-                              onChange={(e) => setManualFormData({ ...manualFormData, address: e.target.value })}
-                            />
+                            <div className="relative">
+                              <Input
+                                ref={addressInputRef}
+                                placeholder="123 Medical Way"
+                                value={manualFormData.address}
+                                onChange={(e) => handleAddressInputChange(e.target.value)}
+                                onKeyDown={handleAddressKeyDown}
+                                onFocus={() => {
+                                  if (addressSuggestions.length > 0) {
+                                    setShowAddressSuggestions(true);
+                                  }
+                                }}
+                                className="w-full"
+                              />
+                              {showAddressSuggestions && addressSuggestions.length > 0 && (
+                                <div
+                                  ref={suggestionsRef}
+                                  className="absolute z-50 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto"
+                                >
+                                  {addressSuggestions.map((suggestion, index) => (
+                                    <div
+                                      key={suggestion.place_id}
+                                      onClick={() => {
+                                        if (suggestion.place_id) {
+                                          handleAddressSelect(suggestion.place_id);
+                                        }
+                                      }}
+                                      className={cn(
+                                        "px-4 py-3 cursor-pointer hover:bg-muted transition-colors",
+                                        index === selectedSuggestionIndex && "bg-muted"
+                                      )}
+                                    >
+                                      <div className="flex items-start gap-2">
+                                        {suggestion.types?.includes('establishment') ? (
+                                          <Building className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                                        ) : (
+                                          <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                          <div className="font-medium text-sm text-foreground truncate">
+                                            {suggestion.structured_formatting.main_text}
+                                          </div>
+                                          <div className="text-xs text-muted-foreground truncate">
+                                            {suggestion.structured_formatting.secondary_text}
+                                          </div>
+                                          {/* Show type hint if available */}
+                                          {suggestion.types && suggestion.types.length > 0 && (
+                                            <div className="text-xs text-muted-foreground/70 mt-0.5">
+                                              {suggestion.types[0].replace(/_/g, ' ')}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
                           </div>
                           <div className="space-y-2">
                             <Label>City</Label>

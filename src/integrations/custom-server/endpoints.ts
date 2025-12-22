@@ -1,9 +1,13 @@
 export const API_ENDPOINTS = {
-  // Auth endpoints (not yet implemented in backend)
+  // Auth endpoints
   auth: {
     register: "POST /api/v1/auth/register",
     login: "POST /api/v1/auth/login",
     refresh: "POST /api/v1/auth/refresh",
+    me: "GET /api/v1/auth/me",
+    passwordResetRequest: "POST /api/v1/auth/password-reset/request",
+    passwordResetConfirm: "POST /api/v1/auth/password-reset/confirm",
+    googleLogin: "POST /api/v1/auth/google",
   },
 
   // Health check

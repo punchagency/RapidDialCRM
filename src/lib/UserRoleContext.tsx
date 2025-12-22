@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { UserRole, canAccess as checkPermission, PermissionMatrix } from "./permissions";
 import { User } from "@/lib/types";
+import { useAuth } from "./AuthContext";
 
 interface ImpersonationState {
   isActive: boolean;
@@ -23,10 +24,27 @@ interface UserRoleContextType {
 const UserRoleContext = createContext<UserRoleContextType | undefined>(undefined);
 
 export function UserRoleProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
+
+  const mapDbRoleToUiRole = (dbRole: string): UserRole => {
+    const mapping: Record<string, UserRole> = {
+      admin: "admin",
+      manager: "manager",
+      sales_manager: "manager",
+      inside_sales_rep: "sales_rep",
+      field_sales_rep: "sales_rep",
+      data_loader: "loader",
+    };
+    return mapping[dbRole] || "sales_rep";
+  };
+
   const [actualRole, setActualRoleState] = useState<UserRole>(() => {
     const saved = localStorage.getItem("user_role");
     const validRoles: UserRole[] = ["admin", "manager", "sales_rep", "loader"];
-    return (validRoles.includes(saved as UserRole) ? (saved as UserRole) : "sales_rep");
+    if (user?.role) {
+      return mapDbRoleToUiRole(user.role);
+    }
+    return validRoles.includes(saved as UserRole) ? (saved as UserRole) : "sales_rep";
   });
 
   const [impersonation, setImpersonation] = useState<ImpersonationState>({
@@ -41,18 +59,6 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
     if (impersonation.isActive) {
       stopImpersonation();
     }
-  };
-
-  const mapDbRoleToUiRole = (dbRole: string): UserRole => {
-    const mapping: Record<string, UserRole> = {
-      admin: "admin",
-      manager: "manager",
-      sales_manager: "manager",
-      inside_sales_rep: "sales_rep",
-      field_sales_rep: "sales_rep",
-      data_loader: "loader",
-    };
-    return mapping[dbRole] || "sales_rep";
   };
 
   const startImpersonation = (user: User, role?: UserRole) => {
@@ -72,8 +78,8 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const effectiveRole = impersonation.isActive && impersonation.role 
-    ? impersonation.role 
+  const effectiveRole = impersonation.isActive && impersonation.role
+    ? impersonation.role
     : actualRole;
 
   const handleCanAccess = (permission: keyof PermissionMatrix) => {
@@ -82,11 +88,29 @@ export function UserRoleProvider({ children }: { children: ReactNode }) {
 
   const canImpersonate = actualRole === "admin";
 
+  useEffect(() => {
+    if (user?.role) {
+      const mapped = mapDbRoleToUiRole(user.role);
+      setActualRoleState(mapped);
+      localStorage.setItem("user_role", mapped);
+      if (impersonation.isActive) {
+        stopImpersonation();
+      }
+    } else {
+      // Reset to default when logging out
+      localStorage.removeItem("user_role");
+      setActualRoleState("sales_rep");
+      if (impersonation.isActive) {
+        stopImpersonation();
+      }
+    }
+  }, [user?.role, impersonation.isActive]);
+
   return (
-    <UserRoleContext.Provider value={{ 
+    <UserRoleContext.Provider value={{
       userRole: effectiveRole,
       actualRole,
-      setUserRole, 
+      setUserRole,
       canAccess: handleCanAccess,
       isImpersonating: impersonation.isActive,
       impersonatedUser: impersonation.user,

@@ -1,4 +1,4 @@
-import { CustomServerClient } from "./client";
+import { ApiPrep } from "./api-prep";
 import { API_ENDPOINTS } from "./endpoints";
 import type {
   Prospect,
@@ -8,175 +8,56 @@ import type {
   Stakeholder,
   SpecialtyColor,
   CallOutcome,
-  CallHistory,
 } from "@/lib/types";
 
-interface EndpointParserProps {
-  raw_endpoint?: string;
-  params?: Record<string, string>;
-  queryParams?: Record<string, string>;
-}
-
-class EndpointHelper {
-  static parser({
-    raw_endpoint,
-    params = {},
-    queryParams = {},
-  }: EndpointParserProps) {
-    if (!raw_endpoint) throw new Error("Endpoint is required");
-    let [method, endpoint] = raw_endpoint.split(" ");
-
-    let endpointWithValue = endpoint;
-    Object.entries(params).forEach(([k, v]) => {
-      endpointWithValue = endpointWithValue.replace(`:${k}`, v);
-    });
-
-    let queries = "";
-    Object.entries(queryParams).forEach(([k, v], i) => {
-      if (i === 0) {
-        queries += `?${k}=${v}`;
-      } else {
-        queries += `&${k}=${v}`;
-      }
-    });
-
-    return {
-      endpoint: endpointWithValue + queries,
-      method,
-    };
-  }
-}
-
-interface ApiResponse<T = any> {
-  has_error: boolean;
-  message: string;
-  data?: T;
-  [key: string]: any;
-}
-
 export class CustomServerApi {
-  // Get authorization token from localStorage
-  private static getAuthToken(): string | null {
-    try {
-      const authData = localStorage.getItem("auth.user");
-      if (authData) {
-        const parsedData = JSON.parse(authData);
-        return parsedData.access_token || null;
-      }
-    } catch (error) {
-      console.error("Error getting auth token:", error);
-    }
-    return null;
+  // ==================== AUTH ====================
+  static async login(email: string, password: string) {
+    return ApiPrep.makeRequest<{ token: string; user: User }>(
+      API_ENDPOINTS.auth.login,
+      { email, password }
+    );
   }
 
-  // Refresh token when it expires
-  private static async refreshAuthToken(): Promise<string | null> {
-    try {
-      const authData = localStorage.getItem("auth.user");
-      if (!authData) return null;
-
-      const parsedData = JSON.parse(authData);
-      const refreshToken = parsedData.refresh_token;
-
-      if (!refreshToken) return null;
-
-      // Note: Auth endpoints not yet implemented in backend
-      // When auth is implemented, uncomment this:
-      // const { data, error } = await this.makeRequest(API_ENDPOINTS.auth.refresh, { refresh_token: refreshToken });
-      // if (error || !data) return null;
-      // const updatedAuthData = { ...parsedData, access_token: data.access_token, refresh_token: data.refresh_token || refreshToken };
-      // localStorage.setItem('auth.user', JSON.stringify(updatedAuthData));
-      // return data.access_token;
-
-      // For now, return null as auth is not implemented
-      return null;
-    } catch (error) {
-      localStorage.removeItem("auth.user");
-      console.error("Error refreshing token:", error);
-      return null;
-    }
+  static async register(payload: {
+    name: string;
+    email: string;
+    password: string;
+    role?: string;
+    territory?: string;
+  }) {
+    return ApiPrep.makeRequest<{ token: string; user: User }>(
+      API_ENDPOINTS.auth.register,
+      payload
+    );
   }
 
-  // Generic method for making API calls
-  private static async makeRequest<T = any>(
-    endpoint: string,
-    data?: any,
-    config?: Partial<EndpointParserProps>
-  ): Promise<{ data: T | null; error: string | null; loading: boolean }> {
-    const { endpoint: parsedEndpoint, method } = EndpointHelper.parser({
-      raw_endpoint: endpoint,
-      params: config?.params,
-      queryParams: config?.queryParams,
-    });
+  static async me() {
+    return ApiPrep.makeRequest<User>(API_ENDPOINTS.auth.me);
+  }
 
-    const url = import.meta.env.VITE_CUSTOM_SERVER_URL + parsedEndpoint;
-    let token = this.getAuthToken();
+  static async requestPasswordReset(email: string) {
+    return ApiPrep.makeRequest<{ message: string }>(
+      API_ENDPOINTS.auth.passwordResetRequest,
+      { email }
+    );
+  }
 
-    let response = {
-      data: null as T | null,
-      error: null as string | null,
-      loading: false,
-    };
+  static async confirmPasswordReset(payload: {
+    token: string;
+    password: string;
+  }) {
+    return ApiPrep.makeRequest<{ message: string }>(
+      API_ENDPOINTS.auth.passwordResetConfirm,
+      payload
+    );
+  }
 
-    // First attempt with current token
-    await CustomServerClient.http({
-      onSuccess: (data: ApiResponse<T>) => {
-        // Handle backend response format: { has_error, message, data }
-        if (data && typeof data === "object" && "has_error" in data) {
-          if (data.has_error) {
-            response.error = data.message || "An error occurred";
-          } else {
-            response.data = data.data !== undefined ? data.data : (data as T);
-          }
-        } else {
-          response.data = data as T;
-        }
-      },
-      onError: async (error: string) => {
-        // If we get a 401 and have a refresh token, try to refresh
-        if (error?.includes("401") || error?.includes("Unauthorized")) {
-          const newToken = await this.refreshAuthToken();
-          if (newToken) {
-            // Retry the request with the new token
-            await CustomServerClient.http({
-              onSuccess: (data: ApiResponse<T>) => {
-                if (data && typeof data === "object" && "has_error" in data) {
-                  if (data.has_error) {
-                    response.error = data.message || "An error occurred";
-                  } else {
-                    response.data =
-                      data.data !== undefined ? data.data : (data as T);
-                  }
-                } else {
-                  response.data = data as T;
-                }
-              },
-              onError: (retryError: string) => {
-                response.error = retryError;
-              },
-              onLoading: (loading: boolean) => {
-                response.loading = loading;
-              },
-              url,
-              method,
-              data,
-              token: newToken,
-            });
-            return;
-          }
-        }
-        response.error = error;
-      },
-      onLoading: (loading: boolean) => {
-        response.loading = loading;
-      },
-      url,
-      method,
-      data,
-      token: token || undefined,
-    });
-
-    return response;
+  static async googleLogin(idToken: string) {
+    return ApiPrep.makeRequest<{ token: string; user: User }>(
+      API_ENDPOINTS.auth.googleLogin,
+      { idToken }
+    );
   }
 
   // ==================== PROSPECTS ====================
@@ -190,7 +71,7 @@ export class CustomServerApi {
     if (params?.limit) queryParams.limit = params.limit.toString();
     if (params?.offset) queryParams.offset = params.offset.toString();
 
-    return this.makeRequest<Prospect[]>(
+    return ApiPrep.makeRequest<Prospect[]>(
       API_ENDPOINTS.prospects.findAll,
       undefined,
       { queryParams }
@@ -198,7 +79,7 @@ export class CustomServerApi {
   }
 
   static async getProspect(id: string) {
-    return this.makeRequest<Prospect>(
+    return ApiPrep.makeRequest<Prospect>(
       API_ENDPOINTS.prospects.findOne,
       undefined,
       { params: { id } }
@@ -206,23 +87,23 @@ export class CustomServerApi {
   }
 
   static async createProspect(data: Partial<Prospect>) {
-    return this.makeRequest<Prospect>(API_ENDPOINTS.prospects.create, data);
+    return ApiPrep.makeRequest<Prospect>(API_ENDPOINTS.prospects.create, data);
   }
 
   static async updateProspect(id: string, data: Partial<Prospect>) {
-    return this.makeRequest<Prospect>(API_ENDPOINTS.prospects.update, data, {
+    return ApiPrep.makeRequest<Prospect>(API_ENDPOINTS.prospects.update, data, {
       params: { id },
     });
   }
 
   static async deleteProspect(id: string) {
-    return this.makeRequest(API_ENDPOINTS.prospects.delete, undefined, {
+    return ApiPrep.makeRequest(API_ENDPOINTS.prospects.delete, undefined, {
       params: { id },
     });
   }
 
   static async getProspectsByTerritory(territory: string) {
-    return this.makeRequest<Prospect[]>(
+    return ApiPrep.makeRequest<Prospect[]>(
       API_ENDPOINTS.prospects.findByTerritory,
       undefined,
       { params: { territory } }
@@ -231,7 +112,7 @@ export class CustomServerApi {
 
   // ==================== CALLING LIST ====================
   static async getCallingList(fieldRepId: string) {
-    return this.makeRequest<{
+    return ApiPrep.makeRequest<{
       fieldRepId: string;
       territory: string;
       count: number;
@@ -243,22 +124,22 @@ export class CustomServerApi {
 
   // ==================== FIELD REPS ====================
   static async getFieldReps() {
-    return this.makeRequest<FieldRep[]>(API_ENDPOINTS.fieldReps.findAll);
+    return ApiPrep.makeRequest<FieldRep[]>(API_ENDPOINTS.fieldReps.findAll);
   }
 
   static async createFieldRep(data: Partial<FieldRep>) {
-    return this.makeRequest<FieldRep>(API_ENDPOINTS.fieldReps.create, data);
+    return ApiPrep.makeRequest<FieldRep>(API_ENDPOINTS.fieldReps.create, data);
   }
 
   static async updateFieldRep(id: string, data: Partial<FieldRep>) {
-    return this.makeRequest<FieldRep>(API_ENDPOINTS.fieldReps.update, data, {
+    return ApiPrep.makeRequest<FieldRep>(API_ENDPOINTS.fieldReps.update, data, {
       params: { id },
     });
   }
 
   // ==================== APPOINTMENTS ====================
   static async createAppointment(data: Partial<Appointment>) {
-    return this.makeRequest<Appointment>(
+    return ApiPrep.makeRequest<Appointment>(
       API_ENDPOINTS.appointments.create,
       data
     );
@@ -268,7 +149,7 @@ export class CustomServerApi {
     fieldRepId: string,
     date: string
   ) {
-    return this.makeRequest<Appointment[]>(
+    return ApiPrep.makeRequest<Appointment[]>(
       API_ENDPOINTS.appointments.getByFieldRepAndDate,
       undefined,
       { params: { fieldRepId, date } }
@@ -278,7 +159,7 @@ export class CustomServerApi {
   static async getTodayAppointments(params?: { territory?: string }) {
     const queryParams: Record<string, string> = {};
     if (params?.territory) queryParams.territory = params.territory;
-    return this.makeRequest<Appointment[]>(
+    return ApiPrep.makeRequest<Appointment[]>(
       API_ENDPOINTS.appointments.getToday,
       undefined,
       { queryParams }
@@ -286,7 +167,7 @@ export class CustomServerApi {
   }
 
   static async updateAppointment(id: string, data: Partial<Appointment>) {
-    return this.makeRequest<Appointment>(
+    return ApiPrep.makeRequest<Appointment>(
       API_ENDPOINTS.appointments.update,
       data,
       { params: { id } }
@@ -300,7 +181,7 @@ export class CustomServerApi {
     outcome: string,
     notes?: string
   ) {
-    return this.makeRequest(API_ENDPOINTS.callOutcome.record, {
+    return ApiPrep.makeRequest(API_ENDPOINTS.callOutcome.record, {
       prospectId,
       callerId,
       outcome,
@@ -310,14 +191,14 @@ export class CustomServerApi {
 
   // ==================== GEOCODING ====================
   static async geocodeProspects() {
-    return this.makeRequest<{ geocoded: number; total: number }>(
+    return ApiPrep.makeRequest<{ geocoded: number; total: number }>(
       API_ENDPOINTS.geocoding.geocodeProspects,
       {}
     );
   }
 
   static async recalculatePriorities(territory?: string) {
-    return this.makeRequest<{ updated: number }>(
+    return ApiPrep.makeRequest<{ updated: number }>(
       API_ENDPOINTS.geocoding.recalculatePriorities,
       { territory }
     );
@@ -325,7 +206,7 @@ export class CustomServerApi {
 
   // ==================== STAKEHOLDERS ====================
   static async getStakeholdersByProspect(prospectId: string) {
-    return this.makeRequest<Stakeholder[]>(
+    return ApiPrep.makeRequest<Stakeholder[]>(
       API_ENDPOINTS.stakeholders.getByProspect,
       undefined,
       { params: { prospectId } }
@@ -333,14 +214,14 @@ export class CustomServerApi {
   }
 
   static async createStakeholder(data: Partial<Stakeholder>) {
-    return this.makeRequest<Stakeholder>(
+    return ApiPrep.makeRequest<Stakeholder>(
       API_ENDPOINTS.stakeholders.create,
       data
     );
   }
 
   static async getStakeholder(id: string) {
-    return this.makeRequest<Stakeholder>(
+    return ApiPrep.makeRequest<Stakeholder>(
       API_ENDPOINTS.stakeholders.getOne,
       undefined,
       { params: { id } }
@@ -348,7 +229,7 @@ export class CustomServerApi {
   }
 
   static async updateStakeholder(id: string, data: Partial<Stakeholder>) {
-    return this.makeRequest<Stakeholder>(
+    return ApiPrep.makeRequest<Stakeholder>(
       API_ENDPOINTS.stakeholders.update,
       data,
       { params: { id } }
@@ -356,47 +237,49 @@ export class CustomServerApi {
   }
 
   static async deleteStakeholder(id: string) {
-    return this.makeRequest(API_ENDPOINTS.stakeholders.delete, undefined, {
+    return ApiPrep.makeRequest(API_ENDPOINTS.stakeholders.delete, undefined, {
       params: { id },
     });
   }
 
   // ==================== USERS ====================
   static async getUsers() {
-    return this.makeRequest<User[]>(API_ENDPOINTS.users.findAll);
+    return ApiPrep.makeRequest<User[]>(API_ENDPOINTS.users.findAll);
   }
 
   static async createUser(data: Partial<User>) {
-    return this.makeRequest<User>(API_ENDPOINTS.users.create, data);
+    return ApiPrep.makeRequest<User>(API_ENDPOINTS.users.create, data);
   }
 
   static async getUser(id: string) {
-    return this.makeRequest<User>(API_ENDPOINTS.users.findOne, undefined, {
+    return ApiPrep.makeRequest<User>(API_ENDPOINTS.users.findOne, undefined, {
       params: { id },
     });
   }
 
   static async getUserByEmail(email: string) {
-    return this.makeRequest<User>(API_ENDPOINTS.users.findByEmail, undefined, {
-      params: { email },
-    });
+    return ApiPrep.makeRequest<User>(
+      API_ENDPOINTS.users.findByEmail,
+      undefined,
+      { params: { email } }
+    );
   }
 
   static async updateUser(id: string, data: Partial<User>) {
-    return this.makeRequest<User>(API_ENDPOINTS.users.update, data, {
+    return ApiPrep.makeRequest<User>(API_ENDPOINTS.users.update, data, {
       params: { id },
     });
   }
 
   static async deleteUser(id: string) {
-    return this.makeRequest(API_ENDPOINTS.users.delete, undefined, {
+    return ApiPrep.makeRequest(API_ENDPOINTS.users.delete, undefined, {
       params: { id },
     });
   }
 
   // ==================== USER TERRITORIES ====================
   static async getUserTerritories(userId: string) {
-    return this.makeRequest<string[]>(
+    return ApiPrep.makeRequest<string[]>(
       API_ENDPOINTS.userTerritories.getUserTerritories,
       undefined,
       { params: { id: userId } }
@@ -404,7 +287,7 @@ export class CustomServerApi {
   }
 
   static async setUserTerritories(userId: string, territories: string[]) {
-    return this.makeRequest<string[]>(
+    return ApiPrep.makeRequest<string[]>(
       API_ENDPOINTS.userTerritories.setUserTerritories,
       { territories },
       { params: { id: userId } }
@@ -412,14 +295,14 @@ export class CustomServerApi {
   }
 
   static async getAllTerritories() {
-    return this.makeRequest<string[]>(
+    return ApiPrep.makeRequest<string[]>(
       API_ENDPOINTS.userTerritories.getAllTerritories
     );
   }
 
   // ==================== USER PROFESSIONS ====================
   static async getUserProfessions(userId: string) {
-    return this.makeRequest<string[]>(
+    return ApiPrep.makeRequest<string[]>(
       API_ENDPOINTS.userProfessions.getUserProfessions,
       undefined,
       { params: { id: userId } }
@@ -427,7 +310,7 @@ export class CustomServerApi {
   }
 
   static async setUserProfessions(userId: string, professions: string[]) {
-    return this.makeRequest<string[]>(
+    return ApiPrep.makeRequest<string[]>(
       API_ENDPOINTS.userProfessions.setUserProfessions,
       { professions },
       { params: { id: userId } }
@@ -435,40 +318,42 @@ export class CustomServerApi {
   }
 
   static async getAllProfessions() {
-    return this.makeRequest<string[]>(
+    return ApiPrep.makeRequest<string[]>(
       API_ENDPOINTS.userProfessions.getAllProfessions
     );
   }
 
   // ==================== USER ASSIGNMENTS ====================
   static async getUserAssignments(userId: string) {
-    return this.makeRequest<{ territories: string[]; professions: string[] }>(
-      API_ENDPOINTS.userAssignments.getAssignments,
-      undefined,
-      { params: { id: userId } }
-    );
+    return ApiPrep.makeRequest<{
+      territories: string[];
+      professions: string[];
+    }>(API_ENDPOINTS.userAssignments.getAssignments, undefined, {
+      params: { id: userId },
+    });
   }
 
   static async setUserAssignments(
     userId: string,
     assignments: { territories: string[]; professions: string[] }
   ) {
-    return this.makeRequest<{ territories: string[]; professions: string[] }>(
-      API_ENDPOINTS.userAssignments.setAssignments,
-      assignments,
-      { params: { id: userId } }
-    );
+    return ApiPrep.makeRequest<{
+      territories: string[];
+      professions: string[];
+    }>(API_ENDPOINTS.userAssignments.setAssignments, assignments, {
+      params: { id: userId },
+    });
   }
 
   // ==================== SPECIALTY COLORS ====================
   static async getSpecialtyColors() {
-    return this.makeRequest<SpecialtyColor[]>(
+    return ApiPrep.makeRequest<SpecialtyColor[]>(
       API_ENDPOINTS.specialtyColors.findAll
     );
   }
 
   static async getSpecialtyColor(specialty: string) {
-    return this.makeRequest<SpecialtyColor>(
+    return ApiPrep.makeRequest<SpecialtyColor>(
       API_ENDPOINTS.specialtyColors.findOne,
       undefined,
       { params: { specialty } }
@@ -479,7 +364,7 @@ export class CustomServerApi {
     specialty: string,
     data: Partial<SpecialtyColor>
   ) {
-    return this.makeRequest<SpecialtyColor>(
+    return ApiPrep.makeRequest<SpecialtyColor>(
       API_ENDPOINTS.specialtyColors.update,
       data,
       { params: { specialty } }
@@ -488,18 +373,20 @@ export class CustomServerApi {
 
   // ==================== CALL OUTCOMES CONFIG ====================
   static async getCallOutcomes() {
-    return this.makeRequest<CallOutcome[]>(API_ENDPOINTS.callOutcomes.findAll);
+    return ApiPrep.makeRequest<CallOutcome[]>(
+      API_ENDPOINTS.callOutcomes.findAll
+    );
   }
 
   static async createCallOutcome(data: Partial<CallOutcome>) {
-    return this.makeRequest<CallOutcome>(
+    return ApiPrep.makeRequest<CallOutcome>(
       API_ENDPOINTS.callOutcomes.create,
       data
     );
   }
 
   static async updateCallOutcome(id: string, data: Partial<CallOutcome>) {
-    return this.makeRequest<CallOutcome>(
+    return ApiPrep.makeRequest<CallOutcome>(
       API_ENDPOINTS.callOutcomes.update,
       data,
       { params: { id } }
@@ -507,26 +394,21 @@ export class CustomServerApi {
   }
 
   static async deleteCallOutcome(id: string) {
-    return this.makeRequest(API_ENDPOINTS.callOutcomes.delete, undefined, {
+    return ApiPrep.makeRequest(API_ENDPOINTS.callOutcomes.delete, undefined, {
       params: { id },
     });
   }
 
-  // ==================== CALL HISTORY ====================
-  static async getCallHistory() {
-    return this.makeRequest<CallHistory[]>(API_ENDPOINTS.callHistory.findAll);
-  }
-
   // ==================== TWILIO ====================
   static async generateTwilioToken(identity: string) {
-    return this.makeRequest<{ token: string; identity: string }>(
+    return ApiPrep.makeRequest<{ token: string; identity: string }>(
       API_ENDPOINTS.twilio.generateToken,
       { identity }
     );
   }
 
   static async makeTwilioCall(to: string, prospectId?: string) {
-    return this.makeRequest<{
+    return ApiPrep.makeRequest<{
       success: boolean;
       callSid: string;
       status: string;
@@ -536,7 +418,7 @@ export class CustomServerApi {
   }
 
   static async getTwilioConfig() {
-    return this.makeRequest<{
+    return ApiPrep.makeRequest<{
       configured: boolean;
       phoneNumber: string | null;
     }>(API_ENDPOINTS.twilio.getConfig);
@@ -544,7 +426,7 @@ export class CustomServerApi {
 
   // ==================== LIVEKIT ====================
   static async getLiveKitConfig() {
-    return this.makeRequest<{ configured: boolean; url: string }>(
+    return ApiPrep.makeRequest<{ configured: boolean; url: string }>(
       API_ENDPOINTS.livekit.getConfig
     );
   }
@@ -554,7 +436,7 @@ export class CustomServerApi {
     roomName?: string,
     name?: string
   ) {
-    return this.makeRequest<{
+    return ApiPrep.makeRequest<{
       token: string;
       identity: string;
       roomName: string;
@@ -568,7 +450,7 @@ export class CustomServerApi {
     phoneNumber: string,
     prospectId?: string
   ) {
-    return this.makeRequest<{
+    return ApiPrep.makeRequest<{
       success: boolean;
       roomName: string;
       token: string;
@@ -590,7 +472,7 @@ export class CustomServerApi {
     notes?: string,
     duration?: number
   ) {
-    return this.makeRequest(API_ENDPOINTS.livekit.endCall, {
+    return ApiPrep.makeRequest(API_ENDPOINTS.livekit.endCall, {
       roomName,
       prospectId,
       callerId,
@@ -602,14 +484,14 @@ export class CustomServerApi {
 
   // ==================== BULK OPERATIONS ====================
   static async bulkSearch(specialty: string, location: string) {
-    return this.makeRequest<{ results: any[] }>(API_ENDPOINTS.bulk.search, {
+    return ApiPrep.makeRequest<{ results: any[] }>(API_ENDPOINTS.bulk.search, {
       specialty,
       location,
     });
   }
 
   static async bulkAdd(contacts: any[], territory: string, specialty: string) {
-    return this.makeRequest<{
+    return ApiPrep.makeRequest<{
       added: number;
       skipped: number;
       details: { added: any[]; skipped: any[] };
@@ -617,7 +499,7 @@ export class CustomServerApi {
   }
 
   static async updateProspectAddresses() {
-    return this.makeRequest<{
+    return ApiPrep.makeRequest<{
       total: number;
       updated: number;
       failed: number;
@@ -629,43 +511,45 @@ export class CustomServerApi {
   static async getIssues(status?: string) {
     const queryParams: Record<string, string> = {};
     if (status) queryParams.status = status;
-    return this.makeRequest<any[]>(API_ENDPOINTS.issues.findAll, undefined, {
+    return ApiPrep.makeRequest<any[]>(API_ENDPOINTS.issues.findAll, undefined, {
       queryParams,
     });
   }
 
   static async getIssue(id: string) {
-    return this.makeRequest<any>(API_ENDPOINTS.issues.findOne, undefined, {
+    return ApiPrep.makeRequest<any>(API_ENDPOINTS.issues.findOne, undefined, {
       params: { id },
     });
   }
 
   static async createIssue(data: Partial<any>) {
-    return this.makeRequest<any>(API_ENDPOINTS.issues.create, data);
+    return ApiPrep.makeRequest<any>(API_ENDPOINTS.issues.create, data);
   }
 
   static async updateIssue(id: string, data: Partial<any>) {
-    return this.makeRequest<any>(API_ENDPOINTS.issues.update, data, {
+    return ApiPrep.makeRequest<any>(API_ENDPOINTS.issues.update, data, {
       params: { id },
     });
   }
 
   static async deleteIssue(id: string) {
-    return this.makeRequest(API_ENDPOINTS.issues.delete, undefined, {
+    return ApiPrep.makeRequest(API_ENDPOINTS.issues.delete, undefined, {
       params: { id },
     });
   }
 
   // ==================== LINEAR ====================
   static async getLinearTeams() {
-    return this.makeRequest<any[]>(API_ENDPOINTS.linear.getTeams);
+    return ApiPrep.makeRequest<any[]>(API_ENDPOINTS.linear.getTeams);
   }
 
   static async getLinearIssues(teamId?: string) {
     const queryParams: Record<string, string> = {};
     if (teamId) queryParams.teamId = teamId;
-    return this.makeRequest<any[]>(API_ENDPOINTS.linear.getIssues, undefined, {
-      queryParams,
-    });
+    return ApiPrep.makeRequest<any[]>(
+      API_ENDPOINTS.linear.getIssues,
+      undefined,
+      { queryParams }
+    );
   }
 }
