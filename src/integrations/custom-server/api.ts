@@ -8,6 +8,7 @@ import type {
   Stakeholder,
   SpecialtyColor,
   CallOutcome,
+  CallHistory,
 } from "@/lib/types";
 
 interface EndpointParserProps {
@@ -509,6 +510,11 @@ export class CustomServerApi {
     return this.makeRequest(API_ENDPOINTS.callOutcomes.delete, undefined, {
       params: { id },
     });
+  }
+
+  // ==================== CALL HISTORY ====================
+  static async getCallHistory() {
+    return this.makeRequest<CallHistory[]>(API_ENDPOINTS.callHistory.findAll);
   }
 
   // ==================== TWILIO ====================

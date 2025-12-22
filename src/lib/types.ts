@@ -102,10 +102,25 @@ export type CallOutcome = {
   updatedAt: Date;
 };
 
+export type CallHistory = {
+  id: string;
+  prospectId?: string;
+  callerId?: string;
+  fieldRepId?: string;
+  callDuration?: number;
+  recordingUrl?: string;
+  callSid?: string;
+  attemptDate: Date;
+  status: string;
+  outcome: string;
+  notes?: string;
+  createdAt: Date;
+  prospect?: any;
+};
+
 export type UserRole =
   | "admin"
   | "manager"
   | "inside_sales_rep"
   | "field_sales_rep"
   | "data_loader";
-
