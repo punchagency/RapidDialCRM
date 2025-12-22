@@ -8,6 +8,7 @@ import type {
   Stakeholder,
   SpecialtyColor,
   CallOutcome,
+  CallHistory,
 } from "@/lib/types";
 
 export class CustomServerApi {
@@ -187,6 +188,12 @@ export class CustomServerApi {
       outcome,
       notes,
     });
+  }
+  // ==================== CALL HISTORY ====================
+  static async getCallHistory() {
+    return ApiPrep.makeRequest<CallHistory[]>(
+      API_ENDPOINTS.callHistory.findAll
+    );
   }
 
   // ==================== GEOCODING ====================

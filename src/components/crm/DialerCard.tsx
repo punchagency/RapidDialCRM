@@ -30,6 +30,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getSpecialtyColors } from "@/lib/specialtyColors";
 import { useTwilioDevice, CallStatus } from "@/hooks/useTwilioDevice";
 import { getAuthHeaders, resolveApiUrl } from "@/services/http";
+import { CustomServerApi } from "@/integrations/custom-server/api";
 
 interface DialerCardProps {
   prospect: Prospect;
@@ -74,13 +75,9 @@ export function DialerCard({
   useEffect(() => {
     async function loadOutcomes() {
       try {
-        const response = await fetch(resolveApiUrl("/api/call-outcomes"), {
-          headers: getAuthHeaders(),
-          credentials: "include",
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setOutcomes(data);
+        const { data: outcomes } = await CustomServerApi.getCallOutcomes();
+        if (outcomes) {
+          setOutcomes(outcomes);
         }
       } catch (error) {
         console.error("Failed to load call outcomes:", error);
