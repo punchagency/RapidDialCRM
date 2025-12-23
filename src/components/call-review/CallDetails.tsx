@@ -22,7 +22,10 @@ export function CallDetails({ call }: CallDetailsProps) {
         <p className="text-xs text-muted-foreground uppercase tracking-wider">
           Outcome
         </p>
-        <Badge variant="secondary" className="border" style={outcomeStyle}>
+        <Badge
+          variant="secondary"
+          className={`border ${outcomeStyle?.backgroundColor} ${outcomeStyle?.color} ${outcomeStyle?.borderColor}`}
+        >
           {call.outcome}
         </Badge>
       </div>

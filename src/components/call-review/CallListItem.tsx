@@ -51,7 +51,7 @@ export function CallListItem({ call, isActive, onClick }: CallListItemProps) {
           <div className="flex items-center gap-2">
             <img src={avatar} className="h-6 w-6 rounded-full" alt="Rep" />
             <span className="text-sm font-medium">
-              {call.callerId || "Unknown"}
+              {call.caller?.name || "Unknown"}
             </span>
           </div>
           <span className="text-xs text-muted-foreground">
@@ -64,8 +64,7 @@ export function CallListItem({ call, isActive, onClick }: CallListItemProps) {
         <div className="flex items-center gap-3 text-sm flex-wrap">
           <Badge
             variant="secondary"
-            className="font-normal border"
-            style={outcomeStyle}
+            className={`font-normal border ${outcomeStyle?.backgroundColor} ${outcomeStyle?.color} ${outcomeStyle?.borderColor}`}
           >
             {call.outcome}
           </Badge>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Prospect } from "@/lib/types";
+import { Prospect, Appointment } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +12,7 @@ import { ProspectInfo } from "@/components/dialer/ProspectInfo";
 import { CallNotesTab } from "@/components/dialer/CallNotesTab";
 import { ScriptsTab } from "@/components/dialer/ScriptsTab";
 import { OutcomeSelector } from "@/components/dialer/OutcomeSelector";
+import { BookAppointmentModal } from "@/components/dialer/BookAppointmentModal";
 
 interface DialerCardProps {
   prospect: Prospect;
@@ -32,6 +33,9 @@ export function DialerCard({
   const [activeTab, setActiveTab] = useState("notes");
   const [outcomes, setOutcomes] = useState<any[]>([]);
   const [showDialpad, setShowDialpad] = useState(false);
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const storage = localStorage.getItem("auth.user");
+  const user = storage ? JSON.parse(storage) : {};
   const { toast } = useToast();
 
   const {
@@ -45,7 +49,7 @@ export function DialerCard({
     hangUp,
     toggleMute,
     sendDigits,
-  } = useTwilioDevice({ identity: "crm-dialer" });
+  } = useTwilioDevice({ identity: user.user.id });
 
   useEffect(() => {
     initializeDevice();
@@ -105,6 +109,11 @@ export function DialerCard({
     if (callStatus === "connected" || callStatus === "ringing") {
       hangUp();
     }
+    if (status === "Booked") {
+      setShowAppointmentModal(true);
+      return; // Don't complete until appointment is saved
+    }
+    console.log("Call completed with status:", status);
     onComplete(status, notes);
     setNotes("");
   };
@@ -126,12 +135,6 @@ export function DialerCard({
       <div className="lg:col-span-2 flex flex-col gap-4 min-h-0 overflow-y-auto">
         <Card className="border-none shadow-md flex-1 flex flex-col">
           <CardContent className="p-4 flex-1 flex flex-col">
-            <ProspectInfo
-              prospect={prospect}
-              canEdit={canEdit}
-              onEditClick={onEditClick}
-            />
-
             {/* Phone Number & Call Button */}
             <div className="flex gap-2 items-stretch mb-3 mt-4">
               <CallStatusDisplay
@@ -160,6 +163,11 @@ export function DialerCard({
               show={showDialpad}
               isInCall={isInCall}
               onDigitPress={handleDialpadDigit}
+            />
+            <ProspectInfo
+              prospect={prospect}
+              canEdit={canEdit}
+              onEditClick={onEditClick}
             />
           </CardContent>
         </Card>
@@ -220,6 +228,52 @@ export function DialerCard({
           </CardContent>
         </Card>
       </div>
+
+      {/* Appointment Booking Modal */}
+      <BookAppointmentModal
+        isOpen={showAppointmentModal}
+        onClose={() => setShowAppointmentModal(false)}
+        onSave={async (
+          appointmentData: Omit<
+            Appointment,
+            | "id"
+            | "createdAt"
+            | "updatedAt"
+            | "googleCalendarEventId"
+            | "status"
+          >
+        ) => {
+          try {
+            // Save appointment to backend
+            onComplete("Booked", notes);
+            setNotes("");
+            const { data, error } = await CustomServerApi.createAppointment(
+              appointmentData
+            );
+
+            if (error) {
+              toast({
+                title: "Failed to Book Appointment",
+                description: error,
+                variant: "destructive",
+              });
+              return;
+            }
+
+            toast({
+              title: "Appointment Booked!",
+              description: `Appointment scheduled for ${appointmentData.scheduledDate} at ${appointmentData.scheduledTime}`,
+            });
+          } catch (err) {
+            toast({
+              title: "Error",
+              description: "Failed to save appointment",
+              variant: "destructive",
+            });
+          }
+        }}
+        prospect={prospect}
+      />
     </div>
   );
 }

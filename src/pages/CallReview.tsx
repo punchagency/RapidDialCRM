@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import {
   Card,
@@ -8,7 +8,9 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Award, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Award, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallHistory } from "@/hooks/useCallHistory";
 import { CallListItem } from "@/components/call-review/CallListItem";
 import { AudioPlayer } from "@/components/call-review/AudioPlayer";
@@ -25,6 +27,9 @@ const formatDuration = (seconds?: number): string => {
 };
 
 export default function CallReview() {
+  const ITEMS_PER_PAGE = 20;
+  const [currentPage, setCurrentPage] = useState(0);
+
   const {
     callHistory,
     loading,
@@ -32,7 +37,11 @@ export default function CallReview() {
     selectedCall,
     activeCallId,
     setActiveCallId,
-  } = useCallHistory({ offset: 0, limit: 100 });
+    total,
+  } = useCallHistory({
+    offset: currentPage * ITEMS_PER_PAGE,
+    limit: ITEMS_PER_PAGE,
+  });
 
   const handlePointsChange = (points: number) => {
     console.log("Points awarded:", points);
@@ -108,7 +117,67 @@ export default function CallReview() {
           <h1 className="text-xl font-heading font-semibold text-foreground">
             Call Review
           </h1>
-          <Badge variant="secondary">{callHistory.length} Calls</Badge>
+          <div className="flex items-center gap-4">
+            <Badge variant="secondary">
+              {total > 0 ? (
+                <>
+                  Showing {currentPage * ITEMS_PER_PAGE + 1}-
+                  {Math.min((currentPage + 1) * ITEMS_PER_PAGE, total)} of{" "}
+                  {total} calls
+                </>
+              ) : (
+                "0 calls"
+              )}
+            </Badge>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+                disabled={currentPage === 0 || loading}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+
+              {/* Page selector */}
+              <div className="flex items-center gap-2 px-2">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                  Page
+                </span>
+                <Input
+                  type="number"
+                  min="1"
+                  max={Math.ceil(total / ITEMS_PER_PAGE)}
+                  value={currentPage + 1}
+                  onChange={(e) => {
+                    const page = parseInt(e.target.value) - 1;
+                    const maxPage = Math.ceil(total / ITEMS_PER_PAGE) - 1;
+                    if (!isNaN(page) && page >= 0 && page <= maxPage) {
+                      setCurrentPage(page);
+                    }
+                  }}
+                  className="w-16 h-8 text-center"
+                  disabled={loading}
+                />
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                  of {Math.ceil(total / ITEMS_PER_PAGE)}
+                </span>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((p) => p + 1)}
+                disabled={
+                  (currentPage + 1) * ITEMS_PER_PAGE >= total || loading
+                }
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </header>
 
         <div className="flex-1 p-6 overflow-y-auto">

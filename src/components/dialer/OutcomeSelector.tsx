@@ -27,12 +27,7 @@ export function OutcomeSelector({
             key={outcome.id}
             variant="outline"
             size="sm"
-            className="h-auto py-2 px-2 flex flex-col items-center justify-center border text-xs font-medium"
-            style={{
-              backgroundColor: outcome.bgColor,
-              color: outcome.textColor,
-              borderColor: outcome.borderColor || outcome.bgColor,
-            }}
+            className={`h-auto py-2 px-2 flex flex-col items-center justify-center border text-xs font-medium ${outcome.bgColor} ${outcome.textColor} ${outcome.borderColor}`}
             onClick={() => onOutcomeSelect(outcome.label)}
             data-testid={`outcome-${outcome.label}`}
           >

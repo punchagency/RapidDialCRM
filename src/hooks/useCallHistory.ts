@@ -12,6 +12,7 @@ export function useCallHistory(params?: UseCallHistoryParams) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeCallId, setActiveCallId] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
 
   // Fetch call history on mount or when params change
   useEffect(() => {
@@ -23,6 +24,8 @@ export function useCallHistory(params?: UseCallHistoryParams) {
           setError(response.error);
         } else if (response.data) {
           setCallHistory(response.data);
+          setTotal(response.total || 0);
+
           // Set the first call as active
           if (response.data.length > 0) {
             setActiveCallId(response.data[0].id);
@@ -48,5 +51,6 @@ export function useCallHistory(params?: UseCallHistoryParams) {
     selectedCall,
     activeCallId,
     setActiveCallId,
+    total,
   };
 }

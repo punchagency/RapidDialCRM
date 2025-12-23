@@ -36,18 +36,13 @@ export default function Dialer() {
 
   const updateProspectMutation = useUpdateProspect();
   const recordCallOutcomeMutation = useRecordCallOutcome();
-
+  const storage = localStorage.getItem("auth.user");
+  const user = storage ? JSON.parse(storage) : {};
   const handleSaveContact = async (updatedProspect: Prospect) => {
     try {
       await updateProspectMutation.mutateAsync({
         id: updatedProspect.id,
         data: updatedProspect,
-      });
-      await recordCallOutcomeMutation.mutateAsync({
-        prospectId: updatedProspect.id,
-        callerId: "current-user",
-        outcome: "contacted",
-        notes: "Contact updated",
       });
       setSelectedContactForEdit(null);
       toast({
@@ -70,7 +65,7 @@ export default function Dialer() {
 
       await recordCallOutcomeMutation.mutateAsync({
         prospectId: currentProspect.id,
-        callerId: "current-user",
+        callerId: user.user.id,
         outcome: status,
         notes,
       });
