@@ -66,11 +66,13 @@ export class CustomServerApi {
     territory?: string;
     limit?: number;
     offset?: number;
+    called?: boolean;
   }) {
     const queryParams: Record<string, string> = {};
     if (params?.territory) queryParams.territory = params.territory;
     if (params?.limit) queryParams.limit = params.limit.toString();
     if (params?.offset) queryParams.offset = params.offset.toString();
+    if (params?.called) queryParams.called = params.called.toString();
 
     return ApiPrep.makeRequest<Prospect[]>(
       API_ENDPOINTS.prospects.findAll,
@@ -188,12 +190,6 @@ export class CustomServerApi {
       outcome,
       notes,
     });
-  }
-  // ==================== CALL HISTORY ====================
-  static async getCallHistory() {
-    return ApiPrep.makeRequest<CallHistory[]>(
-      API_ENDPOINTS.callHistory.findAll
-    );
   }
 
   // ==================== GEOCODING ====================
@@ -404,6 +400,19 @@ export class CustomServerApi {
     return ApiPrep.makeRequest(API_ENDPOINTS.callOutcomes.delete, undefined, {
       params: { id },
     });
+  }
+
+  // ==================== CALL HISTORY ====================
+  static async getCallHistory(params?: { limit?: number; offset?: number }) {
+    const queryParams: Record<string, string> = {};
+    if (params?.limit) queryParams.limit = params.limit.toString();
+    if (params?.offset) queryParams.offset = params.offset.toString();
+
+    return ApiPrep.makeRequest<CallHistory[]>(
+      API_ENDPOINTS.callHistory.findAll,
+      undefined,
+      { queryParams }
+    );
   }
 
   // ==================== TWILIO ====================
