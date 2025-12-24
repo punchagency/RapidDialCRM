@@ -15,6 +15,7 @@ import {
   useUpdateProspect,
 } from "@/hooks/useProspects";
 import { useRecordCallOutcome } from "@/hooks/useCallOutcomes";
+import { useAuth } from '@/lib/AuthContext';
 
 export default function Dialer() {
   const [location] = useLocation();
@@ -24,6 +25,7 @@ export default function Dialer() {
     useState<Prospect | null>(null);
   const { toast } = useToast();
   const { canAccess } = useUserRole();
+  const { user } = useAuth();
 
   const canEdit = canAccess("contacts_edit");
 
@@ -35,6 +37,8 @@ export default function Dialer() {
   const { data: prospects = [], isLoading } = useProspects({
     limit: 100,
     offset: 0,
+    userId: user?.id,
+    role: user?.role,
   });
   const { data: initialProspect } = useProspect(prospectId || "");
   const updateProspectMutation = useUpdateProspect();

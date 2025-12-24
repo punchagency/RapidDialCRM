@@ -4,6 +4,7 @@
 
 export type Prospect = {
   id: string;
+  assignedInsideSalesRepId: string | null;
   businessName: string;
   phoneNumber: string;
   addressStreet: string | null;

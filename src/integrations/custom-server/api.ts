@@ -66,12 +66,16 @@ export class CustomServerApi {
     territory?: string;
     limit?: number;
     offset?: number;
+    userId?: string;
+    role?: string;
   }) {
     const queryParams: Record<string, string> = {};
     if (params?.territory) queryParams.territory = params.territory;
     if (params?.limit) queryParams.limit = params.limit.toString();
     if (params?.offset) queryParams.offset = params.offset.toString();
-
+    if (params?.userId) queryParams.userId = params.userId;
+    if (params?.role) queryParams.role = params.role;
+  
     return ApiPrep.makeRequest<Prospect[]>(
       API_ENDPOINTS.prospects.findAll,
       undefined,

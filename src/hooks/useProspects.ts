@@ -6,7 +6,7 @@ import type { Prospect } from '@/lib/types';
 export const prospectKeys = {
   all: ['prospects'] as const,
   lists: () => [...prospectKeys.all, 'list'] as const,
-  list: (filters?: { territory?: string; limit?: number; offset?: number }) => 
+  list: (filters?: { territory?: string; limit?: number; offset?: number }) =>
     [...prospectKeys.lists(), filters] as const,
   details: () => [...prospectKeys.all, 'detail'] as const,
   detail: (id: string) => [...prospectKeys.details(), id] as const,
@@ -14,7 +14,7 @@ export const prospectKeys = {
 };
 
 // Get all prospects
-export function useProspects(params?: { territory?: string; limit?: number; offset?: number }) {
+export function useProspects(params?: { territory?: string; limit?: number; offset?: number, userId?: string, role?: string }) {
   return useQuery({
     queryKey: prospectKeys.list(params),
     queryFn: async () => {
@@ -56,7 +56,7 @@ export function useProspectsByTerritory(territory: string) {
 // Create prospect mutation
 export function useCreateProspect() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (data: Partial<Prospect>) => {
       const { data: result, error } = await CustomServerApi.createProspect(data);
@@ -73,7 +73,7 @@ export function useCreateProspect() {
 // Update prospect mutation
 export function useUpdateProspect() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Prospect> }) => {
       const { data: result, error } = await CustomServerApi.updateProspect(id, data);
