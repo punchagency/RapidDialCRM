@@ -118,7 +118,8 @@ export type CallHistory = {
   outcome: string;
   notes?: string;
   createdAt: Date;
-  prospect?: any;
+  prospect?: Prospect;
+  caller?: User;
 };
 
 export type UserRole =
