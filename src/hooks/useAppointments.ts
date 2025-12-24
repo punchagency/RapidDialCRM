@@ -16,7 +16,8 @@ export function useTodayAppointments(territory?: string) {
   return useQuery({
     queryKey: appointmentKeys.today(territory),
     queryFn: async () => {
-      const { data, error } = await CustomServerApi.getTodayAppointments(territory);
+      const { data, error } = await CustomServerApi.getTodayAppointments({territory});
+      console.log('data', data, 'error', error);
       if (error) throw new Error(error);
       return data || [];
     },

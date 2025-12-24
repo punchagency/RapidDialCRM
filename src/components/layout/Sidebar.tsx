@@ -30,6 +30,7 @@ import avatar from "@/assets/generated_images/Professional_user_avatar_1_a4d3e76
 import managerAvatar from "@/assets/generated_images/Professional_user_avatar_2_9f00e114.png";
 import { useUserRole } from "@/lib/UserRoleContext";
 import { getRoleLabel, getRoleColor, UserRole } from "@/lib/permissions";
+import { useAuth } from "@/lib/AuthContext";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -56,11 +57,12 @@ export function Sidebar() {
     stopImpersonation,
     canImpersonate,
   } = useUserRole();
+  const { user, logout } = useAuth();
 
   const [, forceUpdate] = useState(0);
 
   const { data: users = [] } = useQuery<User[]>({
-    queryKey: ["/api/users"],
+    queryKey: ["/api/v1/users"],
     enabled: canImpersonate && actualRole === "admin",
   });
 
@@ -92,7 +94,9 @@ export function Sidebar() {
   }, []);
 
   const handleLogout = () => {
+    stopImpersonation();
     localStorage.removeItem("user_role");
+    logout();
     setLocation("/auth");
   };
 
@@ -189,6 +193,14 @@ export function Sidebar() {
       .toUpperCase()
       .slice(0, 2);
   };
+
+  const activeUserName = isImpersonating && impersonatedUser
+    ? impersonatedUser.name
+    : user?.name || (userRole === "manager" ? "Sarah Miller" : userRole === "admin" ? "Admin User" : "Alex Johnson");
+
+  const activeUserRoleLabel = isImpersonating && impersonatedUser
+    ? mapDbRoleToLabel(impersonatedUser.role)
+    : userRole.replace(/_/g, " ");
 
   return (
     <div className="h-screen w-64 bg-card border-r border-border flex flex-col shrink-0 z-20 relative">
@@ -311,18 +323,10 @@ export function Sidebar() {
             />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate text-foreground">
-                {isImpersonating && impersonatedUser
-                  ? impersonatedUser.name
-                  : userRole === "manager"
-                  ? "Sarah Miller"
-                  : userRole === "admin"
-                  ? "Admin User"
-                  : "Alex Johnson"}
+                {activeUserName}
               </p>
               <p className="text-xs text-muted-foreground truncate capitalize">
-                {isImpersonating
-                  ? `Viewing as ${userRole.replace(/_/g, " ")}`
-                  : `${userRole.replace(/_/g, " ")} Role`}
+                {isImpersonating ? `Viewing as ${activeUserRoleLabel}` : `${activeUserRoleLabel} Role`}
               </p>
             </div>
             <Settings
@@ -337,7 +341,7 @@ export function Sidebar() {
         </Link>
 
         {canImpersonate && actualRole === "admin" && !isImpersonating && (
-          <div className="mb-2">
+          <div className="mb-2 hidden">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -387,7 +391,7 @@ export function Sidebar() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-1 mt-2 mb-2">
+        <div className="grid grid-cols-2 gap-1 mt-2 mb-2 hidden">
           <button
             onClick={() => setUserRole("admin")}
             className={cn(

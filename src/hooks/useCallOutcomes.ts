@@ -1,13 +1,13 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { CustomServerApi } from '@/integrations/custom-server/api';
-import type { CallOutcome } from '@/lib/types';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { CustomServerApi } from "@/integrations/custom-server/api";
+import type { CallOutcome } from "@/lib/types";
 
 // Query keys
 export const callOutcomeKeys = {
-  all: ['callOutcomes'] as const,
-  lists: () => [...callOutcomeKeys.all, 'list'] as const,
+  all: ["callOutcomes"] as const,
+  lists: () => [...callOutcomeKeys.all, "list"] as const,
   list: () => [...callOutcomeKeys.lists()] as const,
-  details: () => [...callOutcomeKeys.all, 'detail'] as const,
+  details: () => [...callOutcomeKeys.all, "detail"] as const,
   detail: (id: string) => [...callOutcomeKeys.details(), id] as const,
 };
 
@@ -27,12 +27,14 @@ export function useCallOutcomes() {
 // Create call outcome mutation
 export function useCreateCallOutcome() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (data: Partial<CallOutcome>) => {
-      const { data: result, error } = await CustomServerApi.createCallOutcome(data);
+      const { data: result, error } = await CustomServerApi.createCallOutcome(
+        data
+      );
       if (error) throw new Error(error);
-      if (!result) throw new Error('Failed to create call outcome');
+      if (!result) throw new Error("Failed to create call outcome");
       return result;
     },
     onSuccess: () => {
@@ -44,17 +46,28 @@ export function useCreateCallOutcome() {
 // Update call outcome mutation
 export function useUpdateCallOutcome() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<CallOutcome> }) => {
-      const { data: result, error } = await CustomServerApi.updateCallOutcome(id, data);
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Partial<CallOutcome>;
+    }) => {
+      const { data: result, error } = await CustomServerApi.updateCallOutcome(
+        id,
+        data
+      );
       if (error) throw new Error(error);
-      if (!result) throw new Error('Failed to update call outcome');
+      if (!result) throw new Error("Failed to update call outcome");
       return result;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: callOutcomeKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: callOutcomeKeys.detail(variables.id) });
+      queryClient.invalidateQueries({
+        queryKey: callOutcomeKeys.detail(variables.id),
+      });
     },
   });
 }
@@ -62,7 +75,7 @@ export function useUpdateCallOutcome() {
 // Delete call outcome mutation
 export function useDeleteCallOutcome() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: string) => {
       const { data, error } = await CustomServerApi.deleteCallOutcome(id);
@@ -78,17 +91,45 @@ export function useDeleteCallOutcome() {
 // Record call outcome (for prospect calls)
 export function useRecordCallOutcome() {
   return useMutation({
-    mutationFn: async ({ prospectId, callerId, outcome, notes }: { 
-      prospectId: string; 
-      callerId: string; 
-      outcome: string; 
+    mutationFn: async ({
+      prospectId,
+      callerId,
+      outcome,
+      notes,
+    }: {
+      prospectId: string;
+      callerId: string;
+      outcome: string;
       notes?: string;
     }) => {
-      const { data, error } = await CustomServerApi.recordCallOutcome(prospectId, callerId, outcome, notes);
+      const { data, error } = await CustomServerApi.recordCallOutcome(
+        prospectId,
+        callerId,
+        outcome,
+        notes
+      );
       if (error) throw new Error(error);
       return data;
     },
   });
 }
 
+// Helper function to get outcome style
+export function getOutcomeStyle(
+  callOutcomes: CallOutcome[],
+  outcomeLabel: string
+) {
+  const outcome = callOutcomes.find(
+    (o) => o.label.toLowerCase() === outcomeLabel.toLowerCase()
+  );
 
+  if (outcome) {
+    return {
+      backgroundColor: outcome.bgColor,
+      color: outcome.textColor,
+      borderColor: outcome.borderColor || outcome.bgColor,
+    };
+  }
+
+  return undefined;
+}

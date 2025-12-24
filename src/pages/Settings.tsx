@@ -8,28 +8,40 @@ import { SecurityTab } from "@/components/crm/SecurityTab";
 import { TeamStructureTab } from "@/components/crm/TeamStructureTab";
 import { StatusesTab } from "@/components/crm/StatusesTab";
 import { UserAssignmentsTab } from "@/components/crm/UserAssignmentsTab";
+import { TeamMembersTab } from "@/components/crm/TeamMembersTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { User, Bell, Shield, Plug, FileText, Briefcase, Map, Network, CheckCircle, ChevronRight, Lock, MapPin } from "lucide-react";
+import { User, Bell, Shield, Plug, FileText, Briefcase, Map, Network, CheckCircle, ChevronRight, Lock, MapPin, Users } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/lib/UserRoleContext";
+import type { PermissionMatrix } from "@/lib/permissions";
+
+type SettingsTab = {
+  value: string;
+  icon: LucideIcon;
+  label: string;
+  adminOnly?: boolean;
+  permission?: keyof PermissionMatrix;
+};
 
 export default function Settings() {
-  const { canAccess } = useUserRole();
-  
-  const configTabs = [
+  const { canAccess, userRole } = useUserRole();
+
+  const configTabs: SettingsTab[] = [
     { value: "profile", icon: User, label: "Profile" },
     { value: "statuses", icon: CheckCircle, label: "Call Statuses" },
     { value: "assignments", icon: MapPin, label: "User Assignments" },
+    { value: "team-members", icon: Users, label: "Team Members", adminOnly: true },
     { value: "team", icon: Network, label: "Team Structure" },
     { value: "security", icon: Shield, label: "Security" },
     { value: "notifications", icon: Bell, label: "Notifications" },
   ];
 
-  const systemTabs = [
+  const systemTabs: SettingsTab[] = [
     { value: "field", icon: Map, label: "Field & Route", permission: "settings_access" as const },
     { value: "professions", icon: Briefcase, label: "Professions", permission: "settings_access" as const },
     { value: "templates", icon: FileText, label: "Templates", permission: "settings_access" as const },
@@ -37,6 +49,7 @@ export default function Settings() {
   ].filter(tab => !tab.permission || canAccess(tab.permission));
 
   const visibleConfigTabs = configTabs.filter(tab => {
+    if (tab.adminOnly) return userRole === "admin";
     if (tab.value === "team") return canAccess("team_management");
     if (tab.value === "assignments") return canAccess("team_management");
     return true;
@@ -45,7 +58,7 @@ export default function Settings() {
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar />
-      
+
       <main className="flex-1 flex flex-col overflow-hidden bg-muted/10">
         <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-white shrink-0">
           <h1 className="text-xl font-heading font-semibold text-foreground">Settings</h1>
@@ -58,9 +71,9 @@ export default function Settings() {
                 <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4 px-2">Configuration</h2>
                 <TabsList className="flex flex-col h-auto w-full bg-transparent p-0 gap-1">
                   {visibleConfigTabs.map((item) => (
-                    <TabsTrigger 
+                    <TabsTrigger
                       key={item.value}
-                      value={item.value} 
+                      value={item.value}
                       className={cn(
                         "w-full justify-start gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all",
                         "data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none",
@@ -80,9 +93,9 @@ export default function Settings() {
                     <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mt-6 mb-4 px-2">System</h2>
                     <TabsList className="flex flex-col h-auto w-full bg-transparent p-0 gap-1">
                       {systemTabs.map((item) => (
-                        <TabsTrigger 
+                        <TabsTrigger
                           key={item.value}
-                          value={item.value} 
+                          value={item.value}
                           className={cn(
                             "w-full justify-start gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all",
                             "data-[state=active]:bg-primary/10 data-[state=active]:text-primary data-[state=active]:shadow-none",
@@ -104,7 +117,7 @@ export default function Settings() {
             <div className="flex-1 overflow-y-auto bg-slate-50/50">
               <div className="max-w-5xl mx-auto p-8">
                 <TabsContent value="profile" className="mt-0 space-y-6">
-                   <div>
+                  <div>
                     <h2 className="text-lg font-semibold mb-1">Profile Settings</h2>
                     <p className="text-sm text-muted-foreground mb-6">Manage your public profile and preferences.</p>
                     <Card className="border shadow-sm">
@@ -130,6 +143,10 @@ export default function Settings() {
                   <UserAssignmentsTab />
                 </TabsContent>
 
+                <TabsContent value="team-members" className="mt-0">
+                  <TeamMembersTab />
+                </TabsContent>
+
                 <TabsContent value="team" className="mt-0">
                   <TeamStructureTab />
                 </TabsContent>
@@ -153,7 +170,7 @@ export default function Settings() {
                 <TabsContent value="integrations" className="mt-0">
                   <IntegrationsTab />
                 </TabsContent>
-                
+
                 <TabsContent value="notifications" className="mt-0 space-y-6">
                   <div>
                     <h2 className="text-lg font-semibold mb-1">Notification Preferences</h2>
@@ -162,15 +179,15 @@ export default function Settings() {
                       <CardContent className="space-y-0 divide-y p-0">
                         <div className="flex items-center justify-between p-6">
                           <div className="space-y-0.5">
-                             <Label className="text-base">Email Summary</Label>
-                             <p className="text-sm text-muted-foreground">Receive a daily summary of team performance.</p>
+                            <Label className="text-base">Email Summary</Label>
+                            <p className="text-sm text-muted-foreground">Receive a daily summary of team performance.</p>
                           </div>
                           <Switch defaultChecked />
                         </div>
                         <div className="flex items-center justify-between p-6">
                           <div className="space-y-0.5">
-                             <Label className="text-base">Missed Call Alerts</Label>
-                             <p className="text-sm text-muted-foreground">Get notified immediately when a call is missed.</p>
+                            <Label className="text-base">Missed Call Alerts</Label>
+                            <p className="text-sm text-muted-foreground">Get notified immediately when a call is missed.</p>
                           </div>
                           <Switch defaultChecked />
                         </div>

@@ -257,7 +257,7 @@ export function StatusesTab() {
             variant="outline" 
             size="sm" 
             onClick={handleReset} 
-            disabled={isSaving || !isDirty}
+            // disabled={isSaving || !isDirty}
             className="border-gray-300 text-gray-700"
           >
             <RotateCcw className="h-4 w-4 mr-2" /> Reset

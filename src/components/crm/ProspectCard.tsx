@@ -7,6 +7,7 @@ import { Phone, MapPin, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
 import { getSpecialtyColors } from "@/lib/specialtyColors";
+import { useCallOutcomes } from "@/hooks/useCallOutcomes";
 
 interface CallOutcome {
   id: string;
@@ -22,37 +23,22 @@ interface ProspectCardProps {
   onEdit?: (e: React.MouseEvent) => void;
 }
 
-export function ProspectCard({ 
-  prospect, 
+export function ProspectCard({
+  prospect,
   showEditButton = false,
-  onEdit
+  onEdit,
 }: ProspectCardProps) {
   const colors = getSpecialtyColors(prospect.specialty);
-  const [callOutcomes, setCallOutcomes] = useState<CallOutcome[]>([]);
-  const fullAddress = [prospect.addressStreet, prospect.addressCity, prospect.addressState, prospect.addressZip]
-    .filter(Boolean)
-    .join(", ") || "N/A";
-
-  useEffect(() => {
-    const fetchCallOutcomes = async () => {
-      try {
-        const response = await fetch(`/api/call-outcomes?t=${Date.now()}`, {
-          cache: "no-store",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            "Pragma": "no-cache",
-          },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setCallOutcomes(Array.isArray(data) ? data : []);
-        }
-      } catch (error) {
-        console.error("Failed to fetch call outcomes:", error);
-      }
-    };
-    fetchCallOutcomes();
-  }, []);
+  const { data: callOutcomes = [] } = useCallOutcomes();
+  const fullAddress =
+    [
+      prospect.addressStreet,
+      prospect.addressCity,
+      prospect.addressState,
+      prospect.addressZip,
+    ]
+      .filter(Boolean)
+      .join(", ") || "N/A";
 
   const callOutcomeColor = callOutcomes.find(
     (outcome) => outcome.label === prospect.lastCallOutcome
@@ -63,24 +49,36 @@ export function ProspectCard({
       <Card className="group hover:shadow-md transition-all border-border/60 cursor-pointer">
         <CardContent className="p-4 flex items-center gap-4">
           <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
-            {prospect.businessName.split(" ").map(n => n[0]).join("").slice(0, 2)}
+            {prospect.businessName
+              .split(" ")
+              .map((n) => n[0])
+              .join("")
+              .slice(0, 2)}
           </div>
-          
+
           <div className="flex-1 min-w-0 grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <p className="font-semibold truncate">{prospect.businessName}</p>
-                <Badge 
-                  variant="secondary" 
-                  className={cn("text-[10px] h-5 px-2 rounded-full font-semibold border-none", colors.bgColor, colors.textColor)}
+                <p className="font-semibold truncate">
+                  {prospect.businessName}
+                </p>
+                <Badge
+                  variant="secondary"
+                  className={cn(
+                    "text-[10px] h-5 px-2 rounded-full font-semibold border-none",
+                    colors.bgColor,
+                    colors.textColor
+                  )}
                   data-testid={`specialty-badge-${prospect.id}`}
                 >
                   {prospect.specialty}
                 </Badge>
               </div>
-              <p className="text-xs text-muted-foreground truncate">{fullAddress}</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {fullAddress}
+              </p>
             </div>
-            
+
             <div className="hidden md:block text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Phone className="h-3 w-3" /> {prospect.phoneNumber}
@@ -89,25 +87,31 @@ export function ProspectCard({
                 <MapPin className="h-3 w-3" /> {prospect.territory}
               </div>
             </div>
-            
+
             <div className="hidden md:flex items-center justify-center">
-              {prospect.lastCallOutcome && callOutcomeColor ? (
-                <Badge 
+              {prospect.lastCallOutcome ? (
+                <Badge
                   variant="secondary"
-                  className={cn("text-[10px] h-5 px-2 rounded-full font-semibold border-none", callOutcomeColor.bgColor, callOutcomeColor.textColor)}
+                  className={cn(
+                    "text-[10px] h-5 px-2 rounded-full font-semibold border-none",
+                    callOutcomeColor?.bgColor,
+                    callOutcomeColor?.textColor
+                  )}
                   data-testid={`call-status-badge-${prospect.id}`}
                 >
                   {prospect.lastCallOutcome}
                 </Badge>
               ) : (
-                <span className="text-xs text-muted-foreground">No call yet</span>
+                <span className="text-xs text-muted-foreground">
+                  No call yet
+                </span>
               )}
             </div>
-            
+
             <div className="hidden md:flex items-center justify-end gap-2">
               {showEditButton && (
-                <Button 
-                  size="sm" 
+                <Button
+                  size="sm"
                   variant="ghost"
                   onClick={onEdit}
                   data-testid={`edit-button-${prospect.id}`}
@@ -122,4 +126,3 @@ export function ProspectCard({
     </Link>
   );
 }
-
