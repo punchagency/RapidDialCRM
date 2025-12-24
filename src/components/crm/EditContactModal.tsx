@@ -1,9 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Prospect } from "@/lib/types";
 import { geocodeAddress } from "@/lib/geocoding";
@@ -17,14 +29,7 @@ interface EditContactModalProps {
   canEdit?: boolean;
 }
 
-const TIMEZONES = [
-  "EST",
-  "CST",
-  "MST",
-  "PST",
-  "AKST",
-  "HST",
-];
+const TIMEZONES = ["EST", "CST", "MST", "PST", "AKST", "HST"];
 
 const DEAL_SIZES = [
   "Small (<$50K)",
@@ -33,7 +38,12 @@ const DEAL_SIZES = [
   "Enterprise (>$2M)",
 ];
 
-export function EditContactModal({ contact, isOpen, onClose, onSave }: EditContactModalProps) {
+export function EditContactModal({
+  contact,
+  isOpen,
+  onClose,
+  onSave,
+}: EditContactModalProps) {
   const [formData, setFormData] = useState(contact);
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -48,14 +58,14 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
     setIsSearching(true);
     try {
       const apiKey = import.meta.env.VITE_HERE_API_KEY;
-      
+
       if (!apiKey) {
         console.error("HERE API key not configured");
         setAddressSuggestions([]);
         setIsSearching(false);
         return;
       }
-      
+
       // Use HERE Autosuggest API which is the best for search-as-you-type
       // It finds both addresses and places (POIs) efficiently
       const params = new URLSearchParams({
@@ -102,13 +112,18 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
     // Handle both geocode and autocomplete response formats
     const fullAddress = suggestion.address?.label || suggestion.title || "";
     const position = suggestion.position || suggestion.address?.position || {};
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
       addressStreet: fullAddress,
       addressCity: suggestion.address?.city || prev.addressCity,
-      addressState: suggestion.address?.state || suggestion.address?.stateCode || prev.addressState,
-      addressZip: suggestion.address?.postalCode ? String(suggestion.address.postalCode) : prev.addressZip,
+      addressState:
+        suggestion.address?.state ||
+        suggestion.address?.stateCode ||
+        prev.addressState,
+      addressZip: suggestion.address?.postalCode
+        ? String(suggestion.address.postalCode)
+        : prev.addressZip,
       addressLat: position.lat ? String(position.lat) : prev.addressLat,
       addressLng: position.lng ? String(position.lng) : prev.addressLng,
     }));
@@ -126,13 +141,18 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Edit Contact: {contact?.businessName || 'Loading...'}</DialogTitle>
+          <DialogTitle>
+            Edit Contact: {contact?.businessName || "Loading..."}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           {/* Business Name */}
           <div>
-            <Label htmlFor="business-name" className="text-sm font-medium mb-2 block">
+            <Label
+              htmlFor="business-name"
+              className="text-sm font-medium mb-2 block"
+            >
               Name
             </Label>
             <div className="relative">
@@ -140,7 +160,10 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
                 id="business-name"
                 value={formData.businessName}
                 onChange={(e) => {
-                  setFormData(prev => ({ ...prev, businessName: e.target.value }));
+                  setFormData((prev) => ({
+                    ...prev,
+                    businessName: e.target.value,
+                  }));
                   handleAddressSearch(e.target.value);
                 }}
                 placeholder="Contact or business name"
@@ -151,13 +174,21 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
 
           {/* Phone Number */}
           <div>
-            <Label htmlFor="phone-number" className="text-sm font-medium mb-2 block">
+            <Label
+              htmlFor="phone-number"
+              className="text-sm font-medium mb-2 block"
+            >
               Phone Number
             </Label>
             <Input
               id="phone-number"
               value={formData.phoneNumber}
-              onChange={(e) => setFormData(prev => ({ ...prev, phoneNumber: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  phoneNumber: e.target.value,
+                }))
+              }
               placeholder="(555) 555-5555"
               data-testid="edit-phone-input"
             />
@@ -165,8 +196,11 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
 
           {/* Address Search */}
           <div>
-            <Label htmlFor="address-search" className="text-sm font-medium mb-2 block">
-              Address (searches HERE Maps for name or address)
+            <Label
+              htmlFor="address-search"
+              className="text-sm font-medium mb-2 block"
+            >
+              Address (searches Maps for name or address)
             </Label>
             <div className="relative">
               <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
@@ -200,8 +234,12 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
                     <div className="flex items-start gap-2">
                       <MapPin className="h-3 w-3 mt-1 flex-shrink-0 text-muted-foreground" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-foreground font-medium">{suggestion.title}</p>
-                        <p className="text-xs text-muted-foreground truncate">{suggestion.address?.label}</p>
+                        <p className="text-sm text-foreground font-medium">
+                          {suggestion.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {suggestion.address?.label}
+                        </p>
                       </div>
                     </div>
                   </Card>
@@ -218,13 +256,18 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
 
           {/* Specialty */}
           <div>
-            <Label htmlFor="specialty" className="text-sm font-medium mb-2 block">
+            <Label
+              htmlFor="specialty"
+              className="text-sm font-medium mb-2 block"
+            >
               Specialty
             </Label>
             <Input
               id="specialty"
               value={formData.specialty}
-              onChange={(e) => setFormData(prev => ({ ...prev, specialty: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, specialty: e.target.value }))
+              }
               placeholder="e.g., Chiropractor, Dentist"
               data-testid="edit-specialty-input"
             />
@@ -232,13 +275,18 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
 
           {/* Territory */}
           <div>
-            <Label htmlFor="territory" className="text-sm font-medium mb-2 block">
+            <Label
+              htmlFor="territory"
+              className="text-sm font-medium mb-2 block"
+            >
               Territory
             </Label>
             <Input
               id="territory"
               value={formData.territory}
-              onChange={(e) => setFormData(prev => ({ ...prev, territory: e.target.value }))}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, territory: e.target.value }))
+              }
               placeholder="e.g., South Florida, North Texas"
               data-testid="edit-territory-input"
             />
@@ -257,4 +305,3 @@ export function EditContactModal({ contact, isOpen, onClose, onSave }: EditConta
     </Dialog>
   );
 }
-
