@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import type { Prospect } from "@/lib/types";
 import { useProspects, useProspect } from "@/hooks/useProspects";
+import { useAuth } from '@/lib/AuthContext';
 
 interface UseDialerStateParams {
   prospectId?: string | null;
@@ -9,12 +10,15 @@ interface UseDialerStateParams {
 export function useDialerState({ prospectId }: UseDialerStateParams = {}) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const { user } = useAuth();
 
   // Fetch prospects
   const { data: prospects = [], isLoading } = useProspects({
     limit: 100,
     offset: 0,
     called: true,
+    userId: user?.id,
+    role: user?.role,
   });
 
   // Set initial index when prospectId is provided
