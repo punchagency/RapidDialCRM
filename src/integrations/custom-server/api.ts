@@ -76,7 +76,7 @@ export class CustomServerApi {
     if (params?.offset) queryParams.offset = params.offset.toString();
     if (params?.userId) queryParams.userId = params.userId;
     if (params?.role) queryParams.role = params.role;
-  
+
     if (params?.called) queryParams.called = params.called.toString();
 
     return ApiPrep.makeRequest<Prospect[]>(
@@ -303,9 +303,7 @@ export class CustomServerApi {
   }
 
   static async getAllTerritories() {
-    return ApiPrep.makeRequest<string[]>(
-      API_ENDPOINTS.territories.findAll
-    );
+    return ApiPrep.makeRequest<string[]>(API_ENDPOINTS.territories.findAll);
   }
 
   // ==================== USER PROFESSIONS ====================
@@ -408,10 +406,17 @@ export class CustomServerApi {
   }
 
   // ==================== CALL HISTORY ====================
-  static async getCallHistory(params?: { limit?: number; offset?: number }) {
+  static async getCallHistory(params?: {
+    limit?: number;
+    offset?: number;
+    callerId?: string;
+    search?: string;
+  }) {
     const queryParams: Record<string, string> = {};
     if (params?.limit) queryParams.limit = params.limit.toString();
     if (params?.offset) queryParams.offset = params.offset.toString();
+    if (params?.callerId) queryParams.callerId = params.callerId;
+    if (params?.search) queryParams.search = params.search;
 
     return ApiPrep.makeRequest<CallHistory[]>(
       API_ENDPOINTS.callHistory.findAll,
@@ -587,24 +592,27 @@ export class CustomServerApi {
     );
   }
 
-  static async createTerritory(data: { name: string; description?: string; isActive?: boolean }) {
+  static async createTerritory(data: {
+    name: string;
+    description?: string;
+    isActive?: boolean;
+  }) {
     return ApiPrep.makeRequest<any>(API_ENDPOINTS.territories.create, data);
   }
 
-  static async updateTerritory(id: string, data: Partial<{ name: string; description?: string; isActive?: boolean }>) {
-    return ApiPrep.makeRequest<any>(
-      API_ENDPOINTS.territories.update,
-      data,
-      { params: { id } }
-    );
+  static async updateTerritory(
+    id: string,
+    data: Partial<{ name: string; description?: string; isActive?: boolean }>
+  ) {
+    return ApiPrep.makeRequest<any>(API_ENDPOINTS.territories.update, data, {
+      params: { id },
+    });
   }
 
   static async deleteTerritory(id: string) {
-    return ApiPrep.makeRequest(
-      API_ENDPOINTS.territories.delete,
-      undefined,
-      { params: { id } }
-    );
+    return ApiPrep.makeRequest(API_ENDPOINTS.territories.delete, undefined, {
+      params: { id },
+    });
   }
 
   // ==================== PROFESSIONS ====================
@@ -620,23 +628,26 @@ export class CustomServerApi {
     );
   }
 
-  static async createProfession(data: { name: string; description?: string; isActive?: boolean }) {
+  static async createProfession(data: {
+    name: string;
+    description?: string;
+    isActive?: boolean;
+  }) {
     return ApiPrep.makeRequest<any>(API_ENDPOINTS.professions.create, data);
   }
 
-  static async updateProfession(id: string, data: Partial<{ name: string; description?: string; isActive?: boolean }>) {
-    return ApiPrep.makeRequest<any>(
-      API_ENDPOINTS.professions.update,
-      data,
-      { params: { id } }
-    );
+  static async updateProfession(
+    id: string,
+    data: Partial<{ name: string; description?: string; isActive?: boolean }>
+  ) {
+    return ApiPrep.makeRequest<any>(API_ENDPOINTS.professions.update, data, {
+      params: { id },
+    });
   }
 
   static async deleteProfession(id: string) {
-    return ApiPrep.makeRequest(
-      API_ENDPOINTS.professions.delete,
-      undefined,
-      { params: { id } }
-    );
+    return ApiPrep.makeRequest(API_ENDPOINTS.professions.delete, undefined, {
+      params: { id },
+    });
   }
 }

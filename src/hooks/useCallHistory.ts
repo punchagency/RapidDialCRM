@@ -5,6 +5,8 @@ import type { CallHistory } from "@/lib/types";
 interface UseCallHistoryParams {
   limit?: number;
   offset?: number;
+  callerId?: string;
+  search?: string;
 }
 
 export function useCallHistory(params?: UseCallHistoryParams) {
@@ -40,7 +42,7 @@ export function useCallHistory(params?: UseCallHistoryParams) {
     };
 
     fetchCallHistory();
-  }, [params?.limit, params?.offset]);
+  }, [params?.limit, params?.offset, params?.search, params?.callerId]);
 
   const selectedCall = callHistory.find((c) => c.id === activeCallId);
 

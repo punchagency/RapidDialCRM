@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import {
   Card,
@@ -10,13 +10,20 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Award, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Award,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  Search,
+} from "lucide-react";
 import { useCallHistory } from "@/hooks/useCallHistory";
 import { CallListItem } from "@/components/call-review/CallListItem";
 import { AudioPlayer } from "@/components/call-review/AudioPlayer";
 import { CallDetails } from "@/components/call-review/CallDetails";
 import { ReviewerFeedback } from "@/components/call-review/ReviewerFeedback";
 import { TranscriptPanel } from "@/components/call-review/TranscriptPanel";
+import { UserFilter } from "@/components/call-review/UserFilter";
 
 // Format duration from seconds to MM:SS
 const formatDuration = (seconds?: number): string => {
@@ -29,6 +36,24 @@ const formatDuration = (seconds?: number): string => {
 export default function CallReview() {
   const ITEMS_PER_PAGE = 20;
   const [currentPage, setCurrentPage] = useState(0);
+  const [searchInput, setSearchInput] = useState(""); // User input
+  const [searchQuery, setSearchQuery] = useState(""); // Debounced search query
+  const [callerId, setCallerId] = useState<string | null>(null); // User filter
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput);
+      setCurrentPage(0); // Reset to first page when search changes
+      // Restore focus after search query update
+      if (document.activeElement === searchInputRef.current) {
+        searchInputRef.current?.focus();
+      }
+    }, 1000); // 1 second delay
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const {
     callHistory,
@@ -41,6 +66,8 @@ export default function CallReview() {
   } = useCallHistory({
     offset: currentPage * ITEMS_PER_PAGE,
     limit: ITEMS_PER_PAGE,
+    search: searchQuery,
+    callerId: callerId || undefined,
   });
 
   const handlePointsChange = (points: number) => {
@@ -83,52 +110,33 @@ export default function CallReview() {
     );
   }
 
-  if (callHistory.length === 0) {
-    return (
-      <div className="flex h-screen bg-background overflow-hidden">
-        <Sidebar />
-        <main className="flex-1 flex flex-col overflow-hidden relative bg-muted/30">
-          <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-card z-10">
-            <h1 className="text-xl font-heading font-semibold text-foreground">
-              Call Review
-            </h1>
-          </header>
-          <div className="flex-1 flex items-center justify-center">
-            <Card className="max-w-md">
-              <CardHeader>
-                <CardTitle>No Calls Found</CardTitle>
-                <CardDescription>
-                  There are no recorded calls to review yet.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar />
 
       <main className="flex-1 flex flex-col overflow-hidden relative bg-muted/30">
         <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-card z-10">
-          <h1 className="text-xl font-heading font-semibold text-foreground">
-            Call Review
-          </h1>
           <div className="flex items-center gap-4">
-            <Badge variant="secondary">
-              {total > 0 ? (
-                <>
-                  Showing {currentPage * ITEMS_PER_PAGE + 1}-
-                  {Math.min((currentPage + 1) * ITEMS_PER_PAGE, total)} of{" "}
-                  {total} calls
-                </>
-              ) : (
-                "0 calls"
-              )}
-            </Badge>
+            <h1 className="text-xl font-heading font-semibold text-foreground">
+              Call Review
+            </h1>
+
+            {/* Search Bar */}
+            <div className="relative w-64">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                ref={searchInputRef}
+                type="text"
+                placeholder="Search calls..."
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                className="pl-9 h-9"
+              />
+            </div>
+          </div>
+          {/* User Filter */}
+          <UserFilter value={callerId} onChange={setCallerId} />
+          <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -179,85 +187,97 @@ export default function CallReview() {
             </div>
           </div>
         </header>
+        {callHistory.length === 0 ? (
+          <div className="flex-1 flex items-center justify-center">
+            <Card className="max-w-md">
+              <CardHeader>
+                <CardTitle>No Calls Found</CardTitle>
+                <CardDescription>
+                  There are no recorded calls to review yet.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          </div>
+        ) : (
+          <div className="flex-1 p-6 overflow-y-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full max-h-[calc(100vh-140px)]">
+              {/* Left: Call List */}
+              <div className="lg:col-span-4 space-y-4 overflow-y-auto pr-2">
+                {callHistory.map((call) => (
+                  <CallListItem
+                    key={call.id}
+                    call={call}
+                    isActive={activeCallId === call.id}
+                    onClick={() => setActiveCallId(call.id)}
+                  />
+                ))}
+              </div>
 
-        <div className="flex-1 p-6 overflow-y-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full max-h-[calc(100vh-140px)]">
-            {/* Left: Call List */}
-            <div className="lg:col-span-4 space-y-4 overflow-y-auto pr-2">
-              {callHistory.map((call) => (
-                <CallListItem
-                  key={call.id}
-                  call={call}
-                  isActive={activeCallId === call.id}
-                  onClick={() => setActiveCallId(call.id)}
-                />
-              ))}
-            </div>
-
-            {/* Right: Player & Review */}
-            <div className="lg:col-span-8 flex flex-col gap-6">
-              {selectedCall && (
-                <>
-                  <Card className="flex-1 border-none shadow-md flex flex-col">
-                    <CardHeader>
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <CardTitle className="text-xl mb-1">
-                            {selectedCall.prospect?.businessName ||
-                              "Unknown Business"}
-                          </CardTitle>
-                          <CardDescription>
-                            Recorded Call •{" "}
-                            {formatDuration(selectedCall.callDuration)}
-                            {selectedCall.prospect?.phoneNumber && (
-                              <> • {selectedCall.prospect.phoneNumber}</>
-                            )}
-                          </CardDescription>
+              {/* Right: Player & Review */}
+              <div className="lg:col-span-8 flex flex-col gap-6">
+                {selectedCall && (
+                  <>
+                    <Card className="flex-1 border-none shadow-md flex flex-col">
+                      <CardHeader>
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <CardTitle className="text-xl mb-1">
+                              {selectedCall.prospect?.businessName ||
+                                "Unknown Business"}
+                            </CardTitle>
+                            <CardDescription>
+                              Recorded Call •{" "}
+                              {formatDuration(selectedCall.callDuration)}
+                              {selectedCall.prospect?.phoneNumber && (
+                                <> • {selectedCall.prospect.phoneNumber}</>
+                              )}
+                            </CardDescription>
+                          </div>
+                          {(selectedCall.callDuration || 0) >= 180 && (
+                            <Badge className="bg-purple-100 text-purple-700 border-purple-200 gap-1 py-1 px-3">
+                              <Award className="h-4 w-4" />
+                              Deep Dive Bonus Unlocked
+                            </Badge>
+                          )}
                         </div>
-                        {(selectedCall.callDuration || 0) >= 180 && (
-                          <Badge className="bg-purple-100 text-purple-700 border-purple-200 gap-1 py-1 px-3">
-                            <Award className="h-4 w-4" />
-                            Deep Dive Bonus Unlocked
-                          </Badge>
-                        )}
-                      </div>
-                    </CardHeader>
+                      </CardHeader>
 
-                    <CardContent className="flex-1 flex flex-col space-y-8 p-8">
-                      {/* Audio Player */}
-                      <AudioPlayer
-                        recordingUrl={selectedCall.recordingUrl || null}
-                        businessName={selectedCall.prospect?.businessName}
-                        attemptDate={selectedCall.attemptDate}
-                        callDuration={selectedCall.callDuration}
-                      />
+                      <CardContent className="flex-1 flex flex-col space-y-8 p-8">
+                        {/* Audio Player */}
+                        <AudioPlayer
+                          recordingUrl={selectedCall.recordingUrl || null}
+                          businessName={selectedCall.prospect?.businessName}
+                          attemptDate={selectedCall.attemptDate}
+                          callDuration={selectedCall.callDuration}
+                        />
 
-                      {/* Call Details */}
-                      <CallDetails call={selectedCall} />
+                        {/* Call Details */}
+                        <CallDetails call={selectedCall} />
 
-                      {/* Transcript */}
-                      <TranscriptPanel transcript={null} />
-                    </CardContent>
-                  </Card>
+                        {/* Transcript */}
+                        <TranscriptPanel transcript={null} />
+                      </CardContent>
+                    </Card>
 
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base">
-                        Reviewer Feedback
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ReviewerFeedback
-                        onPointsChange={handlePointsChange}
-                        onFeedback={handleFeedback}
-                      />
-                    </CardContent>
-                  </Card>
-                </>
-              )}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-base">
+                          Reviewer Feedback
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ReviewerFeedback
+                          onPointsChange={handlePointsChange}
+                          onFeedback={handleFeedback}
+                        />
+                      </CardContent>
+                    </Card>
+                  </>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </main>
     </div>
   );
