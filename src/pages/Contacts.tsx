@@ -14,6 +14,7 @@ import { EditContactModal } from "@/components/crm/EditContactModal";
 import { useToast } from "@/hooks/use-toast";
 import { ProspectCard } from "@/components/crm/ProspectCard";
 import { useProspects, useUpdateProspect } from "@/hooks/useProspects";
+import { useAuth } from '@/lib/AuthContext';
 
 export default function Contacts() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -21,11 +22,12 @@ export default function Contacts() {
   const { canAccess } = useUserRole();
   const { toast } = useToast();
   const statuses = getStatuses();
-
   const canEdit = canAccess("contacts_edit");
+  const { user } = useAuth();
+
 
   // Use React Query hook for data fetching
-  const { data: prospects = [], isLoading, error } = useProspects();
+  const { data: prospects = [], isLoading, error } = useProspects({ userId: user?.id, role: user?.role });
   const updateProspectMutation = useUpdateProspect();
 
   const getStatusColor = (statusValue: string) => {

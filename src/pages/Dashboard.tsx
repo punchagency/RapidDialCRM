@@ -49,6 +49,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { useAuth } from '@/lib/AuthContext';
 
 export default function Dashboard() {
   const { userRole } = useUserRole();
@@ -59,9 +60,10 @@ export default function Dashboard() {
   const [bulkSearchLocation, setBulkSearchLocation] = useState("");
   const [bulkSearchTerritory, setBulkSearchTerritory] = useState("");
   const { toast } = useToast();
+  const { user } = useAuth();
 
   // Use React Query hook for data fetching
-  const { data: prospects = [] } = useProspects({ limit: 20 });
+  const { data: prospects = [] } = useProspects({ limit: 20, userId: user?.id, role: user?.role });
 
   const handleFileUpload = async (file: File) => {
     // Parse CSV file

@@ -89,6 +89,24 @@ export const API_ENDPOINTS = {
     getAllProfessions: "GET /api/v1/professions",
   },
 
+  // Territories endpoints (standalone table)
+  territories: {
+    findAll: "GET /api/v1/territories",
+    findOne: "GET /api/v1/territories/:id",
+    create: "POST /api/v1/territories",
+    update: "PATCH /api/v1/territories/:id",
+    delete: "DELETE /api/v1/territories/:id",
+  },
+
+  // Professions endpoints (standalone table)
+  professions: {
+    findAll: "GET /api/v1/professions",
+    findOne: "GET /api/v1/professions/:id",
+    create: "POST /api/v1/professions",
+    update: "PATCH /api/v1/professions/:id",
+    delete: "DELETE /api/v1/professions/:id",
+  },
+
   // User assignments endpoints
   userAssignments: {
     getAssignments: "GET /api/v1/users/:id/assignments",

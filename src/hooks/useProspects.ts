@@ -4,8 +4,8 @@ import type { Prospect } from "@/lib/types";
 
 // Query keys
 export const prospectKeys = {
-  all: ["prospects"] as const,
-  lists: () => [...prospectKeys.all, "list"] as const,
+  all: ['prospects'] as const,
+  lists: () => [...prospectKeys.all, 'list'] as const,
   list: (filters?: { territory?: string; limit?: number; offset?: number }) =>
     [...prospectKeys.lists(), filters] as const,
   details: () => [...prospectKeys.all, "detail"] as const,
@@ -15,17 +15,11 @@ export const prospectKeys = {
 };
 
 // Get all prospects
-export function useProspects(params?: {
-  territory?: string;
-  limit?: number;
-  offset?: number;
-  called?: boolean;
-}) {
+export function useProspects(params?: { territory?: string; limit?: number; offset?: number; userId?: string; role?: string;  called?: boolean; }) {
   return useQuery({
     queryKey: prospectKeys.list(params),
     queryFn: async () => {
       const { data, error } = await CustomServerApi.getProspects(params);
-      console.log("data", data);
       if (error) throw new Error(error);
       return data || [];
     },

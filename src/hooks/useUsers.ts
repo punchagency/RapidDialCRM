@@ -207,7 +207,8 @@ export function useAllTerritories() {
     queryFn: async () => {
       const { data, error } = await CustomServerApi.getAllTerritories();
       if (error) throw new Error(error);
-      return data || [];
+      const territories = data?.map((territory: any) => territory.name) || [];
+      return territories;
     },
     staleTime: 300000, // 5 minutes
   });
@@ -220,7 +221,8 @@ export function useAllProfessions() {
     queryFn: async () => {
       const { data, error } = await CustomServerApi.getAllProfessions();
       if (error) throw new Error(error);
-      return data || [];
+      const professions = data?.map((profession: any) => profession.name) || [];
+      return professions;
     },
     staleTime: 300000, // 5 minutes
   });

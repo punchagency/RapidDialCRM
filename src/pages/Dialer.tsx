@@ -6,6 +6,7 @@ import { useUserRole } from "@/lib/UserRoleContext";
 import { EditContactModal } from "@/components/crm/EditContactModal";
 import { useUpdateProspect } from "@/hooks/useProspects";
 import { useRecordCallOutcome } from "@/hooks/useCallOutcomes";
+import { useAuth } from '@/lib/AuthContext';
 import { useDialerState } from "@/hooks/useDialerState";
 import { DialerHeader } from "@/components/dialer/DialerHeader";
 import { ProspectNavigation } from "@/components/dialer/ProspectNavigation";
@@ -16,6 +17,7 @@ export default function Dialer() {
     useState<Prospect | null>(null);
   const { toast } = useToast();
   const { canAccess } = useUserRole();
+  const { user } = useAuth();
 
   const canEdit = canAccess("contacts_edit");
 
@@ -23,6 +25,14 @@ export default function Dialer() {
   const params = new URLSearchParams(window.location.search);
   const prospectId = params.get("prospectId");
 
+  // Use React Query hooks
+  const { data: prospects = [], isLoading } = useProspects({
+    limit: 100,
+    offset: 0,
+    userId: user?.id,
+    role: user?.role,
+  });
+  const { data: initialProspect } = useProspect(prospectId || "");
   // Use custom dialer state hook
   const {
     currentIndex,
