@@ -11,6 +11,7 @@ import { useDialerState } from "@/hooks/useDialerState";
 import { DialerHeader } from "@/components/dialer/DialerHeader";
 import { ProspectNavigation } from "@/components/dialer/ProspectNavigation";
 import type { Prospect } from "@/lib/types";
+import { useProspects, useProspect } from "@/hooks/useProspects";
 
 export default function Dialer() {
   const [selectedContactForEdit, setSelectedContactForEdit] =
@@ -25,13 +26,6 @@ export default function Dialer() {
   const params = new URLSearchParams(window.location.search);
   const prospectId = params.get("prospectId");
 
-  // Use React Query hooks
-  const { data: prospects = [], isLoading } = useProspects({
-    limit: 100,
-    offset: 0,
-    userId: user?.id,
-    role: user?.role,
-  });
   const { data: initialProspect } = useProspect(prospectId || "");
   // Use custom dialer state hook
   const {
@@ -46,8 +40,6 @@ export default function Dialer() {
 
   const updateProspectMutation = useUpdateProspect();
   const recordCallOutcomeMutation = useRecordCallOutcome();
-  const storage = localStorage.getItem("auth.user");
-  const user = storage ? JSON.parse(storage) : {};
   const handleSaveContact = async (updatedProspect: Prospect) => {
     try {
       await updateProspectMutation.mutateAsync({
@@ -75,7 +67,7 @@ export default function Dialer() {
 
       await recordCallOutcomeMutation.mutateAsync({
         prospectId: currentProspect.id,
-        callerId: user.user.id,
+        callerId: user?.id!,
         outcome: status,
         notes,
       });
