@@ -42,7 +42,7 @@ export default function Settings() {
   ];
 
   const systemTabs: SettingsTab[] = [
-    { value: "field", icon: Map, label: "Field & Route", permission: "settings_access" as const },
+    // { value: "field", icon: Map, label: "Field & Route", permission: "settings_access" as const },
     // { value: "professions", icon: Briefcase, label: "Professions", permission: "settings_access" as const },
     { value: "templates", icon: FileText, label: "Templates", permission: "settings_access" as const },
     { value: "integrations", icon: Plug, label: "Integrations", permission: "settings_integrations" as const },

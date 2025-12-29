@@ -227,7 +227,7 @@ export default function FieldReps() {
       <main className="flex-1 flex flex-col overflow-hidden relative bg-muted/30">
         <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-card z-10">
           <h1 className="text-xl font-heading font-semibold text-foreground">Team Management</h1>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 hidden">
              <Button variant="outline" size="sm" className="gap-2">
                 <Download className="h-4 w-4" /> Export Report
              </Button>

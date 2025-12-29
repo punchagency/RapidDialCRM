@@ -96,7 +96,7 @@ function App() {
           <TooltipProvider>
             <Toaster />
             <Router />
-            <IssueTrackerButton />
+            {/* <IssueTrackerButton /> */}
           </TooltipProvider>
         </UserRoleProvider>
       </AuthProvider>

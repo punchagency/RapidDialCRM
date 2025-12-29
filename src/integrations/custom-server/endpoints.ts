@@ -180,6 +180,15 @@ export const API_ENDPOINTS = {
     save: "POST /api/v1/team-relationships",
     delete: "DELETE /api/v1/team-relationships/:insideRepId",
   },
+
+  // Email templates endpoints
+  emailTemplates: {
+    findAll: "GET /api/v1/email-templates",
+    findOne: "GET /api/v1/email-templates/:id",
+    create: "POST /api/v1/email-templates",
+    update: "PATCH /api/v1/email-templates/:id",
+    delete: "DELETE /api/v1/email-templates/:id",
+  },
 };
 
 export default API_ENDPOINTS;

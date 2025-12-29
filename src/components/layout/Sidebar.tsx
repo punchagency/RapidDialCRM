@@ -142,12 +142,12 @@ export function Sidebar() {
         href: "/scripts",
         permission: "scripts_view" as const,
       },
-      {
-        icon: Bug,
-        label: "Issues",
-        href: "/issues",
-        permission: "dashboard_view" as const,
-      },
+      // {
+      //   icon: Bug,
+      //   label: "Issues",
+      //   href: "/issues",
+      //   permission: "dashboard_view" as const,
+      // },
     ];
     return baseItems.filter((item) => canAccess(item.permission));
   };
@@ -156,7 +156,7 @@ export function Sidebar() {
     { icon: Headphones, label: "Call Review", href: "/call-review" },
     { icon: UserCog, label: "Field Reps", href: "/field-reps?tab=field" },
     { icon: Headset, label: "Inside Reps", href: "/field-reps?tab=inside" },
-    { icon: Network, label: "Org Chart", href: "/org-chart" },
+    // { icon: Network, label: "Org Chart", href: "/org-chart" },
   ];
 
   const getRoleItems = () => {

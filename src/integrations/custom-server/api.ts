@@ -679,4 +679,55 @@ export class CustomServerApi {
       { params: { insideRepId } }
     );
   }
+
+  // ==================== EMAIL TEMPLATES ====================
+  static async getEmailTemplates(specialty?: string) {
+    const queryParams = specialty ? { specialty } : undefined;
+    return ApiPrep.makeRequest<any[]>(
+      API_ENDPOINTS.emailTemplates.findAll,
+      undefined,
+      { queryParams }
+    );
+  }
+
+  static async getEmailTemplate(id: string) {
+    return ApiPrep.makeRequest<any>(
+      API_ENDPOINTS.emailTemplates.findOne,
+      undefined,
+      { params: { id } }
+    );
+  }
+
+  static async createEmailTemplate(data: {
+    name: string;
+    subject: string;
+    body: string;
+    specialty?: string;
+  }) {
+    return ApiPrep.makeRequest<any>(API_ENDPOINTS.emailTemplates.create, data);
+  }
+
+  static async updateEmailTemplate(
+    id: string,
+    data: Partial<{
+      name: string;
+      subject: string;
+      body: string;
+      specialty?: string;
+    }>
+  ) {
+    return ApiPrep.makeRequest<any>(
+      API_ENDPOINTS.emailTemplates.update,
+      data,
+      { params: { id } }
+    );
+  }
+
+  static async deleteEmailTemplate(id: string) {
+    return ApiPrep.makeRequest(
+      API_ENDPOINTS.emailTemplates.delete,
+      undefined,
+      { params: { id } }
+    );
+  }
 }
