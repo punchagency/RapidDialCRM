@@ -16,7 +16,7 @@ import { BookAppointmentModal } from "@/components/dialer/BookAppointmentModal";
 
 interface DialerCardProps {
   prospect: Prospect;
-  onComplete: (status: string, notes: string) => void;
+  onComplete: (status: string, notes: string) => Promise<boolean> | void;
   canEdit?: boolean;
   onEditClick?: () => void;
 }
@@ -245,7 +245,16 @@ export function DialerCard({
         ) => {
           try {
             // Save appointment to backend
-            onComplete("Booked", notes);
+            const success = await onComplete("Booked", notes);
+            if (success === false) {
+              toast({
+                title: "Error",
+                description: "Make a call before booking an appointment",
+                variant: "destructive",
+              });
+              return;
+            }
+
             setNotes("");
             const { data, error } = await CustomServerApi.createAppointment(
               appointmentData

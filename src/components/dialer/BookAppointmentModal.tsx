@@ -43,6 +43,10 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { CustomServerApi } from "@/integrations/custom-server/api";
 import type { Prospect, FieldRep, Appointment } from "@/lib/types";
+import {
+  MapsAutocomplete,
+  type PlaceResult,
+} from "@/components/ui/mapsautocomplete";
 
 interface BookAppointmentModalProps {
   isOpen: boolean;
@@ -83,6 +87,7 @@ export function BookAppointmentModal({
   const [time, setTime] = useState("09:00");
   const [duration, setDuration] = useState(30);
   const [notes, setNotes] = useState("");
+  const [place, setPlace] = useState("");
   const [selectedFieldRepId, setSelectedFieldRepId] = useState<string>("");
   const [fieldReps, setFieldReps] = useState<FieldRep[]>([]);
   const [loading, setLoading] = useState(false);
@@ -126,6 +131,8 @@ export function BookAppointmentModal({
       scheduledDate: format(date, "yyyy-MM-dd"),
       scheduledTime: time,
       durationMinutes: duration,
+      notes: notes || null,
+      place: place || null,
     };
 
     onSave(appointmentData);
@@ -137,8 +144,14 @@ export function BookAppointmentModal({
     setTime("09:00");
     setDuration(30);
     setNotes("");
+    setPlace("");
     setSelectedFieldRepId("");
     onClose();
+  };
+
+  // Handle place selection from autocomplete
+  const handlePlaceSelected = (placeResult: PlaceResult) => {
+    setPlace(placeResult.formattedAddress);
   };
 
   // Get selected field rep details
@@ -155,8 +168,25 @@ export function BookAppointmentModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          handleClose();
+        }
+      }}
+    >
+      <DialogContent
+        className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto"
+        onPointerDownOutside={(e) => {
+          if (
+            e.target instanceof Element &&
+            e.target.closest(".pac-container")
+          ) {
+            e.preventDefault();
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Schedule Appointment</DialogTitle>
           <DialogDescription>
@@ -321,6 +351,17 @@ export function BookAppointmentModal({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          {/* Appointment Address */}
+          <div className="grid gap-2">
+            <MapsAutocomplete
+              label="Appointment Address (Optional)"
+              placeholder="Search for appointment location..."
+              value={place}
+              onValueChange={setPlace}
+              onPlaceSelected={handlePlaceSelected}
+            />
           </div>
 
           {/* Notes */}

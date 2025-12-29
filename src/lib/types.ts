@@ -55,6 +55,8 @@ export type Appointment = {
   durationMinutes: number | null;
   googleCalendarEventId: string | null;
   status: string | null;
+  notes: string | null;
+  place: string | null;
   createdAt: Date;
   updatedAt: Date;
 };

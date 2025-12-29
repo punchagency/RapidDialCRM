@@ -6,7 +6,7 @@ import { useUserRole } from "@/lib/UserRoleContext";
 import { EditContactModal } from "@/components/crm/EditContactModal";
 import { useUpdateProspect } from "@/hooks/useProspects";
 import { useRecordCallOutcome } from "@/hooks/useCallOutcomes";
-import { useAuth } from '@/lib/AuthContext';
+import { useAuth } from "@/lib/AuthContext";
 import { useDialerState } from "@/hooks/useDialerState";
 import { DialerHeader } from "@/components/dialer/DialerHeader";
 import { ProspectNavigation } from "@/components/dialer/ProspectNavigation";
@@ -61,9 +61,12 @@ export default function Dialer() {
     }
   };
 
-  const handleComplete = async (status: string, notes: string) => {
+  const handleComplete = async (
+    status: string,
+    notes: string
+  ): Promise<boolean> => {
     try {
-      if (!currentProspect) return;
+      if (!currentProspect) return false;
 
       await recordCallOutcomeMutation.mutateAsync({
         prospectId: currentProspect.id,
@@ -89,6 +92,8 @@ export default function Dialer() {
         });
         setIsTransitioning(false);
       }
+
+      return true;
     } catch (error) {
       toast({
         title: "Error",
@@ -97,6 +102,7 @@ export default function Dialer() {
         variant: "destructive",
       });
       setIsTransitioning(false);
+      return false;
     }
   };
 
