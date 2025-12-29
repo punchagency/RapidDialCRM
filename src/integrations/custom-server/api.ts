@@ -650,4 +650,33 @@ export class CustomServerApi {
       params: { id },
     });
   }
+
+  // ==================== TEAM RELATIONSHIPS ====================
+  static async getTeamRelationships(insideRepId?: string) {
+    const queryParams = insideRepId ? { insideRepId } : undefined;
+    return ApiPrep.makeRequest<any[]>(
+      API_ENDPOINTS.teamRelationships.findAll,
+      undefined,
+      { queryParams }
+    );
+  }
+
+  static async saveTeamRelationships(payload: {
+    insideRepId: string;
+    fieldRepIds: string[];
+    managerIds: string[];
+  }) {
+    return ApiPrep.makeRequest<any[]>(
+      API_ENDPOINTS.teamRelationships.save,
+      payload
+    );
+  }
+
+  static async deleteTeamRelationships(insideRepId: string) {
+    return ApiPrep.makeRequest(
+      API_ENDPOINTS.teamRelationships.delete,
+      undefined,
+      { params: { insideRepId } }
+    );
+  }
 }
