@@ -43,6 +43,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useUsers } from '@/hooks/useUsers';
 
 export function Sidebar() {
   const [location, setLocation] = useLocation();
@@ -61,10 +62,7 @@ export function Sidebar() {
 
   const [, forceUpdate] = useState(0);
 
-  const { data: users = [] } = useQuery<User[]>({
-    queryKey: ["/api/v1/users"],
-    enabled: canImpersonate && actualRole === "admin",
-  });
+  const { data: users = [], isLoading, error } = useUsers();
 
   useEffect(() => {
     const update = () => forceUpdate((n) => n + 1);
