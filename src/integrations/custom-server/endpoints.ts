@@ -173,6 +173,13 @@ export const API_ENDPOINTS = {
     getTeams: "GET /api/v1/linear/teams",
     getIssues: "GET /api/v1/linear/issues",
   },
+
+  // Team relationships endpoints
+  teamRelationships: {
+    findAll: "GET /api/v1/team-relationships",
+    save: "POST /api/v1/team-relationships",
+    delete: "DELETE /api/v1/team-relationships/:insideRepId",
+  },
 };
 
 export default API_ENDPOINTS;
