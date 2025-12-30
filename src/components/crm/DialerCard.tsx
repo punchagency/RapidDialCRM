@@ -3,6 +3,7 @@ import { Prospect, Appointment } from "@/lib/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/AuthContext";
 import { useTwilioDevice } from "@/hooks/useTwilioDevice";
 import { CustomServerApi } from "@/integrations/custom-server/api";
 import { CallStatusDisplay } from "@/components/dialer/CallStatusDisplay";
@@ -34,8 +35,7 @@ export function DialerCard({
   const [outcomes, setOutcomes] = useState<any[]>([]);
   const [showDialpad, setShowDialpad] = useState(false);
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
-  const storage = localStorage.getItem("auth.user");
-  const user = storage ? JSON.parse(storage) : {};
+  const { user } = useAuth();
   const { toast } = useToast();
 
   const {
@@ -49,7 +49,7 @@ export function DialerCard({
     hangUp,
     toggleMute,
     sendDigits,
-  } = useTwilioDevice({ identity: user.user.id });
+  } = useTwilioDevice({ identity: user?.id || "" });
 
   useEffect(() => {
     initializeDevice();
@@ -82,7 +82,7 @@ export function DialerCard({
     try {
       await makeCall(prospect.phoneNumber, {
         prospectId: prospect.id,
-        callerName: "CRM Dialer",
+        callerName: user?.name || "CRM Dialer",
       });
       toast({
         title: "Calling...",

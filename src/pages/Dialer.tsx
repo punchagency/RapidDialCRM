@@ -115,8 +115,20 @@ export default function Dialer() {
 
   if (prospects.length === 0)
     return (
-      <div className="flex h-screen items-center justify-center">
-        No prospects found
+      <div className="flex h-screen bg-background overflow-hidden">
+        <Sidebar />
+        <main className="flex-1 flex flex-col items-center justify-center p-6">
+          <div className="text-center space-y-4">
+            <h2 className="text-2xl font-semibold">Great Job! 🎉</h2>
+            <p className="text-muted-foreground max-w-md">
+              You're done with all your prospects. Check your contacts for
+              follow-ups or schedule callbacks.
+            </p>
+            <Button asChild className="mt-4">
+              <a href="/contacts">Go to Contacts</a>
+            </Button>
+          </div>
+        </main>
       </div>
     );
 
@@ -146,7 +158,7 @@ export default function Dialer() {
 
         {selectedContactForEdit && (
           <EditContactModal
-            contact={selectedContactForEdit}
+            prospect={selectedContactForEdit}
             isOpen={!!selectedContactForEdit}
             onClose={() => setSelectedContactForEdit(null)}
             onSave={handleSaveContact}
