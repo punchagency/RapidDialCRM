@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Edit, ShieldAlert, Users } from "lucide-react";
-import { useUsers } from "@/hooks/useUsers";
+import { useAllTerritories, useUsers } from "@/hooks/useUsers";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRole } from "@/lib/UserRoleContext";
 import type { User } from "@/lib/types";
@@ -123,6 +123,7 @@ const statusCheck = (inviteStatus: string): boolean => {
 
 export function TeamMembersTab() {
   const { userRole } = useUserRole();
+  const { data: territories = [] } = useAllTerritories();
   const { toast } = useToast();
   const { data: users, isLoading, error, refetch, isFetching } = useUsers();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -134,6 +135,7 @@ export function TeamMembersTab() {
     role: roleOptions[2].value,
     isActive: true,
     password: DEFAULT_PASSWORD,
+    territory: territories[0]?.name || "",
   });
 
   const createUserMutation = useMutation({
@@ -178,6 +180,7 @@ export function TeamMembersTab() {
         role: member.role || roleOptions[2].value,
         isActive: statusCheck(member.inviteStatus || (member.isActive ? "Active" : "Inactive")),
         password: DEFAULT_PASSWORD,
+        territory: territories?.[0],
       });
     } else {
       setFormState({
@@ -186,6 +189,7 @@ export function TeamMembersTab() {
         role: roleOptions[2].value,
         isActive: true,
         password: DEFAULT_PASSWORD,
+        territory: territories?.[0],
       });
     }
     setModalMode(mode);
@@ -353,6 +357,7 @@ export function TeamMembersTab() {
         mode={modalMode}
         formState={formState}
         roleOptions={roleOptions}
+        territoryOptions={territories}
         defaultPassword={DEFAULT_PASSWORD}
         onChange={handleFormChange}
         onSubmit={handleSubmit}

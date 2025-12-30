@@ -25,9 +25,11 @@ export type TeamMemberFormState = {
   role: string;
   isActive: boolean;
   password: string;
+  territory: string;
 };
 
 type RoleOption = { value: string; label: string };
+type TerritoryOption = Array<string>;
 
 type TeamMemberModalProps = {
   open: boolean;
@@ -35,6 +37,7 @@ type TeamMemberModalProps = {
   defaultPassword: string;
   formState: TeamMemberFormState;
   roleOptions: RoleOption[];
+  territoryOptions: TerritoryOption;
   onOpenChange: (open: boolean) => void;
   onChange: (update: Partial<TeamMemberFormState>) => void;
   onSubmit: () => void;
@@ -47,6 +50,7 @@ export function TeamMemberModal({
   defaultPassword,
   formState,
   roleOptions,
+  territoryOptions,
   onOpenChange,
   onChange,
   onSubmit,
@@ -97,6 +101,25 @@ export function TeamMemberModal({
                 {roleOptions.map((role) => (
                   <SelectItem key={role.value} value={role.value}>
                     {role.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Territory</Label>
+            <Select
+              value={formState.territory}
+              onValueChange={(value) => onChange({ territory: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a territory" />
+              </SelectTrigger>
+              <SelectContent>
+                {territoryOptions.map((territory,i) => (
+                  <SelectItem key={i} value={territory}>
+                    {territory}
                   </SelectItem>
                 ))}
               </SelectContent>
