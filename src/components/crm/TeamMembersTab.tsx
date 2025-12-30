@@ -30,6 +30,7 @@ type Member = {
   isActive: boolean;
   avatar?: string | null;
   inviteStatus?: string;
+  territory?: string;
 };
 
 type ModalMode = "add" | "edit";
@@ -101,7 +102,8 @@ const normalizeUsers = (users: User[] | undefined): Member[] => {
       role: user.role || "Team Member",
       isActive: user.isActive ?? true,
       avatar: null,
-      inviteStatus: status
+      inviteStatus: status,
+      territory: user.territory || "Unassigned",
     };
   });
 };
@@ -147,6 +149,7 @@ export function TeamMembersTab() {
         password: passwordToUse,
         role: formState.role,
         isActive: formState.isActive,
+        territory: formState.territory,
       };
       const { data, error: apiError } = await CustomServerApi.register(payload);
       if (apiError) throw new Error(apiError);
@@ -180,7 +183,7 @@ export function TeamMembersTab() {
         role: member.role || roleOptions[2].value,
         isActive: statusCheck(member.inviteStatus || (member.isActive ? "Active" : "Inactive")),
         password: DEFAULT_PASSWORD,
-        territory: territories?.[0],
+        territory: member.territory || territories?.[0],
       });
     } else {
       setFormState({
@@ -217,6 +220,7 @@ export function TeamMembersTab() {
         email: formState.email,
         role: formState.role,
         isActive: formState.isActive,
+        territory: formState.territory,
       };
       const { data, error: apiError } = await CustomServerApi.updateUser(editingMemberId, payload);
       if (apiError) throw new Error(apiError);
@@ -357,7 +361,7 @@ export function TeamMembersTab() {
         mode={modalMode}
         formState={formState}
         roleOptions={roleOptions}
-        territoryOptions={territories}
+        territoryOptions={["Unassigned",...territories]}
         defaultPassword={DEFAULT_PASSWORD}
         onChange={handleFormChange}
         onSubmit={handleSubmit}
