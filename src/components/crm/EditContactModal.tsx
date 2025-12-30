@@ -22,7 +22,7 @@ import { geocodeAddress } from "@/lib/geocoding";
 import { Search, MapPin } from "lucide-react";
 
 interface EditContactModalProps {
-  contact: Prospect;
+  prospect: Prospect;
   isOpen: boolean;
   onClose: () => void;
   onSave: (updatedContact: Prospect) => void;
@@ -39,12 +39,12 @@ const DEAL_SIZES = [
 ];
 
 export function EditContactModal({
-  contact,
+  prospect,
   isOpen,
   onClose,
   onSave,
 }: EditContactModalProps) {
-  const [formData, setFormData] = useState(contact);
+  const [formData, setFormData] = useState(prospect);
   const [addressSuggestions, setAddressSuggestions] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [addressQuery, setAddressQuery] = useState("");
@@ -96,17 +96,18 @@ export function EditContactModal({
   };
 
   useEffect(() => {
-    if (contact) {
-      setFormData(contact);
+    if (prospect) {
+      setFormData(prospect);
       setAddressSuggestions([]);
       setAddressQuery("");
       // Auto-search for address when modal opens with contact name or business name
-      const searchName = (contact as any).businessName || (contact as any).name;
+      const searchName =
+        (prospect as any).businessName || (prospect as any).name;
       if (searchName && searchName.length > 2) {
         handleAddressSearch(searchName);
       }
     }
-  }, [contact, isOpen]);
+  }, [prospect, isOpen]);
 
   const handleSelectAddress = (suggestion: any) => {
     // Handle both geocode and autocomplete response formats
@@ -142,7 +143,7 @@ export function EditContactModal({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            Edit Contact: {contact?.businessName || "Loading..."}
+            Edit Contact: {prospect?.businessName || "Loading..."}
           </DialogTitle>
         </DialogHeader>
 

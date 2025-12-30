@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Phone, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/AuthContext";
 import { useTwilioDevice } from "@/hooks/useTwilioDevice";
 import { CallStatusDisplay } from "@/components/dialer/CallStatusDisplay";
 import { CallControls } from "@/components/dialer/CallControls";
@@ -33,8 +34,7 @@ export function QuickDialerSidebar({
   const [showDialpad, setShowDialpad] = useState(false);
   const { toast } = useToast();
 
-  const storage = localStorage.getItem("auth.user");
-  const user = storage ? JSON.parse(storage) : {};
+  const { user } = useAuth();
 
   const {
     callStatus,
@@ -47,7 +47,7 @@ export function QuickDialerSidebar({
     hangUp,
     toggleMute,
     sendDigits,
-  } = useTwilioDevice({ identity: user.user?.id });
+  } = useTwilioDevice({ identity: user?.id || "" });
 
   useEffect(() => {
     if (isOpen) {

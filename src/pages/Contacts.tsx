@@ -122,7 +122,7 @@ export default function Contacts() {
             <Button variant="outline" size="icon">
               <Filter className="h-4 w-4" />
             </Button>
-            <Button>Add Contact</Button>
+            {/* <Button>Add Contact</Button> */}
           </div>
         </header>
 
