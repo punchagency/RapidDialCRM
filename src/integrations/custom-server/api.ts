@@ -716,18 +716,22 @@ export class CustomServerApi {
       specialty?: string;
     }>
   ) {
-    return ApiPrep.makeRequest<any>(
-      API_ENDPOINTS.emailTemplates.update,
-      data,
-      { params: { id } }
-    );
+    return ApiPrep.makeRequest<any>(API_ENDPOINTS.emailTemplates.update, data, {
+      params: { id },
+    });
   }
 
   static async deleteEmailTemplate(id: string) {
-    return ApiPrep.makeRequest(
-      API_ENDPOINTS.emailTemplates.delete,
-      undefined,
-      { params: { id } }
-    );
+    return ApiPrep.makeRequest(API_ENDPOINTS.emailTemplates.delete, undefined, {
+      params: { id },
+    });
+  }
+  static async sendEmail(data: {
+    name: string;
+    to: string;
+    subject: string;
+    body: string;
+  }) {
+    return ApiPrep.makeRequest<any>(API_ENDPOINTS.email.create, data);
   }
 }

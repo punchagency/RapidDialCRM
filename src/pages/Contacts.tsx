@@ -15,9 +15,13 @@ import { useToast } from "@/hooks/use-toast";
 import { ProspectCard } from "@/components/crm/ProspectCard";
 import { useProspects, useUpdateProspect } from "@/hooks/useProspects";
 import { useAuth } from "@/lib/AuthContext";
+import { TerritoryFilter } from "@/components/contacts/TerritoryFilters";
 
 export default function Contacts() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTerritory, setSelectedTerritory] = useState<string | null>(
+    null
+  );
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(
     null
   );
@@ -34,7 +38,7 @@ export default function Contacts() {
     data: prospects = [],
     isLoading,
     error,
-  } = useProspects({ userId: user?.id, role: user?.role });
+  } = useProspects({ userId: user?.id, role: user?.role, limit: 0, offset: 0 });
   const updateProspectMutation = useUpdateProspect();
 
   const getStatusColor = (statusValue: string) => {
@@ -43,17 +47,26 @@ export default function Contacts() {
   };
 
   const filteredProspects = useMemo(() => {
-    if (!searchQuery.trim()) return prospects;
+    let result = prospects;
+    if (selectedTerritory) {
+      result = result.filter(
+        (prospect) => prospect.territory === selectedTerritory
+      );
+    }
 
-    const query = searchQuery.toLowerCase();
-    return prospects.filter(
-      (prospect) =>
-        prospect.businessName.toLowerCase().includes(query) ||
-        prospect.phoneNumber.toLowerCase().includes(query) ||
-        prospect.addressCity?.toLowerCase().includes(query) ||
-        prospect.specialty.toLowerCase().includes(query)
-    );
-  }, [searchQuery, prospects]);
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (prospect) =>
+          prospect.businessName.toLowerCase().includes(query) ||
+          prospect.phoneNumber.toLowerCase().includes(query) ||
+          prospect.addressCity?.toLowerCase().includes(query) ||
+          prospect.specialty.toLowerCase().includes(query)
+      );
+    }
+
+    return result;
+  }, [searchQuery, prospects, selectedTerritory]);
 
   const handleSaveContact = async (updatedProspect: Prospect) => {
     try {
@@ -119,9 +132,13 @@ export default function Contacts() {
                 </button>
               )}
             </div>
-            <Button variant="outline" size="icon">
+            <TerritoryFilter
+              value={selectedTerritory}
+              onChange={setSelectedTerritory}
+            />
+            {/* <Button variant="outline" size="icon">
               <Filter className="h-4 w-4" />
-            </Button>
+            </Button> */}
             {/* <Button>Add Contact</Button> */}
           </div>
         </header>
@@ -131,7 +148,8 @@ export default function Contacts() {
             {filteredProspects.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground">
-                  No contacts found matching "{searchQuery}"
+                  No contacts found matching "{searchQuery || selectedTerritory}
+                  ".
                 </p>
               </div>
             ) : (

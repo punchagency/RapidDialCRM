@@ -126,3 +126,20 @@ export type UserRole =
   | "inside_sales_rep"
   | "field_sales_rep"
   | "data_loader";
+
+export interface EmailTemplate {
+  id: string;
+  name: string;
+  subject: string;
+  body: string;
+  specialty?: string;
+}
+
+export interface Territory {
+  id: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}

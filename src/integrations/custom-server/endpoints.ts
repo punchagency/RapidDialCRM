@@ -189,6 +189,11 @@ export const API_ENDPOINTS = {
     update: "PATCH /api/v1/email-templates/:id",
     delete: "DELETE /api/v1/email-templates/:id",
   },
+  email: {
+    findAll: "GET /api/v1/email",
+    findOne: "GET /api/v1/email/:id",
+    create: "POST /api/v1/email",
+  },
 };
 
 export default API_ENDPOINTS;

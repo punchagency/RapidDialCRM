@@ -14,6 +14,7 @@ import { CallNotesTab } from "@/components/dialer/CallNotesTab";
 import { ScriptsTab } from "@/components/dialer/ScriptsTab";
 import { OutcomeSelector } from "@/components/dialer/OutcomeSelector";
 import { BookAppointmentModal } from "@/components/dialer/BookAppointmentModal";
+import { EmailComposer } from "./EmailComposer";
 
 interface DialerCardProps {
   prospect: Prospect;
@@ -209,10 +210,17 @@ export function DialerCard({
                 <ScriptsTab prospect={prospect} />
               </TabsContent>
 
-              <TabsContent value="email" className="p-6 m-0 flex-1">
-                <div className="text-base text-muted-foreground">
-                  <p>Email composer coming soon...</p>
-                </div>
+              <TabsContent
+                value="email"
+                className="p-6 m-0 mb-5 flex-1 overflow-y-auto"
+              >
+                <EmailComposer
+                  recipientEmail={prospect?.officeEmail!}
+                  recipientName={prospect.businessName}
+                  recipientCompany={prospect.businessName}
+                  specialty={prospect.specialty}
+                  onSend={() => setActiveTab("notes")}
+                />
               </TabsContent>
             </Tabs>
           </CardContent>
