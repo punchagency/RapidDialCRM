@@ -24,6 +24,7 @@ import {
   ChevronDown,
   User as UserIcon,
   Bug,
+  Calendar,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import avatar from "@/assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
@@ -141,6 +142,12 @@ export function Sidebar() {
         label: "Scripts",
         href: "/scripts",
         permission: "scripts_view" as const,
+      },
+      {
+        icon: Calendar,
+        label: "Calendar",
+        href: "/calendar",
+        permission: "dashboard_view" as const,
       },
       // {
       //   icon: Bug,

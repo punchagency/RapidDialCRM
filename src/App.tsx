@@ -25,6 +25,8 @@ import ScriptsManagement from "@/pages/ScriptsManagement";
 import PermissionsSummary from "@/pages/PermissionsSummary";
 import UserProfile from "@/pages/UserProfile";
 import Issues from "@/pages/Issues";
+import Calendar from "@/pages/Calendar";
+import GoogleCalendarCallback from "@/pages/GoogleCalendarCallback";
 import { UserRoleProvider } from "@/lib/UserRoleContext";
 import { AuthProvider, useAuth } from "@/lib/AuthContext";
 import { IssueTrackerButton } from "@/components/crm/IssueTracker";
@@ -61,6 +63,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/auth" component={Login} />
+      <Route path="/auth/google/callback" component={GoogleCalendarCallback} />
       <Route path="/register" component={Register} />
       <Route path="/password-reset" component={PasswordReset} />
 
@@ -79,6 +82,7 @@ function Router() {
       <Route path="/team-members" component={withProtection(TeamMembers)} />
       <Route path="/hipaa" component={withProtection(HipaaCompliance)} />
       <Route path="/scripts" component={withProtection(ScriptsManagement)} />
+      <Route path="/calendar" component={withProtection(Calendar)} />
       <Route path="/permissions" component={withProtection(PermissionsSummary)} />
       <Route path="/users/:id" component={withProtection(UserProfile)} />
       <Route path="/issues" component={withProtection(Issues)} />

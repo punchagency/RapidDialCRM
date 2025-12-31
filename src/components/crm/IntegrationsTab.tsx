@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Link as LinkIcon, ExternalLink, Phone, AlertCircle, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { CustomServerApi } from "@/integrations/custom-server/api";
 
 export function IntegrationsTab() {
   const [quoConnected, setQuoConnected] = useState(false);
@@ -19,19 +20,28 @@ export function IntegrationsTab() {
   useEffect(() => {
     const storedKey = localStorage.getItem("quo_api_key");
     const storedGcal = localStorage.getItem("gcal_connected");
+    const storedAccessToken = localStorage.getItem("gcal_access_token");
+
     if (storedKey) {
       setApiKey(storedKey);
       setQuoConnected(true);
     }
-    if (storedGcal === "true") {
+    if (storedGcal === "true" && storedAccessToken) {
       setGcalConnected(true);
     }
+
+    // Check calendar config
+    CustomServerApi.getCalendarConfig().then(({ data, error }) => {
+      if (error) {
+        console.warn("Calendar not configured:", error);
+      }
+    });
   }, []);
 
   const handleConnect = () => {
     if (!apiKey) return;
     setIsLoading(true);
-    
+
     // Simulate API verification delay
     setTimeout(() => {
       localStorage.setItem("quo_api_key", apiKey);
@@ -49,26 +59,65 @@ export function IntegrationsTab() {
     setApiKey("");
     setQuoConnected(false);
     toast({
-        title: "Disconnected",
-        description: "Quo integration has been removed."
+      title: "Disconnected",
+      description: "Quo integration has been removed."
     });
   };
 
-  const handleGcalConnect = () => {
+  const handleGcalConnect = async () => {
     setIsGcalLoading(true);
-    setTimeout(() => {
-      localStorage.setItem("gcal_connected", "true");
-      setGcalConnected(true);
+    try {
+      const { data, error } = await CustomServerApi.getCalendarAuthUrl();
+      if (error) {
+        throw new Error(error);
+      }
+      if (data?.authUrl) {
+        // Open OAuth flow in new window (will redirect to frontend callback)
+        const authWindow = window.open(data.authUrl, "Google Calendar Auth", "width=500,height=600");
+
+        // Listen for success message from callback page
+        const handleMessage = async (event: MessageEvent) => {
+          // Verify message is from same origin
+          if (event.origin !== window.location.origin) return;
+
+          if (event.data.type === "GOOGLE_CALENDAR_AUTH_SUCCESS") {
+            window.removeEventListener("message", handleMessage);
+
+            setGcalConnected(true);
+            setIsGcalLoading(false);
+
+            toast({
+              title: "Google Calendar Connected",
+              description: "Your calendar events will now appear in your schedule."
+            });
+          }
+        };
+
+        window.addEventListener("message", handleMessage);
+
+        // Fallback: check if window was closed manually
+        const checkClosed = setInterval(() => {
+          if (authWindow?.closed) {
+            clearInterval(checkClosed);
+            window.removeEventListener("message", handleMessage);
+            setIsGcalLoading(false);
+          }
+        }, 1000);
+      }
+    } catch (error) {
       setIsGcalLoading(false);
       toast({
-        title: "Google Calendar Synced",
-        description: "Your calendar events will now appear in your schedule."
+        title: "Connection Failed",
+        description: error instanceof Error ? error.message : "Unable to connect to Google Calendar",
+        variant: "destructive",
       });
-    }, 1500);
+    }
   };
 
   const handleGcalDisconnect = () => {
     localStorage.removeItem("gcal_connected");
+    localStorage.removeItem("gcal_access_token");
+    localStorage.removeItem("gcal_refresh_token");
     setGcalConnected(false);
     toast({
       title: "Disconnected",
@@ -94,7 +143,7 @@ export function IntegrationsTab() {
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 bg-primary rounded-lg flex items-center justify-center">
-                     <Phone className="h-6 w-6 text-primary-foreground" />
+                    <Phone className="h-6 w-6 text-primary-foreground" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg">Quo (OpenPhone)</h3>
@@ -113,10 +162,10 @@ export function IntegrationsTab() {
                   <div className="space-y-2">
                     <Label htmlFor="quo-api-key">API Key</Label>
                     <div className="flex gap-2">
-                      <Input 
-                        id="quo-api-key" 
-                        type="password" 
-                        placeholder="sk_live_..." 
+                      <Input
+                        id="quo-api-key"
+                        type="password"
+                        placeholder="sk_live_..."
                         value={apiKey}
                         onChange={(e) => setApiKey(e.target.value)}
                         className="font-mono"
@@ -141,7 +190,7 @@ export function IntegrationsTab() {
                         Operational
                       </span>
                     </div>
-                     <div className="p-3 bg-background rounded-lg border">
+                    <div className="p-3 bg-background rounded-lg border">
                       <span className="text-muted-foreground block text-xs mb-1">Last Sync</span>
                       <span className="font-medium">Just now</span>
                     </div>
@@ -168,14 +217,14 @@ export function IntegrationsTab() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-             <div className={cn(
+            <div className={cn(
               "border rounded-xl p-6 transition-all",
               gcalConnected ? "bg-blue-50/50 border-blue-200 dark:bg-blue-900/10 dark:border-blue-900/30" : "bg-card"
             )}>
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 bg-white border rounded-lg flex items-center justify-center">
-                     <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg" alt="GCal" className="h-6 w-6" />
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg" alt="GCal" className="h-6 w-6" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-lg">Google Calendar</h3>
@@ -187,20 +236,20 @@ export function IntegrationsTab() {
                     <Check className="h-3 w-3" /> Connected
                   </Badge>
                 ) : (
-                   <Button variant="outline" onClick={handleGcalConnect} disabled={isGcalLoading}>
-                     {isGcalLoading ? "Connecting..." : "Connect Google Calendar"}
-                   </Button>
+                  <Button variant="outline" onClick={handleGcalConnect} disabled={isGcalLoading}>
+                    {isGcalLoading ? "Connecting..." : "Connect Google Calendar"}
+                  </Button>
                 )}
               </div>
 
               {gcalConnected && (
                 <div className="space-y-4">
-                   <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="grid grid-cols-2 gap-4 text-sm">
                     <div className="p-3 bg-background rounded-lg border">
                       <span className="text-muted-foreground block text-xs mb-1">Calendar</span>
                       <span className="font-medium">alex@quocrm.com</span>
                     </div>
-                     <div className="p-3 bg-background rounded-lg border">
+                    <div className="p-3 bg-background rounded-lg border">
                       <span className="text-muted-foreground block text-xs mb-1">Permissions</span>
                       <span className="font-medium">Read & Write</span>
                     </div>
@@ -225,7 +274,7 @@ export function IntegrationsTab() {
             <CardDescription>Two-way sync with Salesforce, HubSpot, or Pipedrive.</CardDescription>
           </CardHeader>
           <CardContent>
-             <Button variant="outline" disabled>Connect CRM</Button>
+            <Button variant="outline" disabled>Connect CRM</Button>
           </CardContent>
         </Card>
       </div>

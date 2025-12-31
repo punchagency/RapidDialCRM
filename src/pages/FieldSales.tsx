@@ -15,8 +15,11 @@ import { CitySelector } from "@/components/crm/CitySelector";
 import { getCityData } from "@/lib/cityData";
 import { useTodayAppointments } from "@/hooks/useAppointments";
 import { geocodeAddress } from "@/lib/geocoding";
+import { BookAppointmentWithCalendarModal } from "@/components/crm/BookAppointmentWithCalendarModal";
+import { CustomServerApi } from "@/integrations/custom-server/api";
+import type { Prospect, Appointment as AppointmentType } from "@/lib/types";
 
-interface Appointment {
+interface AppointmentDisplay {
   id: string;
   scheduledDate: string;
   scheduledTime: string;
@@ -72,6 +75,8 @@ export default function FieldSales() {
   const [visitPhotos, setVisitPhotos] = useState<Map<string, string[]>>(new Map());
   const [showPhotoPreview, setShowPhotoPreview] = useState<{ appointmentId: string; photos: string[] } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null);
 
   // Load Google Maps API
   const { isLoaded, loadError } = useJsApiLoader({
@@ -105,7 +110,7 @@ export default function FieldSales() {
   console.log('appointmentsData', appointmentsData, 'territory', territory);
 
   // Transform appointments data to match expected format
-  const allAppointments = useMemo(() => {
+  const allAppointments = useMemo((): AppointmentDisplay[] => {
     return (appointmentsData || []).map((apt: any) => ({
       id: apt.id,
       scheduledDate: apt.scheduledDate || apt.scheduled_date,
@@ -122,7 +127,7 @@ export default function FieldSales() {
       territory: apt.territory || territory,
       location_lat: apt.prospect?.addressLat ? parseFloat(apt.prospect.addressLat) : undefined,
       location_lng: apt.prospect?.addressLng ? parseFloat(apt.prospect.addressLng) : undefined,
-    } as Appointment));
+    } as AppointmentDisplay));
   }, [appointmentsData, territory]);
 
   // Filter appointments by selected date (today or tomorrow)
@@ -170,7 +175,7 @@ export default function FieldSales() {
   };
 
   // Convert appointment to stop format for display
-  const appointmentsToStops = useCallback((appts: Appointment[], cityData: { center: [number, number] }): Stop[] => {
+  const appointmentsToStops = useCallback((appts: AppointmentDisplay[], cityData: { center: [number, number] }): Stop[] => {
     return appts.map((apt, idx) => {
       // Use existing coordinates if available, otherwise use city center with offset
       const lat = apt.location_lat || (cityData.center[0] + (idx * 0.01));
@@ -261,21 +266,41 @@ export default function FieldSales() {
     });
   };
 
-  const handleAddToCalendar = () => {
+  const handleAddToCalendar = async () => {
     if (!activeStop) return;
-    if (!gcalConnected) {
+
+    // Find the appointment that corresponds to this stop
+    const appointment = appointments.find(apt => apt.id === activeStop.id);
+    if (!appointment || !appointment.prospectId) {
       toast({
-        title: "Calendar Not Connected",
-        description: "Please connect Google Calendar in Settings > Integrations first.",
+        title: "Error",
+        description: "Unable to find prospect for this appointment.",
         variant: "destructive"
       });
       return;
     }
 
-    toast({
-      title: "Added to Google Calendar",
-      description: `Event created: ${activeStop.type} at ${activeStop.company} (${activeStop.time})`
-    });
+    // Fetch the prospect
+    try {
+      const { data: prospect, error } = await CustomServerApi.getProspect(appointment.prospectId);
+      if (error || !prospect) {
+        toast({
+          title: "Error",
+          description: "Unable to load prospect details.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setSelectedProspect(prospect);
+      setShowAppointmentModal(true);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load prospect details.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleStartRoute = () => {
@@ -848,6 +873,23 @@ export default function FieldSales() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Book Appointment Modal */}
+      <BookAppointmentWithCalendarModal
+        isOpen={showAppointmentModal}
+        onClose={() => {
+          setShowAppointmentModal(false);
+          setSelectedProspect(null);
+        }}
+        onSave={(appointment: AppointmentType) => {
+          toast({
+            title: "Appointment Booked",
+            description: "Appointment has been created and added to your calendar.",
+          });
+          // Optionally refresh appointments here
+        }}
+        initialProspect={selectedProspect}
+      />
     </div>
   );
 }

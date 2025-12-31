@@ -43,6 +43,8 @@ export const API_ENDPOINTS = {
     getByFieldRepAndDate: "GET /api/v1/appointments/:fieldRepId/:date",
     getToday: "GET /api/v1/appointments/today",
     update: "PATCH /api/v1/appointments/:id",
+    delete: "DELETE /api/v1/appointments/:id",
+    getByCalendarEvent: "GET /api/v1/appointments/by-calendar-event/:eventId",
   },
 
   // Call outcomes endpoints
@@ -193,6 +195,17 @@ export const API_ENDPOINTS = {
     findAll: "GET /api/v1/email",
     findOne: "GET /api/v1/email/:id",
     create: "POST /api/v1/email",
+  },
+  // Google Calendar endpoints
+  calendar: {
+    getConfig: "GET /api/v1/calendar/config",
+    getAuthUrl: "GET /api/v1/calendar/auth-url",
+    getTokens: "POST /api/v1/calendar/tokens",
+    listEvents: "GET /api/v1/calendar/events",
+    createEvent: "POST /api/v1/calendar/events",
+    updateEvent: "PATCH /api/v1/calendar/events/:eventId",
+    deleteEvent: "DELETE /api/v1/calendar/events/:eventId",
+    sync: "POST /api/v1/calendar/sync",
   },
 };
 

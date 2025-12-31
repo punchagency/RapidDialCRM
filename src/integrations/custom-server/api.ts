@@ -59,7 +59,7 @@ export class CustomServerApi {
       API_ENDPOINTS.auth.googleLogin,
       { idToken }
     );
-  }
+ }
 
   // ==================== PROSPECTS ====================
   static async getProspects(params?: {
@@ -179,6 +179,20 @@ export class CustomServerApi {
       API_ENDPOINTS.appointments.update,
       data,
       { params: { id } }
+    );
+  }
+
+  static async deleteAppointment(id: string) {
+    return ApiPrep.makeRequest(API_ENDPOINTS.appointments.delete, undefined, {
+      params: { id },
+    });
+  }
+
+  static async getAppointmentByCalendarEvent(eventId: string) {
+    return ApiPrep.makeRequest<Appointment>(
+      API_ENDPOINTS.appointments.getByCalendarEvent,
+      undefined,
+      { params: { eventId } }
     );
   }
 
@@ -733,5 +747,78 @@ export class CustomServerApi {
     body: string;
   }) {
     return ApiPrep.makeRequest<any>(API_ENDPOINTS.email.create, data);
+  }
+
+  // ==================== GOOGLE CALENDAR ====================
+  static async getCalendarConfig() {
+    return ApiPrep.makeRequest<{ configured: boolean }>(API_ENDPOINTS.calendar.getConfig);
+  }
+
+  static async getCalendarAuthUrl(userId?: string) {
+    const queryParams: Record<string, string> = {};
+    if (userId) queryParams.userId = userId;
+    return ApiPrep.makeRequest<{ authUrl: string }>(API_ENDPOINTS.calendar.getAuthUrl, undefined, { queryParams });
+  }
+
+  static async getCalendarTokens(code: string) {
+    return ApiPrep.makeRequest<{ accessToken: string; refreshToken: string | null }>(
+      API_ENDPOINTS.calendar.getTokens,
+      { code }
+    );
+  }
+
+  static async listCalendarEvents(params?: {
+    accessToken: string;
+    refreshToken?: string;
+    timeMin?: string;
+    timeMax?: string;
+    maxResults?: number;
+    calendarId?: string;
+  }) {
+    if (!params?.accessToken) {
+      return { data: null, error: "Access token is required", loading: false };
+    }
+    const queryParams: Record<string, string> = {
+      accessToken: params.accessToken,
+    };
+    if (params.refreshToken) queryParams.refreshToken = params.refreshToken;
+    if (params.timeMin) queryParams.timeMin = params.timeMin;
+    if (params.timeMax) queryParams.timeMax = params.timeMax;
+    if (params.maxResults) queryParams.maxResults = params.maxResults.toString();
+    if (params.calendarId) queryParams.calendarId = params.calendarId;
+    return ApiPrep.makeRequest<any[]>(API_ENDPOINTS.calendar.listEvents, undefined, { queryParams });
+  }
+
+  static async createCalendarEvent(accessToken: string, refreshToken: string | null, event: any) {
+    return ApiPrep.makeRequest<any>(API_ENDPOINTS.calendar.createEvent, {
+      accessToken,
+      refreshToken,
+      event,
+    });
+  }
+
+  static async updateCalendarEvent(eventId: string, accessToken: string, refreshToken: string | null, event: any) {
+    return ApiPrep.makeRequest<any>(API_ENDPOINTS.calendar.updateEvent, {
+      accessToken,
+      refreshToken,
+      event,
+    }, { params: { eventId } });
+  }
+
+  static async deleteCalendarEvent(eventId: string, accessToken: string, refreshToken?: string, calendarId?: string) {
+    const queryParams: Record<string, string> = { accessToken };
+    if (refreshToken) queryParams.refreshToken = refreshToken;
+    if (calendarId) queryParams.calendarId = calendarId;
+    return ApiPrep.makeRequest(API_ENDPOINTS.calendar.deleteEvent, undefined, {
+      params: { eventId },
+      queryParams,
+    });
+  }
+
+  static async syncCalendar(accessToken: string, refreshToken?: string | null) {
+    return ApiPrep.makeRequest<{ created: number; updated: number; errors: number }>(
+      API_ENDPOINTS.calendar.sync,
+      { accessToken, refreshToken }
+    );
   }
 }
