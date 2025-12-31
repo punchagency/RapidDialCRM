@@ -208,8 +208,7 @@ export default function CalendarPage() {
   try {
    // Find appointment by googleCalendarEventId
    const { data: appointment, error } = await CustomServerApi.getAppointmentByCalendarEvent(event.id);
-   console.log("appointment",appointment);
-   console.log("error",error);
+
 
    if (error || !appointment) {
     toast({

@@ -59,7 +59,7 @@ export class CustomServerApi {
       API_ENDPOINTS.auth.googleLogin,
       { idToken }
     );
- }
+  }
 
   // ==================== PROSPECTS ====================
   static async getProspects(params?: {
@@ -748,23 +748,32 @@ export class CustomServerApi {
   }) {
     return ApiPrep.makeRequest<any>(API_ENDPOINTS.email.create, data);
   }
+  static async getAllEmails() {
+    return ApiPrep.makeRequest<any>(API_ENDPOINTS.email.findAll);
+  }
 
   // ==================== GOOGLE CALENDAR ====================
   static async getCalendarConfig() {
-    return ApiPrep.makeRequest<{ configured: boolean }>(API_ENDPOINTS.calendar.getConfig);
+    return ApiPrep.makeRequest<{ configured: boolean }>(
+      API_ENDPOINTS.calendar.getConfig
+    );
   }
 
   static async getCalendarAuthUrl(userId?: string) {
     const queryParams: Record<string, string> = {};
     if (userId) queryParams.userId = userId;
-    return ApiPrep.makeRequest<{ authUrl: string }>(API_ENDPOINTS.calendar.getAuthUrl, undefined, { queryParams });
+    return ApiPrep.makeRequest<{ authUrl: string }>(
+      API_ENDPOINTS.calendar.getAuthUrl,
+      undefined,
+      { queryParams }
+    );
   }
 
   static async getCalendarTokens(code: string) {
-    return ApiPrep.makeRequest<{ accessToken: string; refreshToken: string | null }>(
-      API_ENDPOINTS.calendar.getTokens,
-      { code }
-    );
+    return ApiPrep.makeRequest<{
+      accessToken: string;
+      refreshToken: string | null;
+    }>(API_ENDPOINTS.calendar.getTokens, { code });
   }
 
   static async listCalendarEvents(params?: {
@@ -784,12 +793,21 @@ export class CustomServerApi {
     if (params.refreshToken) queryParams.refreshToken = params.refreshToken;
     if (params.timeMin) queryParams.timeMin = params.timeMin;
     if (params.timeMax) queryParams.timeMax = params.timeMax;
-    if (params.maxResults) queryParams.maxResults = params.maxResults.toString();
+    if (params.maxResults)
+      queryParams.maxResults = params.maxResults.toString();
     if (params.calendarId) queryParams.calendarId = params.calendarId;
-    return ApiPrep.makeRequest<any[]>(API_ENDPOINTS.calendar.listEvents, undefined, { queryParams });
+    return ApiPrep.makeRequest<any[]>(
+      API_ENDPOINTS.calendar.listEvents,
+      undefined,
+      { queryParams }
+    );
   }
 
-  static async createCalendarEvent(accessToken: string, refreshToken: string | null, event: any) {
+  static async createCalendarEvent(
+    accessToken: string,
+    refreshToken: string | null,
+    event: any
+  ) {
     return ApiPrep.makeRequest<any>(API_ENDPOINTS.calendar.createEvent, {
       accessToken,
       refreshToken,
@@ -797,15 +815,29 @@ export class CustomServerApi {
     });
   }
 
-  static async updateCalendarEvent(eventId: string, accessToken: string, refreshToken: string | null, event: any) {
-    return ApiPrep.makeRequest<any>(API_ENDPOINTS.calendar.updateEvent, {
-      accessToken,
-      refreshToken,
-      event,
-    }, { params: { eventId } });
+  static async updateCalendarEvent(
+    eventId: string,
+    accessToken: string,
+    refreshToken: string | null,
+    event: any
+  ) {
+    return ApiPrep.makeRequest<any>(
+      API_ENDPOINTS.calendar.updateEvent,
+      {
+        accessToken,
+        refreshToken,
+        event,
+      },
+      { params: { eventId } }
+    );
   }
 
-  static async deleteCalendarEvent(eventId: string, accessToken: string, refreshToken?: string, calendarId?: string) {
+  static async deleteCalendarEvent(
+    eventId: string,
+    accessToken: string,
+    refreshToken?: string,
+    calendarId?: string
+  ) {
     const queryParams: Record<string, string> = { accessToken };
     if (refreshToken) queryParams.refreshToken = refreshToken;
     if (calendarId) queryParams.calendarId = calendarId;
@@ -816,9 +848,10 @@ export class CustomServerApi {
   }
 
   static async syncCalendar(accessToken: string, refreshToken?: string | null) {
-    return ApiPrep.makeRequest<{ created: number; updated: number; errors: number }>(
-      API_ENDPOINTS.calendar.sync,
-      { accessToken, refreshToken }
-    );
+    return ApiPrep.makeRequest<{
+      created: number;
+      updated: number;
+      errors: number;
+    }>(API_ENDPOINTS.calendar.sync, { accessToken, refreshToken });
   }
 }
