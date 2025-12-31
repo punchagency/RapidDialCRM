@@ -1,7 +1,3 @@
-// Frontend type definitions
-// These are simplified types for the client-side only
-// The server schema is the source of truth
-
 export type Prospect = {
   id: string;
   assignedInsideSalesRepId: string | null;
