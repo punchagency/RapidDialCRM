@@ -47,7 +47,7 @@ export function TerritoryFilter({ value, onChange }: TerritoryFilterProps) {
   }, []);
 
   const selectedTerritory = territories.find(
-    (territory) => territory.id === value
+    (territory) => territory.name === value
   );
 
   return (
@@ -110,7 +110,7 @@ export function TerritoryFilter({ value, onChange }: TerritoryFilterProps) {
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4",
-                          value === territory.id ? "opacity-100" : "opacity-0"
+                          value === territory.name ? "opacity-100" : "opacity-0"
                         )}
                       />
                       <div className="flex flex-col">
