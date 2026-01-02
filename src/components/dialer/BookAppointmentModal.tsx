@@ -92,6 +92,8 @@ export function BookAppointmentModal({
   const [fieldReps, setFieldReps] = useState<FieldRep[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+  const [loadingAvailableTimes, setLoadingAvailableTimes] = useState(false);
 
   // Fetch field reps when modal opens
 
@@ -118,6 +120,116 @@ export function BookAppointmentModal({
       fetchFieldReps();
     }
   }, [isOpen]);
+
+  // Calculate available times based on booked appointments and calendar events
+  useEffect(() => {
+    const calculateAvailableTimes = async () => {
+      if (!date || !selectedFieldRepId) {
+        setAvailableTimes([]);
+        return;
+      }
+
+      setLoadingAvailableTimes(true);
+      try {
+        const dateString = format(date, "yyyy-MM-dd");
+        const bookedRanges: Array<{ start: Date; end: Date }> = [];
+
+        // 1. Fetch appointments from database for this field rep and date
+        try {
+          const { data: appointments } = await CustomServerApi.getAppointmentsByFieldRepAndDate(
+            selectedFieldRepId,
+            dateString
+          );
+
+          if (appointments && Array.isArray(appointments)) {
+            appointments.forEach((appointment) => {
+              const appointmentStart = new Date(`${appointment.scheduledDate}T${appointment.scheduledTime}`);
+              const appointmentEnd = new Date(
+                appointmentStart.getTime() + (appointment.durationMinutes || 30) * 60000
+              );
+              bookedRanges.push({ start: appointmentStart, end: appointmentEnd });
+            });
+          }
+        } catch (error) {
+          console.error("Failed to fetch appointments:", error);
+        }
+
+        // 2. Fetch Google Calendar events for this date (if connected)
+        const accessToken = localStorage.getItem("gcal_access_token");
+        const refreshToken = localStorage.getItem("gcal_refresh_token");
+
+        if (accessToken) {
+          try {
+            const startOfDay = new Date(date);
+            startOfDay.setHours(0, 0, 0, 0);
+            const endOfDay = new Date(date);
+            endOfDay.setHours(23, 59, 59, 999);
+
+            const { data: events } = await CustomServerApi.listCalendarEvents({
+              accessToken,
+              refreshToken: refreshToken || undefined,
+              timeMin: startOfDay.toISOString(),
+              timeMax: endOfDay.toISOString(),
+            });
+
+            if (events && Array.isArray(events)) {
+              events.forEach((event: any) => {
+                const start = event.start?.dateTime || event.start?.date;
+                const end = event.end?.dateTime || event.end?.date;
+
+                if (start && end) {
+                  const eventStart = new Date(start);
+                  const eventEnd = new Date(end);
+                  bookedRanges.push({ start: eventStart, end: eventEnd });
+                }
+              });
+            }
+          } catch (error) {
+            console.error("Failed to fetch calendar events:", error);
+          }
+        }
+
+        // 3. Generate available time slots (15-minute intervals) that don't conflict
+        const available: string[] = [];
+
+        for (let hour = 0; hour < 24; hour++) {
+          for (let minute of [0, 15, 30, 45]) {
+            const timeString = `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+            const slotStart = new Date(date);
+            slotStart.setHours(hour, minute, 0, 0);
+            const slotEnd = new Date(slotStart.getTime() + duration * 60000);
+
+            // Check if this time slot overlaps with any booked range
+            const hasConflict = bookedRanges.some((range) => {
+              // Two time ranges overlap if: slotStart < range.end && slotEnd > range.start
+              return slotStart < range.end && slotEnd > range.start;
+            });
+
+            if (!hasConflict) {
+              available.push(timeString);
+            }
+          }
+        }
+
+        setAvailableTimes(available);
+
+        // If current selected time is not available, reset to first available time
+        if (available.length > 0 && !available.includes(time)) {
+          setTime(available[0]);
+        } else if (available.length === 0) {
+          // No available times - keep current selection but user will see empty list
+          setTime("09:00");
+        }
+      } catch (error) {
+        console.error("Error calculating available times:", error);
+        setAvailableTimes([]);
+      } finally {
+        setLoadingAvailableTimes(false);
+      }
+    };
+
+    calculateAvailableTimes();
+  }, [date, selectedFieldRepId, duration]);
 
   const handleSave = () => {
     if (!date || !selectedFieldRepId) return;
@@ -317,17 +429,27 @@ export function BookAppointmentModal({
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="time">Time</Label>
-              <Select value={time} onValueChange={setTime}>
+              <Select value={time} onValueChange={setTime} disabled={loadingAvailableTimes || !date || !selectedFieldRepId}>
                 <SelectTrigger id="time">
                   <Clock className="mr-2 h-4 w-4" />
-                  <SelectValue />
+                  <SelectValue placeholder={loadingAvailableTimes ? "Loading available times..." : "Select time"} />
                 </SelectTrigger>
                 <SelectContent className="max-h-[200px]">
-                  {TIME_OPTIONS.map((timeOption) => (
-                    <SelectItem key={timeOption} value={timeOption}>
-                      {timeOption}
-                    </SelectItem>
-                  ))}
+                  {loadingAvailableTimes ? (
+                    <div className="p-2 text-sm text-muted-foreground text-center">
+                      Loading available times...
+                    </div>
+                  ) : availableTimes.length === 0 ? (
+                    <div className="p-2 text-sm text-muted-foreground text-center">
+                      {date && selectedFieldRepId ? "No available times for this date" : "Select date and field rep first"}
+                    </div>
+                  ) : (
+                    availableTimes.map((timeOption) => (
+                      <SelectItem key={timeOption} value={timeOption}>
+                        {timeOption}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
