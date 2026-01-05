@@ -33,6 +33,8 @@ export function EmailComposer({
 }: EmailComposerProps) {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
+  const [recipients, setRecipients] = useState<string[]>([recipientEmail]);
+  const [inputValue, setInputValue] = useState("");
   const [templateId, setTemplateId] = useState("none");
   const [isSending, setIsSending] = useState(false);
   const { toast } = useToast();
@@ -56,8 +58,6 @@ export function EmailComposer({
         setTemplateId(defaultTemplate.id);
         applyTemplate(defaultTemplate);
 
-        // Only toast if we haven't already modified the fields manually?
-        // For now adhering to original behavior but adding a check to avoid toast spam if it re-runs
         if (templateId === "none") {
           toast({
             title: "Template Auto-Applied",
@@ -67,7 +67,7 @@ export function EmailComposer({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [specialty, templates]); // Added templates to dependency
+  }, [specialty, templates]);
 
   const applyTemplate = (template: EmailTemplate) => {
     let processedBody = template.body
@@ -97,6 +97,45 @@ export function EmailComposer({
     }
   };
 
+  const isValidEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (["Enter", "Tab"].includes(e.key)) {
+      e.preventDefault();
+      const trimmedInput = inputValue.trim();
+      if (trimmedInput && isValidEmail(trimmedInput)) {
+        if (!recipients.includes(trimmedInput)) {
+          setRecipients([...recipients, trimmedInput]);
+        }
+        setInputValue("");
+      } else if (trimmedInput) {
+        toast({
+          variant: "destructive",
+          title: "Invalid Email",
+          description: "Please enter a valid email address.",
+        });
+      }
+    } else if (e.key === "Backspace" && !inputValue && recipients.length > 0) {
+      setRecipients(recipients.slice(0, -1));
+    }
+  };
+
+  const handleBlur = () => {
+    const trimmedInput = inputValue.trim();
+    if (trimmedInput && isValidEmail(trimmedInput)) {
+      if (!recipients.includes(trimmedInput)) {
+        setRecipients([...recipients, trimmedInput]);
+      }
+      setInputValue("");
+    }
+  };
+
+  const removeRecipient = (emailToRemove: string) => {
+    setRecipients(recipients.filter((email) => email !== emailToRemove));
+  };
+
   const handleSend = async () => {
     if (!subject || !body) {
       toast({
@@ -107,11 +146,24 @@ export function EmailComposer({
       return;
     }
 
+    if (recipients.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "No Recipients",
+        description: "Please add at least one recipient.",
+      });
+      return;
+    }
+
     try {
       setIsSending(true);
+      // NOTE: Backend only supports sending to one recipient for now.
+      // We will only use the first one in the list.
+      const primaryRecipient = recipients[0];
+
       const { error } = await CustomServerApi.sendEmail({
         name: user?.name || "Sales Rep",
-        to: recipientEmail,
+        to: primaryRecipient,
         subject,
         body,
       });
@@ -120,7 +172,7 @@ export function EmailComposer({
 
       toast({
         title: "Email Sent",
-        description: `Sent "${subject}" to ${recipientEmail}`,
+        description: `Sent "${subject}" to ${primaryRecipient}`,
       });
 
       setSubject("");
@@ -175,6 +227,53 @@ export function EmailComposer({
       </div>
 
       <div className="space-y-2">
+        <div className="flex flex-wrap items-center gap-1.5 p-2 bg-background border rounded-md focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 ring-offset-background">
+          {recipients.map((email) => (
+            <div
+              key={email}
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            >
+              {email}
+              <button
+                type="button"
+                onClick={() => removeRecipient(email)}
+                className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                <div className="h-3 w-3 flex items-center justify-center">
+                  <span className="sr-only">Remove</span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-3 w-3"
+                  >
+                    <path d="M18 6 6 18" />
+                    <path d="m6 6 12 12" />
+                  </svg>
+                </div>
+              </button>
+            </div>
+          ))}
+          <input
+            type="text"
+            className="flex-1 bg-transparent outline-none text-sm min-w-[120px] placeholder:text-muted-foreground"
+            placeholder={
+              recipients.length === 0 ? "Enter email addresses..." : ""
+            }
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
+            disabled={isSending}
+          />
+        </div>
+
         <Input
           placeholder="Subject"
           value={subject}
