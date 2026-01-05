@@ -143,3 +143,14 @@ export interface Territory {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface EmailLog {
+  id: string;
+  to: string;
+  from?: string;
+  subject: string;
+  title: string;
+  body: string;
+  createdAt: Date;
+  updatedAt?: Date;
+}

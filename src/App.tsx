@@ -10,6 +10,7 @@ import Dialer from "@/pages/Dialer";
 import Settings from "@/pages/Settings";
 import Contacts from "@/pages/Contacts";
 import CallReview from "@/pages/CallReview";
+import EmailReview from "@/pages/EmailReview";
 import FieldSales from "@/pages/FieldSales";
 import FieldReps from "@/pages/FieldReps";
 import OrgChart from "@/pages/OrgChart";
@@ -31,7 +32,11 @@ import { UserRoleProvider } from "@/lib/UserRoleContext";
 import { AuthProvider, useAuth } from "@/lib/AuthContext";
 import { IssueTrackerButton } from "@/components/crm/IssueTracker";
 
-function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
+function ProtectedRoute({
+  component: Component,
+}: {
+  component: React.ComponentType;
+}) {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
 
@@ -57,7 +62,8 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
   return <Component />;
 }
 
-const withProtection = (Component: React.ComponentType) => () => <ProtectedRoute component={Component} />;
+const withProtection = (Component: React.ComponentType) => () =>
+  <ProtectedRoute component={Component} />;
 
 function Router() {
   return (
@@ -73,17 +79,24 @@ function Router() {
       <Route path="/settings" component={withProtection(Settings)} />
       <Route path="/contacts" component={withProtection(Contacts)} />
       <Route path="/call-review" component={withProtection(CallReview)} />
+      <Route path="/email-review" component={withProtection(EmailReview)} />
       <Route path="/map" component={withProtection(FieldSales)} />
       <Route path="/field-reps" component={withProtection(FieldReps)} />
       <Route path="/org-chart" component={withProtection(OrgChart)} />
-      <Route path="/lead-loader" component={withProtection(LeadLoaderWithGoogleMap)} />
+      <Route
+        path="/lead-loader"
+        component={withProtection(LeadLoaderWithGoogleMap)}
+      />
       <Route path="/data-import" component={withProtection(DataImporter)} />
       <Route path="/analytics" component={withProtection(Dashboard)} />
       <Route path="/team-members" component={withProtection(TeamMembers)} />
       <Route path="/hipaa" component={withProtection(HipaaCompliance)} />
       <Route path="/scripts" component={withProtection(ScriptsManagement)} />
       <Route path="/calendar" component={withProtection(Calendar)} />
-      <Route path="/permissions" component={withProtection(PermissionsSummary)} />
+      <Route
+        path="/permissions"
+        component={withProtection(PermissionsSummary)}
+      />
       <Route path="/users/:id" component={withProtection(UserProfile)} />
       <Route path="/issues" component={withProtection(Issues)} />
 

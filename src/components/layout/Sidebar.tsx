@@ -25,6 +25,7 @@ import {
   User as UserIcon,
   Bug,
   Calendar,
+  Mail,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import avatar from "@/assets/generated_images/Professional_user_avatar_1_a4d3e764.png";
@@ -44,7 +45,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useUsers } from '@/hooks/useUsers';
+import { useUsers } from "@/hooks/useUsers";
 
 export function Sidebar() {
   const [location, setLocation] = useLocation();
@@ -161,6 +162,7 @@ export function Sidebar() {
 
   const managerItems = [
     { icon: Headphones, label: "Call Review", href: "/call-review" },
+    { icon: Mail, label: "Email Review", href: "/email-review" },
     { icon: UserCog, label: "Field Reps", href: "/field-reps?tab=field" },
     { icon: Headset, label: "Inside Reps", href: "/field-reps?tab=inside" },
     // { icon: Network, label: "Org Chart", href: "/org-chart" },
@@ -199,13 +201,20 @@ export function Sidebar() {
       .slice(0, 2);
   };
 
-  const activeUserName = isImpersonating && impersonatedUser
-    ? impersonatedUser.name
-    : user?.name || (userRole === "manager" ? "Sarah Miller" : userRole === "admin" ? "Admin User" : "Alex Johnson");
+  const activeUserName =
+    isImpersonating && impersonatedUser
+      ? impersonatedUser.name
+      : user?.name ||
+        (userRole === "manager"
+          ? "Sarah Miller"
+          : userRole === "admin"
+          ? "Admin User"
+          : "Alex Johnson");
 
-  const activeUserRoleLabel = isImpersonating && impersonatedUser
-    ? mapDbRoleToLabel(impersonatedUser.role)
-    : userRole.replace(/_/g, " ");
+  const activeUserRoleLabel =
+    isImpersonating && impersonatedUser
+      ? mapDbRoleToLabel(impersonatedUser.role)
+      : userRole.replace(/_/g, " ");
 
   return (
     <div className="h-screen w-64 bg-card border-r border-border flex flex-col shrink-0 z-20 relative">
@@ -331,7 +340,9 @@ export function Sidebar() {
                 {activeUserName}
               </p>
               <p className="text-xs text-muted-foreground truncate capitalize">
-                {isImpersonating ? `Viewing as ${activeUserRoleLabel}` : `${activeUserRoleLabel} Role`}
+                {isImpersonating
+                  ? `Viewing as ${activeUserRoleLabel}`
+                  : `${activeUserRoleLabel} Role`}
               </p>
             </div>
             <Settings

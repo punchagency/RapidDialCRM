@@ -9,6 +9,7 @@ import type {
   SpecialtyColor,
   CallOutcome,
   CallHistory,
+  EmailLog,
 } from "@/lib/types";
 
 export class CustomServerApi {
@@ -748,8 +749,26 @@ export class CustomServerApi {
   }) {
     return ApiPrep.makeRequest<any>(API_ENDPOINTS.email.create, data);
   }
-  static async getAllEmails() {
-    return ApiPrep.makeRequest<any>(API_ENDPOINTS.email.findAll);
+  static async getAllEmails(params?: {
+    limit?: number;
+    offset?: number;
+    search?: string;
+  }) {
+    const queryParams: Record<string, string> = {};
+    if (params?.limit) queryParams.limit = params.limit.toString();
+    if (params?.offset) queryParams.offset = params.offset.toString();
+    if (params?.search) queryParams.search = params.search;
+
+    return ApiPrep.makeRequest<{ logs: EmailLog[]; count: number }>(
+      API_ENDPOINTS.email.findAll,
+      undefined,
+      { queryParams }
+    );
+  }
+  static async getEmailById(id: string) {
+    return ApiPrep.makeRequest<any>(API_ENDPOINTS.email.findOne, undefined, {
+      params: { id },
+    });
   }
 
   // ==================== GOOGLE CALENDAR ====================
