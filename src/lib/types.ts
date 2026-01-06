@@ -49,6 +49,7 @@ export type Appointment = {
   scheduledDate: string;
   scheduledTime: string;
   durationMinutes: number | null;
+  bufferTimeMinutes: number | null;
   googleCalendarEventId: string | null;
   status: string | null;
   notes: string | null;

@@ -490,7 +490,7 @@ export default function CalendarPage() {
                                     <div className="flex items-start justify-between gap-2">
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
-                                          {event.isFromDatabase ? <h4 className="font-semibold text-sm truncate">{event.summary}</h4>
+                                          {event.isFromDatabase ? <h4 className="font-semibold text-sm truncate text-wrap break-words">{event.summary}</h4>
                                             : (
                                               <Badge variant="secondary" className="text-xs">
                                                 Busy

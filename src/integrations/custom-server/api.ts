@@ -146,11 +146,21 @@ export class CustomServerApi {
     });
   }
 
-  // ==================== APPOINTMENTS ====================
-  static async createAppointment(data: Partial<Appointment>) {
-    return ApiPrep.makeRequest<Appointment>(
-      API_ENDPOINTS.appointments.create,
-      data
+    // ==================== APPOINTMENTS ====================
+    static async createAppointment(data: Partial<Appointment>) {
+      return ApiPrep.makeRequest<Appointment>(
+        API_ENDPOINTS.appointments.create,
+        data
+      );
+    }
+
+  static async getAllAppointments(params?: { territory?: string }) {
+    const queryParams: Record<string, string> = {};
+    if (params?.territory) queryParams.territory = params.territory;
+    return ApiPrep.makeRequest<Appointment[]>(
+      API_ENDPOINTS.appointments.getAll,
+      undefined,
+      { queryParams }
     );
   }
 

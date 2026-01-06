@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Search, Upload, Plus, Database, Globe, CheckCircle, MapPin, Building, Briefcase, FileUp, Loader2, Info, Trash2, UserCog, Stethoscope, X, User, Map as MapIcon, Check } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAllTerritories } from "@/hooks/useUsers";
 import { cn } from "@/lib/utils";
 import { SubContact } from "@/lib/mockData";
 import { CustomServerApi } from "@/integrations/custom-server/api";
@@ -146,7 +147,10 @@ export default function LeadLoader() {
   const [pool, setPool] = useState<PoolItem[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [isLoadingPool, setIsLoadingPool] = useState(false);
-  const [territoryOptions, setTerritoryOptions] = useState<string[]>(DEFAULT_TERRITORY_OPTIONS);
+
+  // Fetch territories using hook
+  const { data: territories = [], isLoading: isLoadingTerritories } = useAllTerritories();
+  const territoryOptions = territories.length > 0 ? [...territories, "Unassigned"] : DEFAULT_TERRITORY_OPTIONS;
 
   const [territory, setTerritory] = useState("");
   const [isImportingAll, setIsImportingAll] = useState(false);
@@ -206,27 +210,9 @@ export default function LeadLoader() {
     }
   };
 
-  // Fetch territories from backend
-  const fetchTerritories = async () => {
-    try {
-      // const { data, error } = await CustomServerApi.getAllTerritories();
-      // if (error) {
-      //   console.warn("Failed to fetch territories:", error);
-      //   return; // Use default options
-      // }
-      // if (data && Array.isArray(data) && data.length > 0) {
-        setTerritoryOptions(["Miami", "Washington, DC", "Los Angeles", "New York", "Chicago", "Dallas", "Unassigned"]);
-      // }
-    } catch (error) {
-      console.warn("Error fetching territories:", error);
-      // Use default options on error
-    }
-  };
-
-  // Load pool and territories on mount
+  // Load pool on mount
   useEffect(() => {
     fetchPool();
-    fetchTerritories();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -613,7 +599,7 @@ export default function LeadLoader() {
                             <SelectValue placeholder="Select a territory or leave empty" />
                           </SelectTrigger>
                           <SelectContent>
-                            {territoryOptions.map((t,i) => (
+                            {territoryOptions.map((t, i) => (
                               <SelectItem key={i} value={t}>{t}</SelectItem>
                             ))}
                           </SelectContent>
@@ -877,7 +863,7 @@ export default function LeadLoader() {
                                 <SelectValue placeholder="Select a territory or leave empty" />
                               </SelectTrigger>
                               <SelectContent>
-                                {territoryOptions.map((t,i) => (
+                                {territoryOptions.map((t, i) => (
                                   <SelectItem key={i} value={t}>{t}</SelectItem>
                                 ))}
                               </SelectContent>

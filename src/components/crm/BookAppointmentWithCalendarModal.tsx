@@ -49,6 +49,7 @@ import {
   type PlaceResult,
 } from "@/components/ui/mapsautocomplete";
 import { useToast } from "@/hooks/use-toast";
+import { BufferTimeInput } from '@/components/crm/BufferTimeInput';
 
 interface BookAppointmentWithCalendarModalProps {
   isOpen: boolean;
@@ -85,6 +86,7 @@ export function BookAppointmentWithCalendarModal({
   const [date, setDate] = useState<Date>();
   const [time, setTime] = useState("09:00");
   const [duration, setDuration] = useState(30);
+  const [bufferTime, setBufferTime] = useState(30);
   const [notes, setNotes] = useState("");
   const [place, setPlace] = useState("");
   const [selectedFieldRepId, setSelectedFieldRepId] = useState<string>("");
@@ -112,6 +114,9 @@ export function BookAppointmentWithCalendarModal({
       if (initialAppointment.durationMinutes) {
         setDuration(initialAppointment.durationMinutes);
       }
+      if (initialAppointment.bufferTimeMinutes !== undefined && initialAppointment.bufferTimeMinutes !== null) {
+        setBufferTime(initialAppointment.bufferTimeMinutes);
+      }
       if (initialAppointment.notes) {
         setNotes(initialAppointment.notes);
       }
@@ -129,6 +134,7 @@ export function BookAppointmentWithCalendarModal({
       setDate(undefined);
       setTime("09:00");
       setDuration(30);
+      setBufferTime(30);
       setNotes("");
       setPlace("");
       setSelectedFieldRepId("");
@@ -211,10 +217,16 @@ export function BookAppointmentWithCalendarModal({
               }
 
               const appointmentStart = new Date(`${appointment.scheduledDate}T${appointment.scheduledTime}`);
+              const appointmentDuration = appointment.durationMinutes || 30;
               const appointmentEnd = new Date(
-                appointmentStart.getTime() + (appointment.durationMinutes || 30) * 60000
+                appointmentStart.getTime() + appointmentDuration * 60000
               );
-              bookedRanges.push({ start: appointmentStart, end: appointmentEnd });
+
+              // Add buffer time after appointment (buffer time is applied after appointment)
+              const bufferTimeMinutes = appointment.bufferTimeMinutes || 0;
+              const rangeEnd = new Date(appointmentEnd.getTime() + bufferTimeMinutes * 60000);
+
+              bookedRanges.push({ start: appointmentStart, end: rangeEnd });
             });
           }
         } catch (error) {
@@ -222,6 +234,7 @@ export function BookAppointmentWithCalendarModal({
         }
 
         // 2. Fetch Google Calendar events for this date (if connected)
+        // Only include events that belong to the selected field rep
         const accessToken = localStorage.getItem("gcal_access_token");
         const refreshToken = localStorage.getItem("gcal_refresh_token");
 
@@ -240,7 +253,31 @@ export function BookAppointmentWithCalendarModal({
             });
 
             if (events && Array.isArray(events)) {
-              events.forEach((event: any) => {
+              // Filter events to only include those belonging to the selected field rep
+              const eventsForFieldRep = await Promise.all(
+                events.map(async (event: any) => {
+                  try {
+                    // Check if this event has a corresponding appointment
+                    const { data: appointment } = await CustomServerApi.getAppointmentByCalendarEvent(event.id);
+
+                    // Only include events that belong to the selected field rep
+                    if (appointment && appointment.fieldRepId === selectedFieldRepId) {
+                      return event;
+                    }
+                    // If no appointment found, it's a Google Calendar-only event
+                    // We'll skip it since we can't determine which field rep it belongs to
+                    return null;
+                  } catch (error) {
+                    // If appointment not found, skip this event
+                    return null;
+                  }
+                })
+              );
+
+              // Add valid events to booked ranges
+              eventsForFieldRep.forEach((event: any) => {
+                if (!event) return;
+
                 const start = event.start?.dateTime || event.start?.date;
                 const end = event.end?.dateTime || event.end?.date;
 
@@ -266,10 +303,13 @@ export function BookAppointmentWithCalendarModal({
             slotStart.setHours(hour, minute, 0, 0);
             const slotEnd = new Date(slotStart.getTime() + duration * 60000);
 
+            // Add buffer time after the new appointment slot
+            const slotEndWithBuffer = new Date(slotEnd.getTime() + bufferTime * 60000);
+
             // Check if this time slot overlaps with any booked range
             const hasConflict = bookedRanges.some((range) => {
-              // Two time ranges overlap if: slotStart < range.end && slotEnd > range.start
-              return slotStart < range.end && slotEnd > range.start;
+              // Two time ranges overlap if: slotStart < range.end && slotEndWithBuffer > range.start
+              return slotStart < range.end && slotEndWithBuffer > range.start;
             });
 
             if (!hasConflict) {
@@ -296,7 +336,7 @@ export function BookAppointmentWithCalendarModal({
     };
 
     calculateAvailableTimes();
-  }, [date, selectedFieldRepId, duration, isEditing, initialAppointment]);
+  }, [date, selectedFieldRepId, duration, bufferTime, isEditing, initialAppointment]);
 
   const handleSave = async () => {
     if (!date || !selectedFieldRepId || !selectedProspectId) return;
@@ -315,6 +355,7 @@ export function BookAppointmentWithCalendarModal({
         scheduledDate: format(date, "yyyy-MM-dd"),
         scheduledTime: time,
         durationMinutes: duration,
+        bufferTimeMinutes: bufferTime || null,
         notes: notes || null,
         place: place || null,
       };
@@ -481,6 +522,7 @@ export function BookAppointmentWithCalendarModal({
       setDate(undefined);
       setTime("09:00");
       setDuration(30);
+      setBufferTime(30);
       setNotes("");
       setPlace("");
       setSelectedFieldRepId("");
@@ -802,6 +844,16 @@ export function BookAppointmentWithCalendarModal({
                 </SelectContent>
               </Select>
             </div>
+
+          </div>
+
+          {/* Buffer Time */}
+          <div className="grid gap-2">
+            <Label htmlFor="bufferTime">Buffer Time (mins)</Label>
+            <BufferTimeInput
+              bufferTime={bufferTime}
+              onValueChange={setBufferTime}
+            />
           </div>
 
           {/* Appointment Address */}

@@ -39,6 +39,7 @@ export const API_ENDPOINTS = {
 
   // Appointments endpoints
   appointments: {
+    getAll: "GET /api/v1/appointments/all",
     create: "POST /api/v1/appointments",
     getByFieldRepAndDate: "GET /api/v1/appointments/:fieldRepId/:date",
     getToday: "GET /api/v1/appointments/today",

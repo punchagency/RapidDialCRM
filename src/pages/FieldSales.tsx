@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from "@react-google-maps/api";
 import { CitySelector } from "@/components/crm/CitySelector";
 import { getCityData } from "@/lib/cityData";
-import { useTodayAppointments } from "@/hooks/useAppointments";
+import { useAllAppointments } from "@/hooks/useAppointments";
 import { geocodeAddress } from "@/lib/geocoding";
 import { BookAppointmentWithCalendarModal } from "@/components/crm/BookAppointmentWithCalendarModal";
 import { CustomServerApi } from "@/integrations/custom-server/api";
@@ -92,22 +92,10 @@ export default function FieldSales() {
     }
   }, []);
 
-  // Get territory from selected city
-  const territory = (() => {
-    const territoryMap: Record<string, string> = {
-      miami: "Miami",
-      washington_dc: "Washington DC",
-      los_angeles: "Los Angeles",
-      new_york: "New York",
-      chicago: "Chicago",
-      dallas: "Dallas",
-    };
-    return territoryMap[selectedCity] || "Miami";
-  })();
+  const territory = selectedCity;
 
   // Fetch appointments from API using hook
-  const { data: appointmentsData, isLoading } = useTodayAppointments(territory);
-  console.log('appointmentsData', appointmentsData, 'territory', territory);
+  const { data: appointmentsData, isLoading } = useAllAppointments(selectedCity);
 
   // Transform appointments data to match expected format
   const allAppointments = useMemo((): AppointmentDisplay[] => {
@@ -152,19 +140,6 @@ export default function FieldSales() {
     }
   }, [appointments, selectedStop]);
 
-  // Get city name mapping
-  const getCityName = (cityId: string): string => {
-    const cityMap: Record<string, string> = {
-      miami: "Miami",
-      washington_dc: "Washington, DC",
-      los_angeles: "Los Angeles",
-      new_york: "New York",
-      chicago: "Chicago",
-      dallas: "Dallas",
-    };
-    return cityMap[cityId] || "Miami";
-  };
-
   // Format time from 24-hour to 12-hour format
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(':');
@@ -198,7 +173,33 @@ export default function FieldSales() {
     });
   }, []);
 
-  const cityData = getCityData(selectedCity);
+  // const cityData = getCityData(selectedCity);
+  const [cityData, setCityData] = useState<{ id: string, name: string, state: string, label: string, center: [number, number], zoom: number }>({
+    id: selectedCity,
+    name: selectedCity.replace('_', ' '),
+    state: '',
+    label: '',
+    center: [0, 0],
+    zoom: 12,
+  });
+  const getCityData = useCallback(async() => {
+    const { data, error } = await CustomServerApi.bulkSearch(selectedCity, selectedCity);
+    if (error) throw new Error(error);
+    
+    const result = data?.results[0];
+    setCityData({
+      id: selectedCity,
+      name: selectedCity.replace('_', ' '),
+      state: result.state,
+      label: result.address,
+      center: [result.latitude, result.longitude],
+      zoom: 12,
+    });
+  }, [selectedCity]); 
+  useEffect(() => {
+    getCityData();
+  }, [selectedCity]);
+
   const [currentRoute, setCurrentRoute] = useState<Stop[]>([]);
 
   // Update route when appointments change

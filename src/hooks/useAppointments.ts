@@ -9,6 +9,7 @@ export const appointmentKeys = {
   today: (territory?: string) => [...appointmentKeys.all, 'today', territory] as const,
   details: () => [...appointmentKeys.all, 'detail'] as const,
   detail: (id: string) => [...appointmentKeys.details(), id] as const,
+  allAppointments: (territory?: string) => [...appointmentKeys.all, 'allAppointments', territory] as const,
 };
 
 // Get today's appointments
@@ -17,7 +18,19 @@ export function useTodayAppointments(territory?: string) {
     queryKey: appointmentKeys.today(territory),
     queryFn: async () => {
       const { data, error } = await CustomServerApi.getTodayAppointments({territory});
-      console.log('data', data, 'error', error);
+      if (error) throw new Error(error);
+      return data || [];
+    },
+    staleTime: 30000, // 30 seconds
+  });
+}
+
+// Get all appointments
+export function useAllAppointments(territory?: string) {
+  return useQuery({
+    queryKey: appointmentKeys.allAppointments(territory),
+    queryFn: async () => {
+      const { data, error } = await CustomServerApi.getAllAppointments({ territory });
       if (error) throw new Error(error);
       return data || [];
     },
