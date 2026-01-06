@@ -18,6 +18,7 @@ import { geocodeAddress } from "@/lib/geocoding";
 import { BookAppointmentWithCalendarModal } from "@/components/crm/BookAppointmentWithCalendarModal";
 import { CustomServerApi } from "@/integrations/custom-server/api";
 import type { Prospect, Appointment as AppointmentType } from "@/lib/types";
+import { Link } from 'wouter';
 
 interface AppointmentDisplay {
   id: string;
@@ -530,6 +531,13 @@ export default function FieldSales() {
                 Tomorrow
               </Button>
             </div>
+              <Link
+                href="/calendar"
+                className="text-xs rounded-lg p-1 border border-gray-200 p-2 cursor-pointer flex items-center gap-1"
+              >
+              <Calendar className="h-4 w-4" />
+              <span className="text-xs">View all</span> 
+              </Link>
           </div>
 
           <div className="flex items-center gap-2">
