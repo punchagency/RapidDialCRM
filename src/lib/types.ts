@@ -159,7 +159,7 @@ export interface EmailLog {
 export interface Script {
   id: string;
   name: string;
-  profession: string;
+  profession?: string | null;
   content: string;
   dynamicFields?: string[];
   branches?: Array<{

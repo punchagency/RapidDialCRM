@@ -57,6 +57,7 @@ export default function ScriptsManagement() {
   const deleteScriptMutation = useDeleteScript();
 
   const [selectedScript, setSelectedScript] = useState<Script | null>(null);
+  const [fieldsViewScript, setFieldsViewScript] = useState<Script | null>(null); // Script selected in Dynamic Fields tab
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [newScript, setNewScript] = useState<Partial<Script>>({ dynamicFields: [], branches: [] });
   const [isProfessionOpen, setIsProfessionOpen] = useState(false);
@@ -90,9 +91,11 @@ export default function ScriptsManagement() {
 
   // Get fields for selected script or all scripts
   const getCurrentFields = (): string[] => {
-    if (selectedScript) {
-      const contentFields = extractFieldsFromContent(selectedScript.content);
-      const storedFields = selectedScript.dynamicFields || [];
+    // Use fieldsViewScript if set (from Dynamic Fields tab), otherwise use selectedScript
+    const scriptToUse = fieldsViewScript || selectedScript;
+    if (scriptToUse) {
+      const contentFields = extractFieldsFromContent(scriptToUse.content);
+      const storedFields = scriptToUse.dynamicFields || [];
       return Array.from(new Set([...contentFields, ...storedFields])).sort();
     }
     return getAllDynamicFields();
@@ -122,9 +125,11 @@ export default function ScriptsManagement() {
       return;
     }
 
-    if (selectedScript) {
+    // Use fieldsViewScript if set (from Dynamic Fields tab), otherwise use selectedScript
+    const scriptToUpdate = fieldsViewScript || selectedScript;
+    if (scriptToUpdate) {
       // Update the selected script
-      const currentFields = selectedScript.dynamicFields || [];
+      const currentFields = scriptToUpdate.dynamicFields || [];
       if (currentFields.includes(fieldName)) {
         toast({ title: "Field exists", description: "This field already exists", variant: "default" });
         return;
@@ -132,7 +137,7 @@ export default function ScriptsManagement() {
 
       updateScriptMutation.mutate(
         {
-          id: selectedScript.id,
+          id: scriptToUpdate.id,
           data: {
             dynamicFields: [...currentFields, fieldName],
           },
@@ -169,11 +174,13 @@ export default function ScriptsManagement() {
 
   // Remove a dynamic field
   const handleRemoveField = (fieldName: string) => {
-    if (selectedScript) {
-      const currentFields = selectedScript.dynamicFields || [];
+    // Use fieldsViewScript if set (from Dynamic Fields tab), otherwise use selectedScript
+    const scriptToUpdate = fieldsViewScript || selectedScript;
+    if (scriptToUpdate) {
+      const currentFields = scriptToUpdate.dynamicFields || [];
       updateScriptMutation.mutate(
         {
-          id: selectedScript.id,
+          id: scriptToUpdate.id,
           data: {
             dynamicFields: currentFields.filter(f => f !== fieldName),
           },
@@ -214,7 +221,14 @@ export default function ScriptsManagement() {
         setSelectedScript(updatedScript);
       }
     }
-  }, [scripts, selectedScript]);
+    // Also update fieldsViewScript
+    if (fieldsViewScript && scripts.length > 0) {
+      const updatedScript = scripts.find(s => s.id === fieldsViewScript.id);
+      if (updatedScript && JSON.stringify(updatedScript) !== JSON.stringify(fieldsViewScript)) {
+        setFieldsViewScript(updatedScript);
+      }
+    }
+  }, [scripts, selectedScript, fieldsViewScript]);
 
   const handleSaveScript = () => {
     if (!newScript.name || !newScript.content) {
@@ -229,7 +243,7 @@ export default function ScriptsManagement() {
           id: newScript.id,
           data: {
             name: newScript.name,
-            profession: newScript.profession || "Healthcare",
+            profession: newScript.profession || undefined,
             content: newScript.content,
             dynamicFields: newScript.dynamicFields,
             branches: newScript.branches,
@@ -252,7 +266,7 @@ export default function ScriptsManagement() {
       // Create new script
       const scriptData: Partial<Script> = {
         name: newScript.name!,
-        profession: newScript.profession || "Healthcare",
+        profession: newScript.profession || undefined,
         content: newScript.content!,
         isPublished: newScript.isPublished || false,
         isDefault: newScript.isDefault || false,
@@ -399,12 +413,16 @@ export default function ScriptsManagement() {
                               />
                             </div>
                             <div className="space-y-2">
-                              <Label>Profession</Label>
-                              <Select value={newScript.profession || "Healthcare"} onValueChange={(v) => setNewScript({ ...newScript, profession: v })}>
+                              <Label>Profession (Optional)</Label>
+                              <Select
+                                value={newScript.profession || "general"}
+                                onValueChange={(v) => setNewScript({ ...newScript, profession: v === "general" ? undefined : v })}
+                              >
                                 <SelectTrigger>
-                                  <SelectValue />
+                                  <SelectValue placeholder="Select profession or General" />
                                 </SelectTrigger>
                                 <SelectContent>
+                                  <SelectItem value="general">General (All Professions)</SelectItem>
                                   {professionsLoading ? (
                                     <SelectItem value="loading" disabled>Loading...</SelectItem>
                                   ) : professions.length === 0 ? (
@@ -416,6 +434,9 @@ export default function ScriptsManagement() {
                                   )}
                                 </SelectContent>
                               </Select>
+                              <p className="text-xs text-muted-foreground">
+                                Select "General" for scripts that work across all professions, or choose a specific profession.
+                              </p>
                             </div>
                           </div>
                           <div className="space-y-2">
@@ -550,7 +571,10 @@ export default function ScriptsManagement() {
                                   size="sm"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    setNewScript(script);
+                                    setNewScript({
+                                      ...script,
+                                      profession: script.profession || undefined,
+                                    });
                                     setIsEditOpen(true);
                                   }}
                                 >
@@ -621,37 +645,45 @@ export default function ScriptsManagement() {
                 <TabsContent value="fields" className="mt-0 space-y-6">
                   <div>
                     <div className="flex items-center justify-between mb-6">
-                      <div>
+                      <div className="flex-1">
                         <h2 className="text-lg font-semibold mb-1">Dynamic Fields</h2>
                         <p className="text-sm text-muted-foreground">
-                          {selectedScript
-                            ? `Fields for "${selectedScript.name}" - Use double curly braces with field names in script content`
+                          {fieldsViewScript
+                            ? `Fields for "${fieldsViewScript.name}" - Use double curly braces with field names in script content`
                             : "Manage dynamic fields across all scripts. Fields are automatically detected from double curly brace patterns."}
                         </p>
                       </div>
-                      {!selectedScript && (
+                      <div className="ml-4">
                         <Select
-                          value="all"
+                          value={fieldsViewScript?.id || "all"}
                           onValueChange={(value) => {
                             if (value === "all") {
-                              setSelectedScript(null);
+                              setFieldsViewScript(null);
                             } else {
                               const script = scripts.find(s => s.id === value);
-                              setSelectedScript(script || null);
+                              setFieldsViewScript(script || null);
                             }
                           }}
                         >
-                          <SelectTrigger className="w-48">
-                            <SelectValue placeholder="Filter by script" />
+                          <SelectTrigger className="w-64">
+                            <SelectValue placeholder="Select script template" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">All Scripts</SelectItem>
-                            {scripts.map((script) => (
-                              <SelectItem key={script.id} value={script.id}>{script.name}</SelectItem>
-                            ))}
+                            {scriptsLoading ? (
+                              <SelectItem value="loading" disabled>Loading scripts...</SelectItem>
+                            ) : scripts.length === 0 ? (
+                              <SelectItem value="none" disabled>No scripts available</SelectItem>
+                            ) : (
+                              scripts.map((script) => (
+                                <SelectItem key={script.id} value={script.id}>
+                                  {script.name} {script.profession && `(${script.profession})`}
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
-                      )}
+                      </div>
                     </div>
 
                     <Card className="border shadow-sm">
@@ -688,7 +720,7 @@ export default function ScriptsManagement() {
                           </div>
                         ) : (
                           <Button
-                              className="w-full gap-2 border-dashed border-primary/30 text-primary  bg-primary/5 hover:bg-primary/10"
+                            className="w-full gap-2 border-dashed border-primary/30 text-primary  bg-primary/5 hover:bg-primary/10"
                             onClick={() => setIsAddingField(true)}
                           >
                             <Plus className="h-4 w-4" /> Add Custom Field
@@ -703,14 +735,17 @@ export default function ScriptsManagement() {
                         ) : (
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {getCurrentFields().map((field) => {
+                              // Use fieldsViewScript if set, otherwise check all scripts
+                              const scriptToCheck = fieldsViewScript || selectedScript;
+
                               // Check if field is used in content
-                              const isUsedInContent = selectedScript
-                                ? selectedScript.content.includes(`{{${field}}}`)
+                              const isUsedInContent = scriptToCheck
+                                ? scriptToCheck.content.includes(`{{${field}}}`)
                                 : scripts.some(s => s.content.includes(`{{${field}}}`));
 
                               // Check if field is stored in dynamicFields
-                              const isStored = selectedScript
-                                ? selectedScript.dynamicFields?.includes(field)
+                              const isStored = scriptToCheck
+                                ? scriptToCheck.dynamicFields?.includes(field)
                                 : scripts.some(s => s.dynamicFields?.includes(field));
 
                               return (
@@ -755,7 +790,7 @@ export default function ScriptsManagement() {
                           </div>
                         )}
 
-                        {selectedScript && (
+                        {fieldsViewScript && (
                           <div className="mt-4 p-3 bg-blue-50/50 border border-blue-200 rounded-lg">
                             <p className="text-xs font-semibold text-blue-900 mb-1">💡 Tip</p>
                             <p className="text-xs text-blue-800">
