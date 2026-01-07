@@ -146,13 +146,13 @@ export class CustomServerApi {
     });
   }
 
-    // ==================== APPOINTMENTS ====================
-    static async createAppointment(data: Partial<Appointment>) {
-      return ApiPrep.makeRequest<Appointment>(
-        API_ENDPOINTS.appointments.create,
-        data
-      );
-    }
+  // ==================== APPOINTMENTS ====================
+  static async createAppointment(data: Partial<Appointment>) {
+    return ApiPrep.makeRequest<Appointment>(
+      API_ENDPOINTS.appointments.create,
+      data
+    );
+  }
 
   static async getAllAppointments(params?: { territory?: string }) {
     const queryParams: Record<string, string> = {};
@@ -882,5 +882,50 @@ export class CustomServerApi {
       updated: number;
       errors: number;
     }>(API_ENDPOINTS.calendar.sync, { accessToken, refreshToken });
+  }
+
+  // ==================== SCRIPTS ====================
+  static async getScripts(profession?: string) {
+    return ApiPrep.makeRequest<any[]>(
+      API_ENDPOINTS.scripts.findAll,
+      undefined,
+      profession ? { queryParams: { profession } } : undefined
+    );
+  }
+
+  static async getScript(id: string) {
+    return ApiPrep.makeRequest<any>(
+      API_ENDPOINTS.scripts.findOne,
+      undefined,
+      { params: { id } }
+    );
+  }
+
+  static async createScript(data: Partial<any>) {
+    return ApiPrep.makeRequest<any>(API_ENDPOINTS.scripts.create, data);
+  }
+
+  static async updateScript(id: string, data: Partial<any>) {
+    return ApiPrep.makeRequest<any>(
+      API_ENDPOINTS.scripts.update,
+      data,
+      { params: { id } }
+    );
+  }
+
+  static async deleteScript(id: string) {
+    return ApiPrep.makeRequest<{ success: boolean }>(
+      API_ENDPOINTS.scripts.delete,
+      undefined,
+      { params: { id } }
+    );
+  }
+
+  static async getDefaultScript(profession: string) {
+    return ApiPrep.makeRequest<any>(
+      API_ENDPOINTS.scripts.getDefault,
+      undefined,
+      { params: { profession } }
+    );
   }
 }

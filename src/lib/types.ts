@@ -155,3 +155,22 @@ export interface EmailLog {
   createdAt: Date;
   updatedAt?: Date;
 }
+
+export interface Script {
+  id: string;
+  name: string;
+  profession: string;
+  content: string;
+  dynamicFields?: string[];
+  branches?: Array<{
+    id: string;
+    condition: string;
+    action: string;
+    content: string;
+  }>;
+  version: number;
+  isPublished: boolean;
+  isDefault: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}

@@ -1,22 +1,21 @@
 import React, { useState } from "react";
 import { useRoute, Link } from "wouter";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { User, Phone, Mail, MapPin, Briefcase, Calendar, ArrowLeft, Eye, Edit2, Save, X, Shield, ChevronRight } from "lucide-react";
-import { User as UserType } from "@/lib/types";
+import { User, Phone, Mail, MapPin, Briefcase, Calendar, ArrowLeft, Eye, Edit2, Save, X, Shield, ChevronRight, Loader2 } from "lucide-react";
 import { useUserRole } from "@/lib/UserRoleContext";
-import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-
-const TERRITORIES = ["Miami", "Washington DC", "Los Angeles", "New York", "Chicago", "Dallas"];
-const PROFESSIONS = ["Dental", "Chiropractor", "Optometry", "Physical Therapy", "Orthodontics", "Legal", "Financial", "Real Estate"];
+import {
+  useUser,
+  useUserAssignments,
+  useSetUserAssignments,
+  useAllTerritories,
+  useAllProfessions
+} from "@/hooks/useUsers";
 
 const roleLabels: Record<string, string> = {
   admin: "Administrator",
@@ -36,9 +35,8 @@ const roleColors: Record<string, string> = {
 
 export default function UserProfile() {
   const [, params] = useRoute("/users/:id");
-  const userId = params?.id;
+  const userId = params?.id || "";
   const { actualRole, startImpersonation } = useUserRole();
-  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [editedTerritories, setEditedTerritories] = useState<string[]>([]);
@@ -46,29 +44,18 @@ export default function UserProfile() {
 
   const canEdit = actualRole === "admin" || actualRole === "manager";
 
-  const { data: user, isLoading: userLoading } = useQuery<UserType>({
-    queryKey: [`/api/users/${userId}`],
-    enabled: !!userId,
-  });
+  // Fetch user data
+  const { data: user, isLoading: userLoading, error: userError } = useUser(userId);
 
-  const { data: assignments, isLoading: assignmentsLoading } = useQuery<{ territories: string[], professions: string[] }>({
-    queryKey: [`/api/users/${userId}/assignments`],
-    enabled: !!userId,
-  });
+  // Fetch user assignments
+  const { data: assignments, isLoading: assignmentsLoading } = useUserAssignments(userId);
 
-  const updateAssignmentsMutation = useMutation({
-    mutationFn: async (data: { territories: string[], professions: string[] }) => {
-      return apiRequest("PUT", `/api/users/${userId}/assignments`, data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [`/api/users/${userId}/assignments`] });
-      toast({ title: "Assignments updated", description: "User assignments have been saved." });
-      setIsEditing(false);
-    },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to update assignments", variant: "destructive" });
-    },
-  });
+  // Fetch available territories and professions
+  const { data: allTerritories = [], isLoading: territoriesLoading } = useAllTerritories();
+  const { data: allProfessions = [], isLoading: professionsLoading } = useAllProfessions();
+
+  // Update assignments mutation
+  const updateAssignmentsMutation = useSetUserAssignments();
 
   const startEditing = () => {
     setEditedTerritories(assignments?.territories || []);
@@ -81,24 +68,47 @@ export default function UserProfile() {
   };
 
   const saveAssignments = () => {
-    updateAssignmentsMutation.mutate({
-      territories: editedTerritories,
-      professions: editedProfessions,
-    });
+    if (!userId) return;
+
+    updateAssignmentsMutation.mutate(
+      {
+        userId,
+        assignments: {
+          territories: editedTerritories,
+          professions: editedProfessions,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast({
+            title: "Assignments updated",
+            description: "User assignments have been saved."
+          });
+          setIsEditing(false);
+        },
+        onError: (error: Error) => {
+          toast({
+            title: "Error",
+            description: error.message || "Failed to update assignments",
+            variant: "destructive"
+          });
+        },
+      }
+    );
   };
 
   const toggleTerritory = (territory: string) => {
-    setEditedTerritories(prev => 
-      prev.includes(territory) 
-        ? prev.filter(t => t !== territory) 
+    setEditedTerritories(prev =>
+      prev.includes(territory)
+        ? prev.filter(t => t !== territory)
         : [...prev, territory]
     );
   };
 
   const toggleProfession = (profession: string) => {
-    setEditedProfessions(prev => 
-      prev.includes(profession) 
-        ? prev.filter(p => p !== profession) 
+    setEditedProfessions(prev =>
+      prev.includes(profession)
+        ? prev.filter(p => p !== profession)
         : [...prev, profession]
     );
   };
@@ -107,16 +117,14 @@ export default function UserProfile() {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  if (userLoading || assignmentsLoading) {
+  if (userLoading || assignmentsLoading || territoriesLoading || professionsLoading) {
     return (
       <div className="flex min-h-screen bg-background">
         <Sidebar />
         <main className="flex-1 p-8">
           <div className="max-w-4xl mx-auto">
-            <div className="animate-pulse space-y-6">
-              <div className="h-8 bg-muted rounded w-1/4" />
-              <div className="h-48 bg-muted rounded" />
-              <div className="h-32 bg-muted rounded" />
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           </div>
         </main>
@@ -124,7 +132,7 @@ export default function UserProfile() {
     );
   }
 
-  if (!user) {
+  if (userError || !user) {
     return (
       <div className="flex min-h-screen bg-background">
         <Sidebar />
@@ -187,8 +195,8 @@ export default function UserProfile() {
                 </div>
                 <div className="flex gap-2">
                   {actualRole === "admin" && (
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => startImpersonation(user)}
                       data-testid="button-impersonate-user"
@@ -244,14 +252,23 @@ export default function UserProfile() {
                       <X className="h-4 w-4 mr-2" />
                       Cancel
                     </Button>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       onClick={saveAssignments}
                       disabled={updateAssignmentsMutation.isPending}
                       data-testid="button-save-assignments"
                     >
-                      <Save className="h-4 w-4 mr-2" />
-                      Save
+                      {updateAssignmentsMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-2" />
+                          Save
+                        </>
+                      )}
                     </Button>
                   </div>
                 )}
@@ -266,18 +283,22 @@ export default function UserProfile() {
                   </Label>
                   {isEditing ? (
                     <div className="space-y-2">
-                      {TERRITORIES.map((territory) => (
-                        <div key={territory} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`territory-${territory}`}
-                            checked={editedTerritories.includes(territory)}
-                            onCheckedChange={() => toggleTerritory(territory)}
-                          />
-                          <label htmlFor={`territory-${territory}`} className="text-sm cursor-pointer">
-                            {territory}
-                          </label>
-                        </div>
-                      ))}
+                      {allTerritories.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No territories available</p>
+                      ) : (
+                        allTerritories.map((territory) => (
+                          <div key={territory} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`territory-${territory}`}
+                              checked={editedTerritories.includes(territory)}
+                              onCheckedChange={() => toggleTerritory(territory)}
+                            />
+                            <label htmlFor={`territory-${territory}`} className="text-sm cursor-pointer">
+                              {territory}
+                            </label>
+                          </div>
+                        ))
+                      )}
                     </div>
                   ) : (
                     <div className="flex flex-wrap gap-2" data-testid="list-user-territories">
@@ -299,18 +320,22 @@ export default function UserProfile() {
                   </Label>
                   {isEditing ? (
                     <div className="space-y-2">
-                      {PROFESSIONS.map((profession) => (
-                        <div key={profession} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={`profession-${profession}`}
-                            checked={editedProfessions.includes(profession)}
-                            onCheckedChange={() => toggleProfession(profession)}
-                          />
-                          <label htmlFor={`profession-${profession}`} className="text-sm cursor-pointer">
-                            {profession}
-                          </label>
-                        </div>
-                      ))}
+                      {allProfessions.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">No professions available</p>
+                      ) : (
+                        allProfessions.map((profession) => (
+                          <div key={profession} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`profession-${profession}`}
+                              checked={editedProfessions.includes(profession)}
+                              onCheckedChange={() => toggleProfession(profession)}
+                            />
+                            <label htmlFor={`profession-${profession}`} className="text-sm cursor-pointer">
+                              {profession}
+                            </label>
+                          </div>
+                        ))
+                      )}
                     </div>
                   ) : (
                     <div className="flex flex-wrap gap-2" data-testid="list-user-professions">

@@ -208,6 +208,15 @@ export const API_ENDPOINTS = {
     deleteEvent: "DELETE /api/v1/calendar/events/:eventId",
     sync: "POST /api/v1/calendar/sync",
   },
+  // Scripts endpoints
+  scripts: {
+    findAll: "GET /api/v1/scripts",
+    findOne: "GET /api/v1/scripts/:id",
+    create: "POST /api/v1/scripts",
+    update: "PATCH /api/v1/scripts/:id",
+    delete: "DELETE /api/v1/scripts/:id",
+    getDefault: "GET /api/v1/scripts/default/:profession",
+  },
 };
 
 export default API_ENDPOINTS;

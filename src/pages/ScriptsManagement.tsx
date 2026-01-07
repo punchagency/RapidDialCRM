@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,37 +10,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileText, Plus, Edit2, Trash2, Copy, Archive, Bookmark, Settings, Save, X, Eye, Code, GitBranch, Briefcase, Lock } from "lucide-react";
+import { FileText, Plus, Edit2, Trash2, Copy, Archive, Bookmark, Settings, Save, X, Eye, Code, GitBranch, Briefcase, Lock, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useUserRole } from "@/lib/UserRoleContext";
-
-interface Script {
-  id: string;
-  name: string;
-  profession: string;
-  content: string;
-  dynamicFields: string[];
-  branches: Branch[];
-  version: number;
-  lastModified: string;
-  isPublished: boolean;
-  isDefault: boolean;
-}
+import { useScripts, useCreateScript, useUpdateScript, useDeleteScript } from "@/hooks/useScripts";
+import { useAllProfessions } from "@/hooks/useUsers";
+import type { Script } from "@/lib/types";
 
 interface Branch {
   id: string;
   condition: string;
   action: string;
   content: string;
-}
-
-interface Profession {
-  id: string;
-  name: string;
-  description: string;
-  defaultScriptId?: string;
 }
 
 export default function ScriptsManagement() {
@@ -66,97 +49,279 @@ export default function ScriptsManagement() {
     );
   }
 
-  const [scripts, setScripts] = useState<Script[]>([
-    {
-      id: "1",
-      name: "Initial Outreach",
-      profession: "Healthcare",
-      content: "Hi {{firstName}}, this is Alex from QuantumPunch. We work with {{company}} to streamline scheduling...",
-      dynamicFields: ["firstName", "company", "specialty"],
-      branches: [],
-      version: 1,
-      lastModified: "2025-11-19",
-      isPublished: true,
-      isDefault: true,
-    },
-  ]);
+  // Fetch scripts and professions from API
+  const { data: scripts = [], isLoading: scriptsLoading, refetch: refetchScripts } = useScripts();
+  const { data: professions = [], isLoading: professionsLoading } = useAllProfessions();
+  const createScriptMutation = useCreateScript();
+  const updateScriptMutation = useUpdateScript();
+  const deleteScriptMutation = useDeleteScript();
 
-  const [professions, setProfessions] = useState<Profession[]>([
-    { id: "1", name: "Healthcare", description: "Medical practices and providers", defaultScriptId: "1" },
-    { id: "2", name: "Legal", description: "Law firms and attorneys" },
-    { id: "3", name: "Finance", description: "Financial institutions" },
-  ]);
-
-  const [selectedScript, setSelectedScript] = useState<Script | null>(scripts[0]);
+  const [selectedScript, setSelectedScript] = useState<Script | null>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [newScript, setNewScript] = useState<Partial<Script>>({ dynamicFields: [], branches: [] });
-  const [newProfession, setNewProfession] = useState<Partial<Profession>>({});
   const [isProfessionOpen, setIsProfessionOpen] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
+  const [newFieldName, setNewFieldName] = useState("");
+  const [isAddingField, setIsAddingField] = useState(false);
   const { toast } = useToast();
 
-  const handleSaveScript = () => {
-    if (!newScript.name) {
-      toast({ title: "Error", description: "Script name is required", variant: "destructive" });
-      return;
-    }
-    
-    const script: Script = {
-      id: newScript.id || `script-${Date.now()}`,
-      name: newScript.name || "",
-      profession: newScript.profession || "Healthcare",
-      content: newScript.content || "",
-      dynamicFields: newScript.dynamicFields || [],
-      branches: newScript.branches || [],
-      version: (newScript.version || 0) + 1,
-      lastModified: new Date().toISOString().split("T")[0],
-      isPublished: newScript.isPublished || false,
-      isDefault: newScript.isDefault || false,
-    };
-
-    if (newScript.id) {
-      setScripts(scripts.map(s => s.id === newScript.id ? script : s));
-      toast({ title: "Script Updated", description: `${script.name} has been updated.` });
-    } else {
-      setScripts([...scripts, script]);
-      toast({ title: "Script Created", description: `${script.name} has been created.` });
-    }
-
-    setIsEditOpen(false);
-    setNewScript({ dynamicFields: [], branches: [] });
+  // Extract dynamic fields from content using regex {{fieldName}}
+  const extractFieldsFromContent = (content: string): string[] => {
+    const regex = /\{\{(\w+)\}\}/g;
+    const matches = content.match(regex);
+    if (!matches) return [];
+    const fields = matches.map(match => match.replace(/[{}]/g, ''));
+    return Array.from(new Set(fields)); // Remove duplicates
   };
 
-  const handleAddProfession = () => {
-    if (!newProfession.name) {
-      toast({ title: "Error", description: "Profession name is required", variant: "destructive" });
+  // Get all unique dynamic fields from all scripts
+  const getAllDynamicFields = (): string[] => {
+    const allFields = new Set<string>();
+    scripts.forEach(script => {
+      if (script.dynamicFields) {
+        script.dynamicFields.forEach(field => allFields.add(field));
+      }
+      // Also extract from content
+      const extracted = extractFieldsFromContent(script.content);
+      extracted.forEach(field => allFields.add(field));
+    });
+    return Array.from(allFields).sort();
+  };
+
+  // Get fields for selected script or all scripts
+  const getCurrentFields = (): string[] => {
+    if (selectedScript) {
+      const contentFields = extractFieldsFromContent(selectedScript.content);
+      const storedFields = selectedScript.dynamicFields || [];
+      return Array.from(new Set([...contentFields, ...storedFields])).sort();
+    }
+    return getAllDynamicFields();
+  };
+
+  // Update dynamic fields when content changes
+  useEffect(() => {
+    if (newScript.content) {
+      const extracted = extractFieldsFromContent(newScript.content);
+      setNewScript(prev => ({
+        ...prev,
+        dynamicFields: Array.from(new Set([...(prev.dynamicFields || []), ...extracted]))
+      }));
+    }
+  }, [newScript.content]);
+
+  // Add a new dynamic field
+  const handleAddField = () => {
+    if (!newFieldName.trim()) {
+      toast({ title: "Error", description: "Field name is required", variant: "destructive" });
       return;
     }
 
-    const profession: Profession = {
-      id: `prof-${Date.now()}`,
-      name: newProfession.name || "",
-      description: newProfession.description || "",
-    };
+    const fieldName = newFieldName.trim().replace(/[{}]/g, '');
+    if (!/^\w+$/.test(fieldName)) {
+      toast({ title: "Error", description: "Field name must contain only letters, numbers, and underscores", variant: "destructive" });
+      return;
+    }
 
-    setProfessions([...professions, profession]);
-    toast({ title: "Profession Added", description: `${profession.name} has been added.` });
-    setIsProfessionOpen(false);
-    setNewProfession({});
+    if (selectedScript) {
+      // Update the selected script
+      const currentFields = selectedScript.dynamicFields || [];
+      if (currentFields.includes(fieldName)) {
+        toast({ title: "Field exists", description: "This field already exists", variant: "default" });
+        return;
+      }
+
+      updateScriptMutation.mutate(
+        {
+          id: selectedScript.id,
+          data: {
+            dynamicFields: [...currentFields, fieldName],
+          },
+        },
+        {
+          onSuccess: async () => {
+            toast({ title: "Field Added", description: `Field {{${fieldName}}} has been added.` });
+            setNewFieldName("");
+            setIsAddingField(false);
+            // Refetch scripts to get updated data
+            await refetchScripts();
+          },
+          onError: (error: Error) => {
+            toast({ title: "Error", description: error.message || "Failed to add field", variant: "destructive" });
+          },
+        }
+      );
+    } else {
+      // Add to new script being created
+      const currentFields = newScript.dynamicFields || [];
+      if (currentFields.includes(fieldName)) {
+        toast({ title: "Field exists", description: "This field already exists", variant: "default" });
+        return;
+      }
+      setNewScript(prev => ({
+        ...prev,
+        dynamicFields: [...currentFields, fieldName],
+      }));
+      setNewFieldName("");
+      setIsAddingField(false);
+      toast({ title: "Field Added", description: `Field {{${fieldName}}} has been added.` });
+    }
+  };
+
+  // Remove a dynamic field
+  const handleRemoveField = (fieldName: string) => {
+    if (selectedScript) {
+      const currentFields = selectedScript.dynamicFields || [];
+      updateScriptMutation.mutate(
+        {
+          id: selectedScript.id,
+          data: {
+            dynamicFields: currentFields.filter(f => f !== fieldName),
+          },
+        },
+        {
+          onSuccess: async () => {
+            toast({ title: "Field Removed", description: `Field {{${fieldName}}} has been removed.` });
+            // Refetch scripts to get updated data
+            await refetchScripts();
+          },
+          onError: (error: Error) => {
+            toast({ title: "Error", description: error.message || "Failed to remove field", variant: "destructive" });
+          },
+        }
+      );
+    } else {
+      const currentFields = newScript.dynamicFields || [];
+      setNewScript(prev => ({
+        ...prev,
+        dynamicFields: currentFields.filter(f => f !== fieldName),
+      }));
+      toast({ title: "Field Removed", description: `Field {{${fieldName}}} has been removed.` });
+    }
+  };
+
+  // Set first script as selected when scripts load
+  useEffect(() => {
+    if (scripts.length > 0 && !selectedScript) {
+      setSelectedScript(scripts[0]);
+    }
+  }, [scripts, selectedScript]);
+
+  // Update selectedScript when scripts are refetched (to get latest data)
+  useEffect(() => {
+    if (selectedScript && scripts.length > 0) {
+      const updatedScript = scripts.find(s => s.id === selectedScript.id);
+      if (updatedScript && JSON.stringify(updatedScript) !== JSON.stringify(selectedScript)) {
+        setSelectedScript(updatedScript);
+      }
+    }
+  }, [scripts, selectedScript]);
+
+  const handleSaveScript = () => {
+    if (!newScript.name || !newScript.content) {
+      toast({ title: "Error", description: "Script name and content are required", variant: "destructive" });
+      return;
+    }
+
+    if (newScript.id) {
+      // Update existing script
+      updateScriptMutation.mutate(
+        {
+          id: newScript.id,
+          data: {
+            name: newScript.name,
+            profession: newScript.profession || "Healthcare",
+            content: newScript.content,
+            dynamicFields: newScript.dynamicFields,
+            branches: newScript.branches,
+            isPublished: newScript.isPublished,
+            isDefault: newScript.isDefault,
+          },
+        },
+        {
+          onSuccess: () => {
+            toast({ title: "Script Updated", description: `${newScript.name} has been updated.` });
+            setIsEditOpen(false);
+            setNewScript({ dynamicFields: [], branches: [] });
+          },
+          onError: (error: Error) => {
+            toast({ title: "Error", description: error.message || "Failed to update script", variant: "destructive" });
+          },
+        }
+      );
+    } else {
+      // Create new script
+      const scriptData: Partial<Script> = {
+        name: newScript.name!,
+        profession: newScript.profession || "Healthcare",
+        content: newScript.content!,
+        isPublished: newScript.isPublished || false,
+        isDefault: newScript.isDefault || false,
+      };
+
+      // Include optional fields if they exist (empty arrays are valid)
+      if (newScript.dynamicFields !== undefined) {
+        scriptData.dynamicFields = newScript.dynamicFields;
+      }
+      if (newScript.branches !== undefined) {
+        scriptData.branches = newScript.branches;
+      }
+
+      createScriptMutation.mutate(
+        scriptData,
+        {
+          onSuccess: () => {
+            toast({ title: "Script Created", description: `${newScript.name} has been created.` });
+            setIsEditOpen(false);
+            setNewScript({ dynamicFields: [], branches: [] });
+          },
+          onError: (error: Error) => {
+            toast({ title: "Error", description: error.message || "Failed to create script", variant: "destructive" });
+          },
+        }
+      );
+    }
   };
 
   const handleDeleteScript = (id: string) => {
-    setScripts(scripts.filter(s => s.id !== id));
-    if (selectedScript?.id === id) {
-      setSelectedScript(scripts.find(s => s.id !== id) || null);
+    if (!confirm("Are you sure you want to delete this script?")) {
+      return;
     }
-    toast({ title: "Script Deleted", description: "Script has been removed." });
+
+    deleteScriptMutation.mutate(id, {
+      onSuccess: () => {
+        if (selectedScript?.id === id) {
+          const remaining = scripts.filter(s => s.id !== id);
+          setSelectedScript(remaining[0] || null);
+        }
+        toast({ title: "Script Deleted", description: "Script has been removed." });
+      },
+      onError: (error: Error) => {
+        toast({ title: "Error", description: error.message || "Failed to delete script", variant: "destructive" });
+      },
+    });
   };
 
   const handlePublishScript = (id: string) => {
-    setScripts(scripts.map(s => 
-      s.id === id ? { ...s, isPublished: !s.isPublished } : s
-    ));
-    toast({ title: selectedScript?.isPublished ? "Unpublished" : "Published", description: "Script status updated." });
+    const script = scripts.find(s => s.id === id);
+    if (!script) return;
+
+    updateScriptMutation.mutate(
+      {
+        id,
+        data: { isPublished: !script.isPublished },
+      },
+      {
+        onSuccess: () => {
+          toast({
+            title: script.isPublished ? "Unpublished" : "Published",
+            description: "Script status updated."
+          });
+        },
+        onError: (error: Error) => {
+          toast({ title: "Error", description: error.message || "Failed to update script", variant: "destructive" });
+        },
+      }
+    );
   };
 
   return (
@@ -181,7 +346,7 @@ export default function ScriptsManagement() {
                     { value: "templates", icon: FileText, label: "Script Templates" },
                     { value: "professions", icon: Briefcase, label: "Professions" },
                     { value: "fields", icon: Code, label: "Dynamic Fields" },
-                    { value: "branches", icon: GitBranch, label: "Branching Logic" },
+                    // { value: "branches", icon: GitBranch, label: "Branching Logic" },
                   ].map((item) => (
                     <TabsTrigger
                       key={item.value}
@@ -212,8 +377,8 @@ export default function ScriptsManagement() {
                     </div>
                     <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
                       <DialogTrigger asChild>
-                        <Button 
-                          className="gap-2 bg-pink-500 hover:bg-pink-600" 
+                        <Button
+                          className="gap-2 bg-pink-500 hover:bg-pink-600"
                           onClick={() => setNewScript({ dynamicFields: [], branches: [] })}
                         >
                           <Plus className="h-4 w-4" /> New Script
@@ -227,7 +392,7 @@ export default function ScriptsManagement() {
                           <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                               <Label>Script Name</Label>
-                              <Input 
+                              <Input
                                 value={newScript.name || ""}
                                 onChange={(e) => setNewScript({ ...newScript, name: e.target.value })}
                                 placeholder="e.g. Initial Outreach"
@@ -240,76 +405,179 @@ export default function ScriptsManagement() {
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {professions.map((p) => (
-                                    <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>
-                                  ))}
+                                  {professionsLoading ? (
+                                    <SelectItem value="loading" disabled>Loading...</SelectItem>
+                                  ) : professions.length === 0 ? (
+                                    <SelectItem value="none" disabled>No professions available</SelectItem>
+                                  ) : (
+                                    professions.map((p) => (
+                                      <SelectItem key={p} value={p}>{p}</SelectItem>
+                                    ))
+                                  )}
                                 </SelectContent>
                               </Select>
                             </div>
                           </div>
                           <div className="space-y-2">
-                            <Label>Script Content (WYSIWYG)</Label>
-                            <Textarea 
+                            <div className="flex items-center justify-between">
+                              <Label>Script Content (WYSIWYG)</Label>
+                              {newScript.dynamicFields && newScript.dynamicFields.length > 0 && (
+                                <div className="flex gap-1 flex-wrap">
+                                  {newScript.dynamicFields.map((field) => (
+                                    <Button
+                                      key={field}
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-6 text-xs"
+                                      onClick={() => {
+                                        const fieldTag = `{{${field}}}`;
+                                        const textarea = document.querySelector('textarea[placeholder*="fieldName"]') as HTMLTextAreaElement;
+                                        if (textarea) {
+                                          const start = textarea.selectionStart;
+                                          const end = textarea.selectionEnd;
+                                          const text = newScript.content || "";
+                                          const newText = text.substring(0, start) + fieldTag + text.substring(end);
+                                          setNewScript({ ...newScript, content: newText });
+                                          // Set cursor position after inserted field
+                                          setTimeout(() => {
+                                            textarea.focus();
+                                            textarea.setSelectionRange(start + fieldTag.length, start + fieldTag.length);
+                                          }, 0);
+                                        } else {
+                                          setNewScript({
+                                            ...newScript,
+                                            content: (newScript.content || "") + fieldTag
+                                          });
+                                        }
+                                      }}
+                                    >
+                                      {`{{${field}}}`}
+                                    </Button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            <Textarea
                               value={newScript.content || ""}
-                              onChange={(e) => setNewScript({ ...newScript, content: e.target.value })}
+                              onChange={(e) => {
+                                const content = e.target.value;
+                                setNewScript({ ...newScript, content });
+                                // Auto-extract and update dynamic fields
+                                const extracted = extractFieldsFromContent(content);
+                                setNewScript(prev => ({
+                                  ...prev,
+                                  content,
+                                  dynamicFields: Array.from(new Set([...(prev.dynamicFields || []), ...extracted]))
+                                }));
+                              }}
                               placeholder='Use {{fieldName}} for dynamic fields...'
-                              className="h-32"
+                              className="h-32 font-mono text-sm"
                             />
+                            {newScript.content && extractFieldsFromContent(newScript.content).length > 0 && (
+                              <div className="text-xs text-muted-foreground">
+                                Detected fields: {extractFieldsFromContent(newScript.content).map(f => `{{${f}}}`).join(", ")}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <DialogFooter>
-                          <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
-                          <Button onClick={handleSaveScript} className="bg-pink-500 hover:bg-pink-600">
-                            <Save className="h-4 w-4 mr-2" /> Save Script
+                          <Button variant="outline" onClick={() => setIsEditOpen(false)} disabled={createScriptMutation.isPending || updateScriptMutation.isPending}>
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handleSaveScript}
+                            className="bg-pink-500 hover:bg-pink-600"
+                            disabled={createScriptMutation.isPending || updateScriptMutation.isPending}
+                          >
+                            {createScriptMutation.isPending || updateScriptMutation.isPending ? (
+                              <>
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Saving...
+                              </>
+                            ) : (
+                              <>
+                                <Save className="h-4 w-4 mr-2" /> Save Script
+                              </>
+                            )}
                           </Button>
                         </DialogFooter>
                       </DialogContent>
                     </Dialog>
                   </div>
 
-                  <div className="space-y-3">
-                    {scripts.map((script) => (
-                      <Card key={script.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedScript(script)}>
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <h3 className="font-semibold">{script.name}</h3>
-                                {script.isDefault && <Badge variant="secondary" className="text-xs">Default</Badge>}
-                                <Badge variant={script.isPublished ? "default" : "outline"} className="text-xs">
-                                  {script.isPublished ? "Published" : "Draft"}
-                                </Badge>
+                  {scriptsLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : scripts.length === 0 ? (
+                    <div className="text-center py-12">
+                      <p className="text-muted-foreground">No scripts found. Create your first script to get started.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {scripts.map((script) => (
+                        <Card key={script.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedScript(script)}>
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <h3 className="font-semibold">{script.name}</h3>
+                                  {script.isDefault && <Badge variant="secondary" className="text-xs">Default</Badge>}
+                                  <Badge variant={script.isPublished ? "default" : "outline"} className="text-xs">
+                                    {script.isPublished ? "Published" : "Draft"}
+                                  </Badge>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-2">{script.content.substring(0, 80)}...</p>
+                                <div className="flex gap-2 text-xs text-muted-foreground">
+                                  <span>📁 {script.profession}</span>
+                                  <span>v{script.version}</span>
+                                  <span>Modified {new Date(script.updatedAt).toLocaleDateString()}</span>
+                                </div>
                               </div>
-                              <p className="text-sm text-muted-foreground mb-2">{script.content.substring(0, 80)}...</p>
-                              <div className="flex gap-2 text-xs text-muted-foreground">
-                                <span>📁 {script.profession}</span>
-                                <span>v{script.version}</span>
-                                <span>Modified {script.lastModified}</span>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handlePublishScript(script.id);
+                                  }}
+                                  disabled={updateScriptMutation.isPending}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setNewScript(script);
+                                    setIsEditOpen(true);
+                                  }}
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteScript(script.id);
+                                  }}
+                                  disabled={deleteScriptMutation.isPending}
+                                >
+                                  {deleteScriptMutation.isPending ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  )}
+                                </Button>
                               </div>
                             </div>
-                            <div className="flex gap-2">
-                              <Button variant="ghost" size="sm" onClick={() => handlePublishScript(script.id)}>
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                onClick={() => {
-                                  setNewScript(script);
-                                  setIsEditOpen(true);
-                                }}
-                              >
-                                <Edit2 className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" onClick={() => handleDeleteScript(script.id)}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
                 </TabsContent>
 
                 {/* Professions Tab */}
@@ -317,93 +585,184 @@ export default function ScriptsManagement() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h2 className="text-lg font-semibold">Profession Types</h2>
-                      <p className="text-sm text-muted-foreground">Manage profession categories and assign default scripts.</p>
+                      <p className="text-sm text-muted-foreground">{"Manage profession categories and assign default scripts. Professions are managed in the Settings page."}</p>
                     </div>
-                    <Dialog open={isProfessionOpen} onOpenChange={setIsProfessionOpen}>
-                      <DialogTrigger asChild>
-                        <Button className="gap-2 bg-pink-500 hover:bg-pink-600">
-                          <Plus className="h-4 w-4" /> New Profession
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Add Profession Type</DialogTitle>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                          <div className="space-y-2">
-                            <Label>Profession Name</Label>
-                            <Input 
-                              value={newProfession.name || ""}
-                              onChange={(e) => setNewProfession({ ...newProfession, name: e.target.value })}
-                              placeholder="e.g. Veterinary Clinic"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>Description</Label>
-                            <Textarea 
-                              value={newProfession.description || ""}
-                              onChange={(e) => setNewProfession({ ...newProfession, description: e.target.value })}
-                              placeholder="Brief description..."
-                              className="h-20"
-                            />
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <Button variant="outline" onClick={() => setIsProfessionOpen(false)}>Cancel</Button>
-                          <Button onClick={handleAddProfession} className="bg-pink-500 hover:bg-pink-600">Add Profession</Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
                   </div>
 
-                  <div className="grid gap-3">
-                    {professions.map((prof) => (
-                      <Card key={prof.id}>
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h3 className="font-semibold">{prof.name}</h3>
-                              <p className="text-sm text-muted-foreground">{prof.description}</p>
+                  {professionsLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : professions.length === 0 ? (
+                    <div className="text-center py-12">
+                      <p className="text-muted-foreground">No professions found.</p>
+                    </div>
+                  ) : (
+                    <div className="grid gap-3">
+                      {professions.map((prof) => (
+                        <Card key={prof}>
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h3 className="font-semibold">{prof}</h3>
+                              </div>
+                              {/* <Button variant="outline" size="sm" className="gap-2">
+                                <Settings className="h-4 w-4" /> Configure
+                              </Button> */}
                             </div>
-                            <Button variant="outline" size="sm" className="gap-2">
-                              <Settings className="h-4 w-4" /> Configure
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
                 </TabsContent>
 
                 {/* Dynamic Fields Tab */}
                 <TabsContent value="fields" className="mt-0 space-y-6">
                   <div>
-                    <h2 className="text-lg font-semibold mb-1">Dynamic Fields</h2>
-                    <p className="text-sm text-muted-foreground mb-6">Create custom fields to personalize scripts with contact data.</p>
-                    
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h2 className="text-lg font-semibold mb-1">Dynamic Fields</h2>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedScript
+                            ? `Fields for "${selectedScript.name}" - Use double curly braces with field names in script content`
+                            : "Manage dynamic fields across all scripts. Fields are automatically detected from double curly brace patterns."}
+                        </p>
+                      </div>
+                      {!selectedScript && (
+                        <Select
+                          value="all"
+                          onValueChange={(value) => {
+                            if (value === "all") {
+                              setSelectedScript(null);
+                            } else {
+                              const script = scripts.find(s => s.id === value);
+                              setSelectedScript(script || null);
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="w-48">
+                            <SelectValue placeholder="Filter by script" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Scripts</SelectItem>
+                            {scripts.map((script) => (
+                              <SelectItem key={script.id} value={script.id}>{script.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+
                     <Card className="border shadow-sm">
                       <CardContent className="p-6 space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="p-4 bg-muted/30 rounded-lg border border-border">
-                            <p className="text-xs font-semibold text-muted-foreground mb-1">{`{{firstName}}`}</p>
-                            <p className="text-sm text-foreground">Contact first name</p>
+                        {isAddingField ? (
+                          <div className="flex gap-2">
+                            <Input
+                              placeholder="Enter field name (e.g., firstName)"
+                              value={newFieldName}
+                              onChange={(e) => setNewFieldName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  handleAddField();
+                                } else if (e.key === 'Escape') {
+                                  setIsAddingField(false);
+                                  setNewFieldName("");
+                                }
+                              }}
+                              autoFocus
+                            />
+                            <Button onClick={handleAddField} size="sm">
+                              <Save className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setIsAddingField(false);
+                                setNewFieldName("");
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
                           </div>
-                          <div className="p-4 bg-muted/30 rounded-lg border border-border">
-                            <p className="text-xs font-semibold text-muted-foreground mb-1">{`{{company}}`}</p>
-                            <p className="text-sm text-foreground">Company name</p>
+                        ) : (
+                          <Button
+                              className="w-full gap-2 border-dashed border-primary/30 text-primary  bg-primary/5 hover:bg-primary/10"
+                            onClick={() => setIsAddingField(true)}
+                          >
+                            <Plus className="h-4 w-4" /> Add Custom Field
+                          </Button>
+                        )}
+
+                        {getCurrentFields().length === 0 ? (
+                          <div className="text-center py-8 text-muted-foreground">
+                            <p>No dynamic fields found.</p>
+                            <p className="text-sm mt-2">Add fields using {"{{fieldName}}"} in script content or click "Add Custom Field" above.</p>
                           </div>
-                          <div className="p-4 bg-muted/30 rounded-lg border border-border">
-                            <p className="text-xs font-semibold text-muted-foreground mb-1">{`{{specialty}}`}</p>
-                            <p className="text-sm text-foreground">Medical specialty/profession</p>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {getCurrentFields().map((field) => {
+                              // Check if field is used in content
+                              const isUsedInContent = selectedScript
+                                ? selectedScript.content.includes(`{{${field}}}`)
+                                : scripts.some(s => s.content.includes(`{{${field}}}`));
+
+                              // Check if field is stored in dynamicFields
+                              const isStored = selectedScript
+                                ? selectedScript.dynamicFields?.includes(field)
+                                : scripts.some(s => s.dynamicFields?.includes(field));
+
+                              return (
+                                <div
+                                  key={field}
+                                  className={cn(
+                                    "p-4 rounded-lg border transition-all relative group",
+                                    isUsedInContent
+                                      ? "bg-primary/5 border-primary/20"
+                                      : "bg-muted/30 border-border"
+                                  )}
+                                >
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <p className="text-xs font-semibold text-muted-foreground mb-1 font-mono">
+                                        {`{{${field}}}`}
+                                      </p>
+                                      <p className="text-sm text-foreground capitalize">
+                                        {field.replace(/([A-Z])/g, ' $1').trim()}
+                                      </p>
+                                      <div className="flex gap-2 mt-2">
+                                        {isUsedInContent && (
+                                          <Badge variant="default" className="text-xs">In Use</Badge>
+                                        )}
+                                        {isStored && (
+                                          <Badge variant="secondary" className="text-xs">Stored</Badge>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                      onClick={() => handleRemoveField(field)}
+                                    >
+                                      <Trash2 className="h-3 w-3 text-destructive" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
-                          <div className="p-4 bg-muted/30 rounded-lg border border-border">
-                            <p className="text-xs font-semibold text-muted-foreground mb-1">{`{{dealSize}}`}</p>
-                            <p className="text-sm text-foreground">Deal size or budget</p>
+                        )}
+
+                        {selectedScript && (
+                          <div className="mt-4 p-3 bg-blue-50/50 border border-blue-200 rounded-lg">
+                            <p className="text-xs font-semibold text-blue-900 mb-1">💡 Tip</p>
+                            <p className="text-xs text-blue-800">
+                              Fields are automatically detected from your script content. Use <code className="bg-blue-100 px-1 rounded">{`{{fieldName}}`}</code> in the script content to create dynamic fields.
+                            </p>
                           </div>
-                        </div>
-                        <Button className="w-full gap-2 border-dashed border-primary/30 text-primary hover:bg-primary/5">
-                          <Plus className="h-4 w-4" /> Add Custom Field
-                        </Button>
+                        )}
                       </CardContent>
                     </Card>
                   </div>
@@ -414,7 +773,7 @@ export default function ScriptsManagement() {
                   <div>
                     <h2 className="text-lg font-semibold mb-1">Branching Logic</h2>
                     <p className="text-sm text-muted-foreground mb-6">Create conditional branches to personalize scripts based on responses.</p>
-                    
+
                     <Card className="border shadow-sm">
                       <CardContent className="p-6">
                         <div className="space-y-4">
