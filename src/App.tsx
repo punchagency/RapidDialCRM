@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/Dashboard";
+import Analytics from "@/pages/Analytics";
 import Dialer from "@/pages/Dialer";
 import Settings from "@/pages/Settings";
 import Contacts from "@/pages/Contacts";
@@ -88,7 +89,7 @@ function Router() {
         component={withProtection(LeadLoaderWithGoogleMap)}
       />
       <Route path="/data-import" component={withProtection(DataImporter)} />
-      <Route path="/analytics" component={withProtection(Dashboard)} />
+      <Route path="/analytics" component={withProtection(Analytics)} />
       <Route path="/team-members" component={withProtection(TeamMembers)} />
       <Route path="/hipaa" component={withProtection(HipaaCompliance)} />
       <Route path="/scripts" component={withProtection(ScriptsManagement)} />
