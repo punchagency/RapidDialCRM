@@ -83,9 +83,7 @@ export default function Analytics() {
 
   // Conversion metrics - using real call outcomes
   const appointments = callHistory.filter(
-   (c) => c.outcome?.toLowerCase().includes("appointment") ||
-    c.outcome?.toLowerCase().includes("scheduled") ||
-    c.outcome?.toLowerCase().includes("meeting")
+   (c) => c.outcome?.toLowerCase().includes("booked")
   ).length;
   const conversionRate = totalCalls > 0 ? (appointments / totalCalls) * 100 : 0;
 
