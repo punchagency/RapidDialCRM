@@ -73,6 +73,7 @@ interface PoolItem {
 export default function LeadLoaderWithGoogleMap() {
   const { toast } = useToast();
   const [searchQuery, setSearchTerm] = useState("");
+  const [phoneNumberErrorMessage, setPhoneNumberErrorMessage] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [pool, setPool] = useState<PoolItem[]>([]);
@@ -687,6 +688,23 @@ export default function LeadLoaderWithGoogleMap() {
 
   const geoResults = searchResults.filter(r => r.latitude && r.longitude);
 
+  function phoneNumberValidor(phoneNumber: string) {
+    const sliceIndex = phoneNumber?.startsWith("+") ? 1 : 0
+    const isInvalid = !!phoneNumber?.split("")?.slice(sliceIndex)?.find((character: any) => isNaN(character))
+    return {
+      hasError: isInvalid,
+      message: isInvalid ? "Invalid phone number" : "",
+      phoneNumber,
+    }
+  }
+
+  const handleChangePhoneNumber = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const phoneNumber = e.target.value
+    const { message, phoneNumber: phone } = phoneNumberValidor(phoneNumber)
+    setPhoneNumberErrorMessage(message)
+    setManualFormData({ ...manualFormData, phone })
+  }
+
   return (
     <div className="flex h-screen bg-background overflow-hidden">
       <Sidebar />
@@ -979,9 +997,10 @@ export default function LeadLoaderWithGoogleMap() {
                             <Input
                               placeholder="(555) 000-0000"
                               value={manualFormData.phone}
-                              onChange={(e) => setManualFormData({ ...manualFormData, phone: e.target.value })}
+                              onChange={handleChangePhoneNumber}
                               required
                             />
+                            {phoneNumberErrorMessage && <p className="text-xs text-red-500">{phoneNumberErrorMessage}</p>}
                           </div>
                           <div className="col-span-2 space-y-2 relative">
                             <Label>Address</Label>
@@ -1066,7 +1085,7 @@ export default function LeadLoaderWithGoogleMap() {
                               placeholder="CA"
                               value={manualFormData.state}
                               onChange={(e) => setManualFormData({ ...manualFormData, state: e.target.value })}
-                            />  
+                            />
                           </div>
                           <div className="space-y-2">
                             <Label>Office Email (optional)</Label>
@@ -1083,7 +1102,7 @@ export default function LeadLoaderWithGoogleMap() {
                                 <SelectValue placeholder="Select a territory or leave empty" />
                               </SelectTrigger>
                               <SelectContent>
-                                {territoryOptions?.map((t,i) => (
+                                {territoryOptions?.map((t, i) => (
                                   <SelectItem key={i} value={t}>{t}</SelectItem>
                                 ))}
                               </SelectContent>
